@@ -1,13 +1,66 @@
-# Setting Up Claude Code Review for ScopeShield
+# Setting Up AI Code Review for ScopeShield
 
-This guide walks you through setting up automated Claude code reviews for the ScopeShield repository.
+This guide walks you through the **3-tier AI review system** for the ScopeShield repository.
+
+## Overview: Triple Coverage Strategy
+
+Since Anthropic doesn't provide an official `anthropic-review-action`, we've implemented **Option D: Maximum Coverage** with three complementary workflows:
+
+1. **CI Workflow** - Fast feedback (tests, build, constitutional checks)
+2. **CodeRabbit GitHub Action** - Comprehensive code analysis
+3. **Custom Claude Review** - Constitutional compliance validation
 
 ## Prerequisites
 
 1. GitHub repository with admin access
-2. Anthropic API key with Claude access
+2. (Optional) Anthropic API key for custom Claude reviews
+3. (Free) CodeRabbit account for automated reviews
 
-## Step 1: Get Anthropic API Key
+## Active Workflows
+
+### 1. CI Workflow (`.github/workflows/ci.yml`) ✅ REQUIRED
+
+**What it does:**
+- Runs all 57 unit tests
+- Builds the extension
+- Validates constitutional compliance
+- Checks for Privacy-First violations (network requests, storage.sync)
+- Validates Manifest V3 compliance
+
+**Setup:** None required - runs automatically on all PRs
+
+**Speed:** ~30-60 seconds
+
+### 2. CodeRabbit GitHub Action (`.github/workflows/coderabbit-review.yml`) ✅ ACTIVE
+
+**What it does:**
+- Comprehensive code analysis
+- Security vulnerability scanning
+- Best practices validation
+- Posts review comments automatically
+
+**Setup:** CodeRabbit automatically reviews PRs when you have an account (free tier available)
+
+**Speed:** ~1-2 minutes
+
+### 3. Custom Claude Review (`.github/workflows/claude-custom-review.yml`) ⚙️ OPTIONAL
+
+**What it does:**
+- Reviews against constitutional principles
+- Uses your `.github/claude-review-config.yml`
+- Posts detailed Claude-powered review comments
+- Validates architecture decisions
+
+**Setup:** Requires `ANTHROPIC_API_KEY` secret (see below)
+
+**Speed:** ~30-90 seconds
+**Cost:** ~$0.01-0.30 per PR
+
+---
+
+## Step 1: Get Anthropic API Key (Optional - For Custom Claude Reviews)
+
+**Skip this if you only want CI + CodeRabbit reviews.**
 
 1. Go to https://console.anthropic.com/
 2. Sign in or create an account
@@ -347,12 +400,15 @@ gh run rerun <run-id>
 
 ### Configuration Files
 
-| File | Purpose |
-|------|---------|
-| `.github/workflows/claude-review.yml` | GitHub Actions workflow |
-| `.github/claude-review-config.yml` | Project-specific rules |
-| `.github/pull_request_template.md` | PR checklist template |
-| `memory/constitution.md` | 8 core principles (referenced by bot) |
+| File | Purpose | Used By |
+|------|---------|---------|
+| `.github/workflows/ci.yml` | CI tests & build validation | All PRs (required) |
+| `.github/workflows/coderabbit-review.yml` | CodeRabbit GitHub Action | CodeRabbit service |
+| `.github/workflows/claude-custom-review.yml` | Custom Claude API reviews | Anthropic API (optional) |
+| `.github/claude-review-config.yml` | Project-specific review rules | Custom Claude review |
+| `.github/pull_request_template.md` | PR checklist template | All PRs |
+| `memory/constitution.md` | 8 core principles | CI + Custom Claude review |
+| `.coderabbit.yaml` | CodeRabbit configuration | CodeRabbit reviews |
 
 ---
 
