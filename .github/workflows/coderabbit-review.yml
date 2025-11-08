@@ -1,0 +1,22 @@
+name: CodeRabbit AI Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  coderabbit-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: CodeRabbit Review
+        uses: coderabbitai/coderabbit-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # CodeRabbit uses your existing .coderabbit.yaml configuration
