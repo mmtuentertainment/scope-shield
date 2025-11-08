@@ -1,0 +1,273 @@
+/**
+ * ScopeShield Content Script Styles (T033)
+ * Visual feedback for scope creep detection
+ */
+
+/* Base highlight styles (T033) */
+.scopeshield-highlight {
+  background-color: #FFEB3B !important;
+  opacity: 0.8;
+  padding: 1px 3px;
+  border-radius: 3px;
+  display: inline;
+  position: relative;
+  transition: all 0.3s ease;
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: rgba(255, 152, 0, 0.5);
+  text-underline-offset: 2px;
+}
+
+/* Confidence-based colors */
+.scopeshield-high-confidence {
+  background-color: #FF9800 !important; /* Amber */
+  text-decoration-color: #FF5722;
+}
+
+.scopeshield-medium-confidence {
+  background-color: #FFEB3B !important; /* Yellow */
+  text-decoration-color: #FFC107;
+}
+
+.scopeshield-low-confidence {
+  background-color: #FFF59D !important; /* Light Yellow */
+  text-decoration-color: #FFEB3B;
+}
+
+/* Animation for new highlights */
+.scopeshield-highlight-animate {
+  animation: scopeshield-pulse 1s ease-out;
+}
+
+@keyframes scopeshield-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 235, 59, 0.8);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 10px 5px rgba(255, 235, 59, 0.4);
+    transform: scale(1.02);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 235, 59, 0);
+    transform: scale(1);
+  }
+}
+
+/* Hover effects */
+.scopeshield-highlight:hover {
+  opacity: 1 !important;
+  cursor: help;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Tooltip styles */
+.scopeshield-highlight::before {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  background: #333;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 10000;
+  margin-bottom: 5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.scopeshield-highlight::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(5px) scale(0);
+  border: 5px solid transparent;
+  border-top-color: #333;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  z-index: 10000;
+}
+
+.scopeshield-highlight:hover::before {
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
+}
+
+.scopeshield-highlight:hover::after {
+  transform: translateX(-50%) translateY(0) scale(1);
+  opacity: 1;
+}
+
+/* Dark mode support (T035) */
+@media (prefers-color-scheme: dark) {
+  .scopeshield-highlight {
+    opacity: 0.6;
+  }
+
+  .scopeshield-high-confidence {
+    background-color: #FF6F00 !important;
+  }
+
+  .scopeshield-medium-confidence {
+    background-color: #FFC107 !important;
+  }
+
+  .scopeshield-low-confidence {
+    background-color: #FFE082 !important;
+  }
+}
+
+/* Gmail-specific dark mode */
+.bX0uNc .scopeshield-highlight, /* Gmail dark mode class */
+[data-theme="dark"] .scopeshield-highlight {
+  opacity: 0.6;
+}
+
+/* Dark mode for fixed notification badge */
+@media (prefers-color-scheme: dark) {
+  .scopeshield-badge {
+    background-color: #424242;
+    color: #FFFFFF;
+    border: 1px solid #616161;
+  }
+}
+
+/* Notification badge styles */
+.scopeshield-badge {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #FF9800;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 50px;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 9999;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: scopeshield-slide-in 0.5s ease-out;
+}
+
+@keyframes scopeshield-slide-in {
+  from {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.scopeshield-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 152, 0, 0.4);
+}
+
+/* Summary overlay */
+.scopeshield-summary {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 9998;
+  min-width: 280px;
+  max-width: 350px;
+}
+
+.scopeshield-summary-header {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scopeshield-summary-count {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 8px;
+  background: #FFF3E0;
+  border-radius: 4px;
+}
+
+.scopeshield-summary-count-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: #FF6F00;
+}
+
+.scopeshield-summary-count-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.scopeshield-summary-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.scopeshield-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.scopeshield-btn-primary {
+  background: #FF9800;
+  color: white;
+}
+
+.scopeshield-btn-primary:hover {
+  background: #F57C00;
+}
+
+.scopeshield-btn-secondary {
+  background: #F5F5F5;
+  color: #666;
+}
+
+.scopeshield-btn-secondary:hover {
+  background: #E0E0E0;
+}
+
+/* Loading indicator */
+.scopeshield-loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #FFF;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: scopeshield-spin 0.6s linear infinite;
+}
+
+@keyframes scopeshield-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

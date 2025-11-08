@@ -1,0 +1,236 @@
+# ScopeShield Claude Code Review Configuration
+# This file provides project-specific context for automated code reviews
+
+project_name: "ScopeShield"
+project_type: "Chrome Extension (Manifest V3)"
+tech_stack:
+  - Vanilla JavaScript (ES6+)
+  - Chrome Extension APIs
+  - Vite (build tool)
+  - Vitest (testing)
+
+# Constitutional governance
+constitution_file: "memory/constitution.md"
+enforce_constitutional_compliance: true
+
+# Architecture principles
+architecture:
+  style: "Event-driven, modular"
+  patterns:
+    - "Content script + Background worker"
+    - "Message passing for cross-context communication"
+    - "MutationObserver for DOM monitoring"
+    - "Debounced event handlers"
+
+  anti_patterns:
+    - "Blocking operations in content scripts"
+    - "Synchronous storage calls"
+    - "Framework dependencies (React, Vue, etc.)"
+    - "External API calls"
+    - "Third-party analytics"
+
+# Performance requirements
+performance:
+  content_script_load: "<50ms (p95), <100ms (p99)"
+  detection_latency: "<300ms (p95), <500ms (p99)"
+  highlight_render: "<50ms (p95), <100ms (p99)"
+  bundle_size: "<500KB total, <200KB per file"
+  memory_usage: "<50MB for content script"
+
+# Accuracy requirements
+accuracy:
+  detection_rate: "≥75%"
+  false_positive_rate: "<25%"
+  overall_accuracy: "≥75%"
+
+# Code quality standards
+code_quality:
+  documentation:
+    - "JSDoc required for all exported functions"
+    - "Inline comments for complex logic"
+    - "README for each major module"
+
+  error_handling:
+    - "Try/catch for all async operations"
+    - "Graceful degradation on errors"
+    - "Console logging with [ScopeShield] prefix"
+
+  naming_conventions:
+    functions: "camelCase (e.g., detectScopeCreep)"
+    constants: "UPPER_SNAKE_CASE (e.g., SCAN_DEBOUNCE_MS)"
+    classes: "PascalCase (if used)"
+    files: "kebab-case (e.g., gmail-dom.js)"
+
+  code_structure:
+    - "Max function length: 50 lines (prefer 20-30)"
+    - "Max file length: 500 lines"
+    - "Extract reusable logic to utilities"
+
+# Security requirements
+security:
+  data_handling:
+    - "NO data transmission outside browser"
+    - "chrome.storage.local ONLY (never sync)"
+    - "No localStorage for sensitive data"
+    - "Sanitize all user input"
+
+  permissions:
+    required:
+      - "storage"
+      - "notifications"
+      - "activeTab"
+    forbidden:
+      - "webRequest"
+      - "webRequestBlocking"
+      - "<all_urls>"
+      - "cookies"
+
+  vulnerabilities:
+    check_for:
+      - "XSS in innerHTML usage"
+      - "eval() or Function() constructor"
+      - "Unsanitized regex from user input"
+      - "Command injection in shell scripts"
+
+# Gmail-specific requirements
+gmail_integration:
+  selector_strategy:
+    - "Always use fallback chains"
+    - "Priority: data-* → ARIA → CSS classes"
+    - "Test selectors against multiple Gmail views"
+
+  stability:
+    - "Handle Gmail SPA navigation"
+    - "Support classic and new Gmail UI"
+    - "Graceful failure on selector changes"
+
+# Testing requirements
+testing:
+  coverage:
+    minimum: "70%"
+    target: "85%"
+
+  test_types:
+    - "Unit tests for detectors"
+    - "Integration tests for content script"
+    - "Accuracy validation with corpus"
+    - "Performance benchmarks"
+
+  required_tests:
+    - "All trigger patterns"
+    - "Exclusion patterns"
+    - "Storage operations"
+    - "Edge cases (quoted text, signatures)"
+
+# File-specific review rules
+file_specific_rules:
+  "src/utils/detector.js":
+    critical: true
+    require_tests: true
+    check_for:
+      - "Pattern accuracy"
+      - "Performance (<10ms per detection)"
+      - "False positive filtering"
+
+  "src/content/content.js":
+    critical: true
+    require_tests: true
+    check_for:
+      - "Memory leaks in observers"
+      - "Debouncing implementation"
+      - "Message deduplication"
+
+  "src/utils/storage.js":
+    critical: true
+    require_tests: true
+    check_for:
+      - "Privacy compliance"
+      - "Quota management"
+      - "Error handling"
+
+  "manifest.json":
+    critical: true
+    require_review: true
+    check_for:
+      - "Minimal permissions"
+      - "Manifest V3 compliance"
+      - "CSP correctness"
+
+  "memory/constitution.md":
+    critical: true
+    require_approval: true
+    note: "Changes require explicit justification"
+
+# Spec-Kit integration
+spec_kit:
+  enabled: true
+  require_specs_for:
+    - "New features"
+    - "Breaking changes"
+    - "Architecture changes"
+
+  spec_location: "specs/"
+  spec_format:
+    - "spec.md (feature description)"
+    - "plan.md (implementation plan)"
+    - "tasks.md (atomic tasks)"
+
+# Review automation rules
+automation:
+  auto_approve:
+    - "Documentation updates (non-constitution)"
+    - "Test additions (no removals)"
+    - "Comment improvements"
+    - "Formatting fixes"
+
+  auto_request_changes:
+    - "Privacy violations (data transmission)"
+    - "Forbidden permissions added"
+    - "Performance regression >100ms"
+    - "Accuracy drop >5%"
+
+  require_manual_review:
+    - "manifest.json changes"
+    - "Constitution changes"
+    - "Security-sensitive code"
+    - "Gmail selector changes"
+
+# Custom checks
+custom_checks:
+  - name: "Constitutional Compliance"
+    description: "Validate against 8 core principles"
+    file_patterns: ["src/**/*.js", "manifest.json"]
+
+  - name: "Gmail Selector Stability"
+    description: "Check for fallback chains"
+    file_patterns: ["src/content/**/*.js"]
+
+  - name: "Performance Budget"
+    description: "Validate latency requirements"
+    file_patterns: ["src/content/*.js", "src/utils/detector.js"]
+
+  - name: "Privacy Audit"
+    description: "Check for data leakage"
+    file_patterns: ["src/**/*.js", "manifest.json"]
+
+# Review output preferences
+output:
+  format: "markdown"
+  grouping: "by_file"
+  include_line_numbers: true
+  include_code_snippets: true
+  max_snippet_lines: 10
+
+  severity_levels:
+    critical: "🚨 CRITICAL"
+    high: "⚠️ HIGH"
+    medium: "💡 MEDIUM"
+    low: "ℹ️ LOW"
+    suggestion: "✨ SUGGESTION"
+
+# Notification settings
+notifications:
+  on_approval: true
+  on_changes_requested: true
+  on_comments: true
+  mention_author: true
