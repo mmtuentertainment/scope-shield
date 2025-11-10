@@ -65,7 +65,7 @@ jobs:
           fi
 
           # Check for manifest v3
-          if ! grep -q '"manifest_version": 3' manifest.json; then
+          if ! grep -q '"manifest_version": 3' src/manifest.json; then
             echo "❌ Error: Not using Manifest V3"
             exit 1
           fi
