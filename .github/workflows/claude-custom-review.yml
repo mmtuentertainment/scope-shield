@@ -36,8 +36,8 @@ jobs:
           REVIEW_CONFIG=$(cat .github/claude-review-config.yml 2>/dev/null || echo "")
           PR_DIFF=$(cat pr-diff.txt)
 
-          # Create review prompt
-          cat > review-prompt.txt << 'PROMPT'
+          # Create review prompt with variable substitution
+          cat > review-prompt.txt << PROMPT
           You are reviewing a pull request for the ScopeShield Chrome Extension.
 
           ## PR Information
