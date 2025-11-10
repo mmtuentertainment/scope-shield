@@ -27,7 +27,7 @@ const DEFAULT_SETTINGS = {
  */
 async function loadSettings() {
   try {
-    const result = await chrome.storage.sync.get('settings');
+    const result = await chrome.storage.local.get('settings');
     const settings = result.settings || DEFAULT_SETTINGS;
 
     enableNotifications.checked = settings.enableNotifications;
@@ -54,7 +54,7 @@ async function saveSettings() {
   };
 
   try {
-    await chrome.storage.sync.set({ settings });
+    await chrome.storage.local.set({ settings });
     showStatus('Settings saved successfully!', 'success');
   } catch (error) {
     console.error('[ScopeShield] Error saving settings:', error);
