@@ -36,24 +36,57 @@ export function createDetectionEvent({
   threadId,
   messageId
 }) {
-  // Validate threadId format before creating event
-  const validThreadId = threadId && /^[a-f0-9]{16}$/i.test(threadId) ? threadId : '';
+  // Validate required parameters (throw errors for invalid inputs)
+  if (!id || !id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
+    throw new Error('Invalid or missing id (must be UUID v4)');
+  }
 
-  // Validate messageId format before creating event
-  const validMessageId = messageId && typeof messageId === 'string' ? messageId : '';
+  if (!emailSubject || typeof emailSubject !== 'string') {
+    throw new Error('Invalid or missing emailSubject (must be non-empty string)');
+  }
+
+  if (!sender || !sender.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    throw new Error('Invalid or missing sender (must be valid email)');
+  }
+
+  if (!detectedText || typeof detectedText !== 'string') {
+    throw new Error('Invalid or missing detectedText (must be non-empty string)');
+  }
+
+  if (!triggerWord || typeof triggerWord !== 'string') {
+    throw new Error('Invalid or missing triggerWord (must be non-empty string)');
+  }
+
+  if (typeof triggerWeight !== 'number' || triggerWeight < 1 || triggerWeight > 10) {
+    throw new Error('Invalid triggerWeight (must be number between 1-10)');
+  }
+
+  if (!emailUrl || !emailUrl.startsWith('https://mail.google.com/')) {
+    throw new Error('Invalid or missing emailUrl (must be Gmail URL)');
+  }
+
+  // Validate threadId format - throw error for invalid format
+  if (!threadId || !/^[a-f0-9]{16}$/i.test(threadId)) {
+    throw new Error('Invalid or missing threadId (must be 16 hex characters)');
+  }
+
+  // Validate messageId format - throw error for invalid format
+  if (!messageId || typeof messageId !== 'string') {
+    throw new Error('Invalid or missing messageId (must be non-empty string)');
+  }
 
   return {
     id: id,
     timestamp: new Date().toISOString(),
-    emailSubject: emailSubject ? emailSubject.substring(0, 200) : 'No subject',
-    sender: sender || 'unknown@gmail.com',
+    emailSubject: emailSubject.substring(0, 200),
+    sender: sender,
     senderName: senderName || null,
-    detectedText: detectedText ? detectedText.substring(0, 100) : '',
-    triggerWord: triggerWord || '',
-    triggerWeight: triggerWeight || 5,
-    emailUrl: emailUrl || '',
-    threadId: validThreadId,
-    messageId: validMessageId,
+    detectedText: detectedText.substring(0, 100),
+    triggerWord: triggerWord,
+    triggerWeight: triggerWeight,
+    emailUrl: emailUrl,
+    threadId: threadId,
+    messageId: messageId,
     acknowledged: false
   };
 }

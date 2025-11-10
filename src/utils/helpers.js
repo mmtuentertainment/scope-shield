@@ -57,13 +57,16 @@ export function sleep(ms) {
 export function extractContext(text, matchIndex, matchLength, contextWords = 10) {
   if (!text || matchIndex < 0) return '';
 
-  // Find word boundaries before match
+  // Find start position by counting words backward from match
   let startIndex = matchIndex;
-  let wordsFound = 0;
-  for (let i = matchIndex - 1; i >= 0 && wordsFound < contextWords; i--) {
-    if (text[i] === ' ') {
-      wordsFound++;
-      if (wordsFound === contextWords) {
+  let wordsBeforeMatch = 0;
+  const wordBoundaryRegex = /\s+/;
+
+  // Walk backward to find N words before match
+  for (let i = matchIndex - 1; i >= 0 && wordsBeforeMatch < contextWords; i--) {
+    if (wordBoundaryRegex.test(text[i]) && i > 0 && !wordBoundaryRegex.test(text[i - 1])) {
+      wordsBeforeMatch++;
+      if (wordsBeforeMatch === contextWords) {
         startIndex = i + 1;
         break;
       }
@@ -71,13 +74,15 @@ export function extractContext(text, matchIndex, matchLength, contextWords = 10)
     if (i === 0) startIndex = 0;
   }
 
-  // Find word boundaries after match
+  // Find end position by counting words forward from match end
   let endIndex = matchIndex + matchLength;
-  wordsFound = 0;
-  for (let i = endIndex; i < text.length && wordsFound < contextWords; i++) {
-    if (text[i] === ' ') {
-      wordsFound++;
-      if (wordsFound === contextWords) {
+  let wordsAfterMatch = 0;
+
+  // Walk forward to find N words after match
+  for (let i = endIndex; i < text.length && wordsAfterMatch < contextWords; i++) {
+    if (wordBoundaryRegex.test(text[i]) && i < text.length - 1 && !wordBoundaryRegex.test(text[i + 1])) {
+      wordsAfterMatch++;
+      if (wordsAfterMatch === contextWords) {
         endIndex = i;
         break;
       }

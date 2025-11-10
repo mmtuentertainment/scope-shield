@@ -62,9 +62,9 @@
 
     <!-- Footer -->
     <footer class="popup-footer">
-      <a href="#help" id="help-link" role="button">Help</a>
+      <button type="button" id="help-link" class="link-button">Help</button>
       <span class="separator" aria-hidden="true">•</span>
-      <a href="#feedback" id="feedback-link" role="button">Feedback</a>
+      <button type="button" id="feedback-link" class="link-button">Feedback</button>
     </footer>
   </div>
 
@@ -84,9 +84,15 @@
         </div>
       </div>
       <div class="detection-actions">
-        <button class="btn-icon acknowledge" title="Acknowledge" aria-label="Acknowledge this detection">✓</button>
-        <button class="btn-icon view" title="View in Gmail" aria-label="View this email in Gmail">👁</button>
-        <button class="btn-icon copy" title="Copy text" aria-label="Copy detected text to clipboard">📋</button>
+        <button class="btn-icon acknowledge" title="Acknowledge" aria-label="Acknowledge this detection">
+          <span aria-hidden="true">✓</span>
+        </button>
+        <button class="btn-icon view" title="View in Gmail" aria-label="View this email in Gmail">
+          <span aria-hidden="true">↗</span>
+        </button>
+        <button class="btn-icon copy" title="Copy text" aria-label="Copy detected text to clipboard">
+          <span aria-hidden="true">⧉</span>
+        </button>
       </div>
     </div>
   </template>

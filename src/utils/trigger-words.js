@@ -191,11 +191,17 @@ export function shouldExclude(text) {
 }
 
 /**
+ * Cached sorted trigger words for performance (sorted by weight, highest first)
+ * @type {Array<TriggerWord>}
+ */
+const SORTED_TRIGGER_WORDS = [...TRIGGER_WORDS].sort((a, b) => b.weight - a.weight);
+
+/**
  * Get all trigger patterns sorted by weight (highest first)
  * @returns {Array<TriggerWord>} Sorted trigger words
  */
 export function getTriggerWordsSorted() {
-  return [...TRIGGER_WORDS].sort((a, b) => b.weight - a.weight);
+  return SORTED_TRIGGER_WORDS;
 }
 
 /**

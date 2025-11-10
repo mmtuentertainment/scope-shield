@@ -5,7 +5,10 @@
 
 import { getUnacknowledgedCount } from '../utils/storage.js';
 
-// Performance metrics storage
+// Performance metrics storage with memory leak protection
+// Limits: Keep max 100 metrics, trim to 50 when exceeded
+const MAX_METRICS = 100;
+const METRICS_TRIM_SIZE = 50;
 const performanceMetrics = [];
 
 /**
@@ -206,9 +209,11 @@ function recordPerformanceMetric(metric) {
     }
   }
 
-  // Keep only last 100 metrics
-  if (performanceMetrics.length > 100) {
-    performanceMetrics.splice(0, 20);
+  // Memory leak protection: Trim metrics array when it exceeds MAX_METRICS
+  if (performanceMetrics.length > MAX_METRICS) {
+    const metricsToRemove = performanceMetrics.length - METRICS_TRIM_SIZE;
+    performanceMetrics.splice(0, metricsToRemove);
+    console.log(`[ScopeShield] Trimmed ${metricsToRemove} old metrics (keeping ${METRICS_TRIM_SIZE})`);
   }
 }
 

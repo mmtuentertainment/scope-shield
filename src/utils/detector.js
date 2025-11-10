@@ -18,6 +18,42 @@ import { extractContext } from './helpers.js';
  */
 
 /**
+ * Pre-compiled regex pattern for high-confidence triggers (cached for performance & security)
+ * Compiled once at module load to prevent ReDoS from dynamic regex construction
+ */
+let cachedTriggerPattern = null;
+
+/**
+ * Get or create the high-confidence trigger pattern (memoized)
+ * @returns {RegExp} Pre-compiled trigger pattern
+ */
+function getHighConfidenceTriggerPattern() {
+  if (!cachedTriggerPattern) {
+    // Extract high-confidence phrases (weight >= 6)
+    const highConfidencePhrases = TRIGGER_WORDS
+      .filter(t => t.weight >= 6)
+      .map(t => t.phrase.replace(/\s+\(.*?\)/, '')); // Remove (weak) suffixes
+
+    // Escape special regex characters for safety
+    const escapedPhrases = highConfidencePhrases
+      .map(phrase => phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .filter(phrase => phrase.length > 0 && phrase.length < 100); // Validate: non-empty and reasonable length
+
+    // Create pattern with word boundaries
+    const patternString = '\\b(' + escapedPhrases.join('|') + ')\\b';
+
+    // Validate total pattern length to prevent ReDoS
+    if (patternString.length > 10000) {
+      console.error('[ScopeShield] Trigger pattern too long, using safe default');
+      cachedTriggerPattern = /\b(also|additionally|one more thing)\b/gi;
+    } else {
+      cachedTriggerPattern = new RegExp(patternString, 'gi');
+    }
+  }
+  return cachedTriggerPattern;
+}
+
+/**
  * Detect scope creep in text
  * @param {string} text - Text to analyze
  * @returns {DetectionResult} Detection result
@@ -122,15 +158,8 @@ function calculateAdjustedWeight(trigger, text, matchIndex) {
   let weight = trigger.weight;
 
   // Boost weight if multiple triggers present
-  // Using TRIGGER_WORDS from shared list for consistency
-  const highConfidencePhrases = TRIGGER_WORDS
-    .filter(t => t.weight >= 6)
-    .map(t => t.phrase.replace(/\s+\(.*?\)/, '')); // Remove (weak) suffixes
-
-  const triggerPattern = new RegExp(
-    '\\b(' + highConfidencePhrases.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b',
-    'gi'
-  );
+  // Using pre-compiled pattern for performance and security (ReDoS prevention)
+  const triggerPattern = getHighConfidenceTriggerPattern();
   const triggerCount = (text.match(triggerPattern) || []).length;
 
   if (triggerCount > 1) {

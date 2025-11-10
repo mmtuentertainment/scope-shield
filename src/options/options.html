@@ -14,20 +14,20 @@
 
     <section>
       <h2>Detection Settings</h2>
-      <div class="setting">
-        <label>
+      <div class="setting" role="group" aria-labelledby="notif-label">
+        <label id="notif-label">
           <input type="checkbox" id="enable-notifications" checked>
           Show browser notifications
         </label>
       </div>
-      <div class="setting">
-        <label>
+      <div class="setting" role="group" aria-labelledby="highlight-label">
+        <label id="highlight-label">
           <input type="checkbox" id="enable-highlights" checked>
           Highlight detected text
         </label>
       </div>
-      <div class="setting">
-        <label>
+      <div class="setting" role="group" aria-labelledby="threshold-label">
+        <label id="threshold-label">
           Confidence threshold:
           <select id="confidence-threshold">
             <option value="1">All (1+)</option>
@@ -40,14 +40,14 @@
 
     <section>
       <h2>Visual Settings</h2>
-      <div class="setting">
-        <label>
+      <div class="setting" role="group" aria-labelledby="color-label">
+        <label id="color-label">
           Highlight color:
           <input type="color" id="highlight-color" value="#FFEB3B">
         </label>
       </div>
-      <div class="setting">
-        <label>
+      <div class="setting" role="group" aria-labelledby="opacity-label">
+        <label id="opacity-label">
           Highlight opacity:
           <input type="range" id="highlight-opacity" min="0.3" max="1" step="0.1" value="0.8">
           <span id="opacity-value">80%</span>

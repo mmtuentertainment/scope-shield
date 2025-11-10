@@ -129,7 +129,7 @@ function getTextNodes(element) {
   );
 
   let node;
-  while (node = walker.nextNode()) {
+  while ((node = walker.nextNode()) !== null) {
     textNodes.push(node);
   }
 
