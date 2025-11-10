@@ -71,7 +71,7 @@ async function resetSettings() {
   }
 
   try {
-    await chrome.storage.sync.set({ settings: DEFAULT_SETTINGS });
+    await chrome.storage.local.set({ settings: DEFAULT_SETTINGS });
     await loadSettings();
     showStatus('Settings reset to defaults', 'success');
   } catch (error) {
