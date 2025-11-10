@@ -245,6 +245,113 @@ Output: `dist/` directory ready for Chrome Web Store submission
 - **Fast**: Detection happens in real-time as user reads messages
 - **Chrome Web Store compliant**: Manifest V3, minimal permissions
 
+## CodeRabbit CLI Integration
+
+This project uses **CodeRabbit CLI + Claude Code** for autonomous AI development workflows with built-in quality gates.
+
+### CodeRabbit Review Focus
+
+When running code reviews (via `coderabbit --prompt-only`), prioritize these areas:
+
+#### 🚨 CRITICAL (Auto-reject)
+1. **Privacy Violations** (Constitution §I)
+   - Any `fetch()`, `XMLHttpRequest`, or external API calls
+   - Use of `chrome.storage.sync` instead of `.local`
+   - Data transmission outside browser
+   - Third-party analytics or tracking
+
+2. **Performance Regressions** (Constitution §III)
+   - Detection latency >500ms (target: <300ms)
+   - Highlighting latency >100ms (target: <50ms)
+   - Bundle size >500KB (target: <300KB)
+   - Memory leaks in MutationObservers
+
+3. **Security Vulnerabilities**
+   - XSS via `innerHTML` without sanitization
+   - eval() or Function() constructor usage
+   - Missing input validation
+   - Permission creep in manifest.json
+
+4. **Chrome Web Store Violations** (Constitution §VI)
+   - Manifest V3 non-compliance
+   - Forbidden permissions (webRequest, <all_urls>, cookies)
+   - Missing or incorrect CSP
+
+#### ⚠️ HIGH (Should fix)
+1. **Gmail Integration Stability**
+   - Selectors without fallback chains
+   - Missing SPA navigation handling
+   - No graceful degradation on selector failures
+
+2. **Accuracy Impacts** (Constitution §VII)
+   - Changes to trigger patterns without tests
+   - Detection rate drops <75%
+   - False positive rate exceeds 25%
+
+3. **Missing Error Handling**
+   - Async operations without try/catch
+   - No fallback for chrome.storage.local failures
+   - Silent failures (no user notification)
+
+#### 💡 MEDIUM (Good to fix)
+1. **Code Quality**
+   - Missing JSDoc comments for public functions
+   - Unclear variable names
+   - Magic numbers without constants
+   - Code duplication
+
+2. **Test Coverage**
+   - New detector patterns without tests
+   - Missing edge case tests
+   - Performance benchmarks missing
+
+3. **Bundle Optimization**
+   - Unused imports
+   - Duplicated dependencies
+   - Unnecessary polyfills
+
+#### ℹ️ LOW (Optional)
+1. **Documentation**
+   - Missing inline comments for complex logic
+   - Outdated README sections
+   - Spec artifacts out of sync
+
+2. **Style Consistency**
+   - Inconsistent naming conventions
+   - Formatting issues
+   - Console.log without [ScopeShield] prefix
+
+### Review Integration Commands
+
+Use these prompts with Claude Code for autonomous workflows:
+
+```bash
+# Standard implementation + review workflow
+Implement [feature] from spec, run coderabbit --prompt-only --type all
+in the background, and fix all issues. Let it take as long as needed.
+
+# Quick pre-commit check
+Run coderabbit --prompt-only --type uncommitted and fix critical issues.
+
+# Pre-PR comprehensive review
+Run coderabbit --prompt-only --base main, fix all findings, then create PR.
+
+# Constitutional validation
+Run coderabbit --prompt-only and verify all 8 constitutional principles.
+```
+
+### Review Configuration
+
+CodeRabbit automatically reads this file for project context. Key points:
+
+- **Privacy-First**: Reject any external data transmission
+- **Performance Budget**: Detection <500ms, highlighting <100ms, bundle <500KB
+- **Accuracy Targets**: ≥75% detection rate, <25% false positive rate
+- **Chrome Compliance**: Manifest V3, minimal permissions only
+- **Gmail Stability**: All selectors must have fallback chains
+
+See [.github/CODERABBIT_INTEGRATION.md](.github/CODERABBIT_INTEGRATION.md) for detailed setup and usage.
+
 ## Communication Style
 
 When working with Claude Code:

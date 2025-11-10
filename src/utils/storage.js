@@ -1,0 +1,159 @@
+/**
+ * Chrome storage wrapper utility for ScopeShield
+ * Handles DetectionEvent storage with quota management
+ */
+
+/**
+ * Save a detection event to chrome.storage.local
+ * @param {Object} event - The DetectionEvent to save
+ */
+export async function saveDetectionEvent(event) {
+  try {
+    // Validate event structure
+    if (!event || !event.id || !event.timestamp) {
+      console.error('[ScopeShield] Invalid event: missing required fields (id, timestamp)', event);
+      throw new Error('Invalid event: missing required fields (id, timestamp)');
+    }
+
+    // Get existing events
+    const { detectionEvents = [] } = await chrome.storage.local.get('detectionEvents');
+
+    // Add new event
+    detectionEvents.push(event);
+
+    // Quota management (every 10th event)
+    if (detectionEvents.length % 10 === 0) {
+      await manageQuota(detectionEvents);
+    }
+
+    // Save updated array
+    await chrome.storage.local.set({ detectionEvents });
+
+    console.log(`[ScopeShield] Saved detection event: ${event.id}`);
+  } catch (error) {
+    console.error('[ScopeShield] Failed to save detection event:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get all detection events from storage
+ * @returns {Array} Array of DetectionEvent objects
+ */
+export async function getDetectionEvents() {
+  try {
+    const { detectionEvents = [] } = await chrome.storage.local.get('detectionEvents');
+
+    // Sort by timestamp (most recent first)
+    const sortedEvents = detectionEvents.sort((a, b) =>
+      new Date(b.timestamp) - new Date(a.timestamp)
+    );
+
+    return sortedEvents;
+  } catch (error) {
+    console.error('[ScopeShield] Failed to get detection events:', error);
+    return [];
+  }
+}
+
+/**
+ * Update acknowledged status of an event
+ * @param {string} eventId - The event ID to update
+ * @param {boolean} acknowledged - The new acknowledged status
+ */
+export async function updateEventAcknowledged(eventId, acknowledged = true) {
+  try {
+    const { detectionEvents = [] } = await chrome.storage.local.get('detectionEvents');
+
+    const event = detectionEvents.find(e => e.id === eventId);
+    if (event) {
+      event.acknowledged = acknowledged;
+      await chrome.storage.local.set({ detectionEvents });
+      console.log(`[ScopeShield] Updated event ${eventId} acknowledged: ${acknowledged}`);
+      return true;
+    } else {
+      console.warn(`[ScopeShield] Event ${eventId} not found`);
+      return false;
+    }
+  } catch (error) {
+    console.error('[ScopeShield] Failed to update event acknowledged:', error);
+    return false;
+  }
+}
+
+/**
+ * Acknowledge an event (alias for updateEventAcknowledged)
+ * @param {string} eventId - The event ID to acknowledge
+ */
+export async function acknowledgeEvent(eventId) {
+  return updateEventAcknowledged(eventId, true);
+}
+
+/**
+ * Get unacknowledged event count
+ * @returns {number} Count of unacknowledged events
+ */
+export async function getUnacknowledgedCount() {
+  try {
+    const { detectionEvents = [] } = await chrome.storage.local.get('detectionEvents');
+    return detectionEvents.filter(e => !e.acknowledged).length;
+  } catch (error) {
+    console.error('[ScopeShield] Failed to get unacknowledged count:', error);
+    return 0;
+  }
+}
+
+/**
+ * Group events by thread ID
+ * @returns {Object} Events grouped by threadId
+ */
+export async function getEventsByThread() {
+  try {
+    const events = await getDetectionEvents();
+
+    const eventsByThread = events.reduce((acc, event) => {
+      if (!acc[event.threadId]) {
+        acc[event.threadId] = [];
+      }
+      acc[event.threadId].push(event);
+      return acc;
+    }, {});
+
+    return eventsByThread;
+  } catch (error) {
+    console.error('[ScopeShield] Failed to group events by thread:', error);
+    return {};
+  }
+}
+
+/**
+ * Manage storage quota with FIFO rotation
+ * @param {Array} detectionEvents - Current events array
+ */
+async function manageQuota(detectionEvents) {
+  try {
+    const bytesInUse = await chrome.storage.local.getBytesInUse();
+    const quotaPct = (bytesInUse / 5242880) * 100; // 5MB = 5242880 bytes
+
+    if (quotaPct > 80) {
+      // FIFO: Remove oldest 200 events
+      const removedCount = Math.min(200, Math.floor(detectionEvents.length * 0.25));
+      detectionEvents.splice(0, removedCount);
+      console.log(`[ScopeShield] Quota at ${quotaPct.toFixed(1)}% - Rotated ${removedCount} oldest events`);
+    }
+  } catch (error) {
+    console.error('[ScopeShield] Failed to manage quota:', error);
+  }
+}
+
+/**
+ * Clear all detection events (for testing/reset)
+ */
+export async function clearAllEvents() {
+  try {
+    await chrome.storage.local.remove('detectionEvents');
+    console.log('[ScopeShield] Cleared all detection events');
+  } catch (error) {
+    console.error('[ScopeShield] Failed to clear events:', error);
+  }
+}

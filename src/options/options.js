@@ -1,0 +1,108 @@
+/**
+ * ScopeShield Options Page Script
+ */
+
+// DOM Elements
+const enableNotifications = document.getElementById('enable-notifications');
+const enableHighlights = document.getElementById('enable-highlights');
+const confidenceThreshold = document.getElementById('confidence-threshold');
+const highlightColor = document.getElementById('highlight-color');
+const highlightOpacity = document.getElementById('highlight-opacity');
+const opacityValue = document.getElementById('opacity-value');
+const saveBtn = document.getElementById('save');
+const resetBtn = document.getElementById('reset');
+const statusEl = document.getElementById('status');
+
+// Default settings
+const DEFAULT_SETTINGS = {
+  enableNotifications: true,
+  enableHighlights: true,
+  confidenceThreshold: 5,
+  highlightColor: '#FFEB3B',
+  highlightOpacity: 0.8
+};
+
+/**
+ * Load settings from storage
+ */
+async function loadSettings() {
+  try {
+    const result = await chrome.storage.local.get('settings');
+    const settings = result.settings || DEFAULT_SETTINGS;
+
+    enableNotifications.checked = settings.enableNotifications;
+    enableHighlights.checked = settings.enableHighlights;
+    confidenceThreshold.value = settings.confidenceThreshold;
+    highlightColor.value = settings.highlightColor;
+    highlightOpacity.value = settings.highlightOpacity;
+    opacityValue.textContent = `${Math.round(settings.highlightOpacity * 100)}%`;
+  } catch (error) {
+    console.error('[ScopeShield] Error loading settings:', error);
+  }
+}
+
+/**
+ * Save settings to storage
+ */
+async function saveSettings() {
+  const settings = {
+    enableNotifications: enableNotifications.checked,
+    enableHighlights: enableHighlights.checked,
+    confidenceThreshold: parseInt(confidenceThreshold.value),
+    highlightColor: highlightColor.value,
+    highlightOpacity: parseFloat(highlightOpacity.value)
+  };
+
+  try {
+    await chrome.storage.local.set({ settings });
+    showStatus('Settings saved successfully!', 'success');
+  } catch (error) {
+    console.error('[ScopeShield] Error saving settings:', error);
+    showStatus('Failed to save settings', 'error');
+  }
+}
+
+/**
+ * Reset settings to defaults
+ */
+async function resetSettings() {
+  if (!confirm('Reset all settings to defaults?')) {
+    return;
+  }
+
+  try {
+    await chrome.storage.local.set({ settings: DEFAULT_SETTINGS });
+    await loadSettings();
+    showStatus('Settings reset to defaults', 'success');
+  } catch (error) {
+    console.error('[ScopeShield] Error resetting settings:', error);
+    showStatus('Failed to reset settings', 'error');
+  }
+}
+
+/**
+ * Show status message
+ */
+function showStatus(message, type) {
+  statusEl.textContent = message;
+  statusEl.className = type;
+  statusEl.style.display = 'block';
+
+  setTimeout(() => {
+    statusEl.style.display = 'none';
+  }, 3000);
+}
+
+/**
+ * Update opacity display
+ */
+highlightOpacity.addEventListener('input', () => {
+  opacityValue.textContent = `${Math.round(highlightOpacity.value * 100)}%`;
+});
+
+// Event listeners
+saveBtn.addEventListener('click', saveSettings);
+resetBtn.addEventListener('click', resetSettings);
+
+// Load settings on page load
+loadSettings();

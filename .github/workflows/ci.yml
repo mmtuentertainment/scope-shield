@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Check build artifacts
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "Error: dist directory not created"
+            exit 1
+          fi
+          if [ ! -f "dist/manifest.json" ]; then
+            echo "Error: manifest.json not found in dist"
+            exit 1
+          fi
+          echo "✓ Build successful"
+          ls -lh dist/
+
+  validate-constitution:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate constitutional compliance
+        run: |
+          echo "🔍 Checking constitutional compliance..."
+
+          # Check for network requests (Privacy-First principle)
+          if grep -r "fetch\|XMLHttpRequest\|axios" src/ --include="*.js" | grep -v "\/\/" | grep -v "\/\*"; then
+            echo "⚠️  Warning: Found potential network requests - verify Privacy-First compliance"
+          fi
+
+          # Check for chrome.storage.sync usage (should use .local)
+          if grep -r "chrome\.storage\.sync" src/ --include="*.js"; then
+            echo "❌ Error: Found chrome.storage.sync - violates Privacy-First principle"
+            exit 1
+          fi
+
+          # Check for manifest v3
+          if ! grep -q '"manifest_version": 3' src/manifest.json; then
+            echo "❌ Error: Not using Manifest V3"
+            exit 1
+          fi
+
+          echo "✅ Constitutional validation passed"

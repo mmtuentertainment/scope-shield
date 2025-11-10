@@ -11,6 +11,10 @@ export default defineConfig({
           dest: '.'
         },
         {
+          src: 'src/content/content.css',
+          dest: 'content'
+        },
+        {
           src: 'assets/**/*',
           dest: 'assets'
         }

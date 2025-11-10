@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScopeShield - Scope Creep Detector</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="popup-header">
+      <div class="header-logo">
+        <img src="../assets/icons/icon48.png" alt="ScopeShield" width="32" height="32">
+        <h1>ScopeShield</h1>
+      </div>
+      <div class="header-status">
+        <span class="status-indicator active"></span>
+        <span class="status-text">Active</span>
+      </div>
+    </header>
+
+    <!-- Summary Section -->
+    <section class="summary-section">
+      <h2>Detection Summary</h2>
+      <div class="summary-stats">
+        <div class="stat-card">
+          <div class="stat-number" id="total-detections">0</div>
+          <div class="stat-label">Total Detections</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="unacknowledged">0</div>
+          <div class="stat-label">Unacknowledged</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Detection List -->
+    <section class="detections-section">
+      <div class="section-header">
+        <h2>Recent Detections</h2>
+        <button class="btn-text" id="clear-all">Clear All</button>
+      </div>
+      <div id="detections-list" class="detections-list">
+        <div class="empty-state">
+          <img src="../assets/icons/icon48.png" alt="No detections" width="48" height="48">
+          <p>No scope creep detected yet</p>
+          <small>Open Gmail to start monitoring</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="actions-section">
+      <button class="btn btn-primary" id="generate-report">
+        Generate Change Order
+      </button>
+      <button class="btn btn-secondary" id="open-options">
+        Settings
+      </button>
+    </section>
+
+    <!-- Footer -->
+    <footer class="popup-footer">
+      <button type="button" id="help-link" class="link-button">Help</button>
+      <span class="separator" aria-hidden="true">•</span>
+      <button type="button" id="feedback-link" class="link-button">Feedback</button>
+    </footer>
+  </div>
+
+  <!-- Detection Item Template -->
+  <template id="detection-item-template">
+    <div class="detection-item">
+      <div class="detection-header">
+        <div class="detection-sender"></div>
+        <div class="detection-time"></div>
+      </div>
+      <div class="detection-content">
+        <div class="detection-text"></div>
+        <div class="detection-trigger">
+          <span class="trigger-label">Trigger:</span>
+          <span class="trigger-word"></span>
+          <span class="confidence-badge"></span>
+        </div>
+      </div>
+      <div class="detection-actions">
+        <button class="btn-icon acknowledge" title="Acknowledge" aria-label="Acknowledge this detection">
+          <span aria-hidden="true">✓</span>
+        </button>
+        <button class="btn-icon view" title="View in Gmail" aria-label="View this email in Gmail">
+          <span aria-hidden="true">↗</span>
+        </button>
+        <button class="btn-icon copy" title="Copy text" aria-label="Copy detected text to clipboard">
+          <span aria-hidden="true">⧉</span>
+        </button>
+      </div>
+    </div>
+  </template>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

@@ -9,8 +9,7 @@
     "notifications"
   ],
   "host_permissions": [
-    "*://mail.google.com/*",
-    "*://*.slack.com/*"
+    "*://mail.google.com/*"
   ],
   "background": {
     "service_worker": "background/service-worker.js"
@@ -18,12 +17,12 @@
   "content_scripts": [
     {
       "matches": [
-        "*://mail.google.com/*",
-        "*://*.slack.com/*"
+        "*://mail.google.com/*"
       ],
       "js": ["content/content.js"],
       "css": ["content/content.css"],
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "all_frames": false
     }
   ],
   "action": {
