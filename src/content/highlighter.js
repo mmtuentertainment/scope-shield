@@ -42,6 +42,73 @@ export function highlightText(messageEl, detection) {
 }
 
 /**
+ * Split text node into before/match/after parts
+ * @param {string} text - Full text
+ * @param {number} startIndex - Start of match
+ * @param {number} length - Length of match
+ * @returns {Object} Split text parts
+ */
+function splitTextNode(text, startIndex, length) {
+  return {
+    beforeText: text.substring(0, startIndex),
+    matchText: text.substring(startIndex, startIndex + length),
+    afterText: text.substring(startIndex + length)
+  };
+}
+
+/**
+ * Create and configure highlight span element
+ * @param {Object} detection - Detection details
+ * @returns {HTMLSpanElement} Configured span
+ */
+function createHighlightSpan(detection) {
+  const span = document.createElement('span');
+  span.className = 'scopeshield-highlight';
+  span.setAttribute('data-trigger', detection.triggerWord);
+  span.setAttribute('data-weight', detection.triggerWeight);
+  span.setAttribute('title', `Scope Creep: ${detection.triggerWord} (confidence: ${detection.triggerWeight}/10)`);
+  return span;
+}
+
+/**
+ * Add confidence-based CSS class to span
+ * @param {HTMLSpanElement} span - Span element
+ * @param {number} weight - Confidence weight
+ */
+function addConfidenceClass(span, weight) {
+  if (weight >= CONFIDENCE_THRESHOLD_HIGH) {
+    span.classList.add('scopeshield-high-confidence');
+  } else if (weight >= CONFIDENCE_THRESHOLD_MEDIUM) {
+    span.classList.add('scopeshield-medium-confidence');
+  } else {
+    span.classList.add('scopeshield-low-confidence');
+  }
+}
+
+/**
+ * Build document fragment with highlighted text
+ * @param {string} beforeText - Text before match
+ * @param {string} matchText - Matched text
+ * @param {string} afterText - Text after match
+ * @param {HTMLSpanElement} highlightSpan - Highlight span
+ * @returns {DocumentFragment} Fragment with nodes
+ */
+function buildHighlightFragment(beforeText, matchText, afterText, highlightSpan) {
+  const beforeNode = beforeText ? document.createTextNode(beforeText) : null;
+  const highlightedText = document.createTextNode(matchText);
+  const afterNode = afterText ? document.createTextNode(afterText) : null;
+
+  highlightSpan.appendChild(highlightedText);
+
+  const fragment = document.createDocumentFragment();
+  if (beforeNode) fragment.appendChild(beforeNode);
+  fragment.appendChild(highlightSpan);
+  if (afterNode) fragment.appendChild(afterNode);
+
+  return fragment;
+}
+
+/**
  * Highlight text within a text node (T034)
  * @param {TextNode} textNode - Text node containing match
  * @param {number} startIndex - Start index of match
@@ -58,41 +125,15 @@ function highlightTextNode(textNode, startIndex, length, detection) {
     return false;
   }
 
-  // Split the text node into three parts: before, match, after
-  const beforeText = text.substring(0, startIndex);
-  const matchText = text.substring(startIndex, startIndex + length);
-  const afterText = text.substring(startIndex + length);
+  // Split text
+  const { beforeText, matchText, afterText } = splitTextNode(text, startIndex, length);
 
-  // Create highlight span
-  const highlightSpan = document.createElement('span');
-  highlightSpan.className = 'scopeshield-highlight';
-  highlightSpan.setAttribute('data-trigger', detection.triggerWord);
-  highlightSpan.setAttribute('data-weight', detection.triggerWeight);
-  highlightSpan.setAttribute('title', `Scope Creep: ${detection.triggerWord} (confidence: ${detection.triggerWeight}/10)`);
+  // Create and configure highlight span
+  const highlightSpan = createHighlightSpan(detection);
+  addConfidenceClass(highlightSpan, detection.triggerWeight);
 
-  // Set confidence-based class
-  if (detection.triggerWeight >= CONFIDENCE_THRESHOLD_HIGH) {
-    highlightSpan.classList.add('scopeshield-high-confidence');
-  } else if (detection.triggerWeight >= CONFIDENCE_THRESHOLD_MEDIUM) {
-    highlightSpan.classList.add('scopeshield-medium-confidence');
-  } else {
-    highlightSpan.classList.add('scopeshield-low-confidence');
-  }
-
-  // Create text nodes
-  const beforeNode = beforeText ? document.createTextNode(beforeText) : null;
-  const highlightedText = document.createTextNode(matchText);
-  const afterNode = afterText ? document.createTextNode(afterText) : null;
-
-  // Build the highlighted content
-  highlightSpan.appendChild(highlightedText);
-
-  // Replace original text node with new structure
-  const fragment = document.createDocumentFragment();
-  if (beforeNode) fragment.appendChild(beforeNode);
-  fragment.appendChild(highlightSpan);
-  if (afterNode) fragment.appendChild(afterNode);
-
+  // Build and insert fragment
+  const fragment = buildHighlightFragment(beforeText, matchText, afterText, highlightSpan);
   parent.replaceChild(fragment, textNode);
 
   // Add animation class after a brief delay

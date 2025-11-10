@@ -47,6 +47,62 @@ export function sleep(ms) {
 }
 
 /**
+ * Find start index by walking backward N words
+ * @param {string} text - Full text
+ * @param {number} fromIndex - Starting position
+ * @param {number} wordCount - Number of words to walk back
+ * @returns {number} Start index
+ */
+function findStartIndex(text, fromIndex, wordCount) {
+  const wordBoundaryRegex = /\s+/;
+  let startIndex = fromIndex;
+  let wordsFound = 0;
+
+  for (let i = fromIndex - 1; i >= 0 && wordsFound < wordCount; i--) {
+    const isWordBoundary = wordBoundaryRegex.test(text[i]);
+    const prevIsNotBoundary = i > 0 && !wordBoundaryRegex.test(text[i - 1]);
+
+    if (isWordBoundary && prevIsNotBoundary) {
+      wordsFound++;
+      if (wordsFound === wordCount) {
+        return i + 1;
+      }
+    }
+    if (i === 0) startIndex = 0;
+  }
+
+  return startIndex;
+}
+
+/**
+ * Find end index by walking forward N words
+ * @param {string} text - Full text
+ * @param {number} fromIndex - Starting position
+ * @param {number} wordCount - Number of words to walk forward
+ * @returns {number} End index
+ */
+function findEndIndex(text, fromIndex, wordCount) {
+  const wordBoundaryRegex = /\s+/;
+  let endIndex = fromIndex;
+  let wordsFound = 0;
+
+  for (let i = fromIndex; i < text.length && wordsFound < wordCount; i++) {
+    const isWordBoundary = wordBoundaryRegex.test(text[i]);
+    const nextIsNotBoundary = i < text.length - 1 && !wordBoundaryRegex.test(text[i + 1]);
+
+    if (isWordBoundary && nextIsNotBoundary) {
+      wordsFound++;
+      if (wordsFound === wordCount) {
+        return i;
+      }
+    }
+    if (i === text.length - 1) endIndex = text.length;
+  }
+
+  return endIndex;
+}
+
+/**
  * Extract text context around a match
  * @param {string} text - Full text
  * @param {number} matchIndex - Index of match
@@ -57,38 +113,8 @@ export function sleep(ms) {
 export function extractContext(text, matchIndex, matchLength, contextWords = 10) {
   if (!text || matchIndex < 0) return '';
 
-  // Find start position by counting words backward from match
-  let startIndex = matchIndex;
-  let wordsBeforeMatch = 0;
-  const wordBoundaryRegex = /\s+/;
-
-  // Walk backward to find N words before match
-  for (let i = matchIndex - 1; i >= 0 && wordsBeforeMatch < contextWords; i--) {
-    if (wordBoundaryRegex.test(text[i]) && i > 0 && !wordBoundaryRegex.test(text[i - 1])) {
-      wordsBeforeMatch++;
-      if (wordsBeforeMatch === contextWords) {
-        startIndex = i + 1;
-        break;
-      }
-    }
-    if (i === 0) startIndex = 0;
-  }
-
-  // Find end position by counting words forward from match end
-  let endIndex = matchIndex + matchLength;
-  let wordsAfterMatch = 0;
-
-  // Walk forward to find N words after match
-  for (let i = endIndex; i < text.length && wordsAfterMatch < contextWords; i++) {
-    if (wordBoundaryRegex.test(text[i]) && i < text.length - 1 && !wordBoundaryRegex.test(text[i + 1])) {
-      wordsAfterMatch++;
-      if (wordsAfterMatch === contextWords) {
-        endIndex = i;
-        break;
-      }
-    }
-    if (i === text.length - 1) endIndex = text.length;
-  }
+  const startIndex = findStartIndex(text, matchIndex, contextWords);
+  const endIndex = findEndIndex(text, matchIndex + matchLength, contextWords);
 
   return text.substring(startIndex, endIndex).trim();
 }
@@ -102,5 +128,5 @@ export function extractContext(text, matchIndex, matchLength, contextWords = 10)
 export function truncate(text, maxLength) {
   if (!text) return '';
   if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength - 3) + '...';
+  return `${text.substring(0, maxLength - 3)  }...`;
 }

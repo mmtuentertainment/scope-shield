@@ -124,6 +124,47 @@ function renderDetectionsList() {
 }
 
 /**
+ * Populate text fields in detection item
+ * @param {HTMLElement} itemEl - Item element
+ * @param {Object} event - Detection event
+ */
+function populateDetectionItemText(itemEl, event) {
+  itemEl.querySelector('.detection-sender').textContent = event.senderName || event.sender || 'Unknown';
+  itemEl.querySelector('.detection-time').textContent = formatTime(event.timestamp);
+  itemEl.querySelector('.detection-text').textContent = event.detectedText || event.context || 'No text available';
+  itemEl.querySelector('.trigger-word').textContent = event.triggerWord || 'Unknown trigger';
+}
+
+/**
+ * Set confidence badge styling
+ * @param {HTMLElement} itemEl - Item element
+ * @param {number} weight - Confidence weight
+ */
+function setConfidenceBadge(itemEl, weight) {
+  const badge = itemEl.querySelector('.confidence-badge');
+  badge.textContent = `${weight}/10`;
+
+  if (weight >= 8) {
+    badge.classList.add('high');
+  } else if (weight >= 5) {
+    badge.classList.add('medium');
+  } else {
+    badge.classList.add('low');
+  }
+}
+
+/**
+ * Attach button event listeners to detection item
+ * @param {HTMLElement} itemEl - Item element
+ * @param {Object} event - Detection event
+ */
+function attachDetectionItemListeners(itemEl, event) {
+  itemEl.querySelector('.acknowledge').addEventListener('click', () => handleAcknowledge(event.id));
+  itemEl.querySelector('.view').addEventListener('click', () => handleView(event.url));
+  itemEl.querySelector('.copy').addEventListener('click', () => handleCopy(event));
+}
+
+/**
  * Create detection item element
  * @param {Object} event - Detection event
  * @returns {HTMLElement|null} Detection item element or null if template missing
@@ -144,43 +185,10 @@ function createDetectionItem(event) {
     itemEl.classList.add('acknowledged');
   }
 
-  // Sender
-  const senderEl = itemEl.querySelector('.detection-sender');
-  senderEl.textContent = event.senderName || event.sender || 'Unknown';
-
-  // Time
-  const timeEl = itemEl.querySelector('.detection-time');
-  timeEl.textContent = formatTime(event.timestamp);
-
-  // Detected text
-  const textEl = itemEl.querySelector('.detection-text');
-  textEl.textContent = event.detectedText || event.context || 'No text available';
-
-  // Trigger info
-  const triggerWordEl = itemEl.querySelector('.trigger-word');
-  triggerWordEl.textContent = event.triggerWord || 'Unknown trigger';
-
-  const confidenceBadge = itemEl.querySelector('.confidence-badge');
-  const weight = event.triggerWeight || 0;
-  confidenceBadge.textContent = `${weight}/10`;
-
-  // Set confidence class
-  if (weight >= 8) {
-    confidenceBadge.classList.add('high');
-  } else if (weight >= 5) {
-    confidenceBadge.classList.add('medium');
-  } else {
-    confidenceBadge.classList.add('low');
-  }
-
-  // Action buttons
-  const acknowledgeBtn = itemEl.querySelector('.acknowledge');
-  const viewBtn = itemEl.querySelector('.view');
-  const copyBtn = itemEl.querySelector('.copy');
-
-  acknowledgeBtn.addEventListener('click', () => handleAcknowledge(event.id));
-  viewBtn.addEventListener('click', () => handleView(event.url));
-  copyBtn.addEventListener('click', () => handleCopy(event));
+  // Populate fields and attach listeners
+  populateDetectionItemText(itemEl, event);
+  setConfidenceBadge(itemEl, event.triggerWeight || 0);
+  attachDetectionItemListeners(itemEl, event);
 
   return itemEl;
 }
@@ -301,16 +309,11 @@ async function handleClearAll() {
 }
 
 /**
- * Generate change order report
+ * Build change order report text
+ * @param {Array} unacknowledged - Unacknowledged events
+ * @returns {string} Report text
  */
-async function generateReport() {
-  const unacknowledged = detectionEvents.filter(e => !e.acknowledged);
-
-  if (unacknowledged.length === 0) {
-    showToast('No unacknowledged detections to report');
-    return;
-  }
-
+function buildChangeOrderReport(unacknowledged) {
   // Group by sender
   const bySender = {};
   unacknowledged.forEach(event => {
@@ -329,7 +332,7 @@ async function generateReport() {
 
   Object.entries(bySender).forEach(([sender, events]) => {
     report += `From: ${sender}\n`;
-    report += '-'.repeat(40) + '\n';
+    report += `${'-'.repeat(40)}\n`;
     events.forEach((event, index) => {
       report += `${index + 1}. "${event.detectedText}"\n`;
       report += `   Trigger: ${event.triggerWord} (Confidence: ${event.triggerWeight}/10)\n`;
@@ -337,16 +340,44 @@ async function generateReport() {
     });
   });
 
-  // Copy to clipboard
+  return report;
+}
+
+/**
+ * Acknowledge multiple events in batch (fixes await-in-loop)
+ * @param {Array} events - Events to acknowledge
+ * @returns {Promise<void>}
+ */
+async function acknowledgeMultipleEvents(events) {
+  const promises = events.map(event => acknowledgeEvent(event.id));
+  await Promise.allSettled(promises);
+
+  // Mark all as acknowledged locally
+  events.forEach(event => {
+    event.acknowledged = true;
+  });
+}
+
+/**
+ * Generate change order report
+ */
+async function generateReport() {
+  const unacknowledged = detectionEvents.filter(e => !e.acknowledged);
+
+  if (unacknowledged.length === 0) {
+    showToast('No unacknowledged detections to report');
+    return;
+  }
+
+  // Build report and copy to clipboard
+  const report = buildChangeOrderReport(unacknowledged);
+
   try {
     await navigator.clipboard.writeText(report);
     showToast('Change order copied to clipboard!');
 
-    // Mark all as acknowledged
-    for (const event of unacknowledged) {
-      await acknowledgeEvent(event.id);
-      event.acknowledged = true;
-    }
+    // Mark all as acknowledged (fixes await-in-loop)
+    await acknowledgeMultipleEvents(unacknowledged);
 
     updateSummaryStats();
     renderDetectionsList();

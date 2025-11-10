@@ -3,6 +3,18 @@
  * Represents a single instance of detected scope creep
  */
 
+import {
+  validateUuid,
+  validateEmail,
+  validateGmailUrl,
+  validateWeight,
+  validateThreadId,
+  validateMessageId,
+  validateStringLength,
+  validateTimestamp,
+  validateBoolean
+} from '../validation/validators.js';
+
 /**
  * @typedef {Object} DetectionEvent
  * @property {string} id - Unique identifier (UUID v4)
@@ -36,57 +48,46 @@ export function createDetectionEvent({
   threadId,
   messageId
 }) {
-  // Validate required parameters (throw errors for invalid inputs)
-  if (!id || !id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
-    throw new Error('Invalid or missing id (must be UUID v4)');
+  // Validate all required parameters using validators
+  const validations = {
+    id: validateUuid(id),
+    sender: validateEmail(sender),
+    triggerWeight: validateWeight(triggerWeight),
+    emailUrl: validateGmailUrl(emailUrl),
+    threadId: validateThreadId(threadId),
+    messageId: validateMessageId(messageId)
+  };
+
+  // Check for validation errors and throw the first one found
+  for (const [_field, result] of Object.entries(validations)) {
+    if (!result.valid) {
+      throw new Error(result.error);
+    }
   }
 
+  // Validate simple string fields
   if (!emailSubject || typeof emailSubject !== 'string') {
     throw new Error('Invalid or missing emailSubject (must be non-empty string)');
   }
-
-  if (!sender || !sender.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-    throw new Error('Invalid or missing sender (must be valid email)');
-  }
-
   if (!detectedText || typeof detectedText !== 'string') {
     throw new Error('Invalid or missing detectedText (must be non-empty string)');
   }
-
   if (!triggerWord || typeof triggerWord !== 'string') {
     throw new Error('Invalid or missing triggerWord (must be non-empty string)');
   }
 
-  if (typeof triggerWeight !== 'number' || triggerWeight < 1 || triggerWeight > 10) {
-    throw new Error('Invalid triggerWeight (must be number between 1-10)');
-  }
-
-  if (!emailUrl || !emailUrl.startsWith('https://mail.google.com/')) {
-    throw new Error('Invalid or missing emailUrl (must be Gmail URL)');
-  }
-
-  // Validate threadId format - throw error for invalid format
-  if (!threadId || !/^[a-f0-9]{16}$/i.test(threadId)) {
-    throw new Error('Invalid or missing threadId (must be 16 hex characters)');
-  }
-
-  // Validate messageId format - throw error for invalid format
-  if (!messageId || typeof messageId !== 'string') {
-    throw new Error('Invalid or missing messageId (must be non-empty string)');
-  }
-
   return {
-    id: id,
+    id,
     timestamp: new Date().toISOString(),
     emailSubject: emailSubject.substring(0, 200),
-    sender: sender,
+    sender,
     senderName: senderName || null,
     detectedText: detectedText.substring(0, 100),
-    triggerWord: triggerWord,
-    triggerWeight: triggerWeight,
-    emailUrl: emailUrl,
-    threadId: threadId,
-    messageId: messageId,
+    triggerWord,
+    triggerWeight,
+    emailUrl,
+    threadId,
+    messageId,
     acknowledged: false
   };
 }
@@ -99,51 +100,44 @@ export function createDetectionEvent({
 export function validateDetectionEvent(event) {
   const errors = [];
 
-  // Required fields
-  if (!event.id || !event.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
-    errors.push('Invalid or missing id (must be UUID v4)');
-  }
+  // Validate required fields using validators
+  const validations = [
+    validateUuid(event.id),
+    validateTimestamp(event.timestamp),
+    validateStringLength(event.emailSubject, 'emailSubject', 200),
+    validateEmail(event.sender),
+    validateStringLength(event.detectedText, 'detectedText', 100),
+    validateGmailUrl(event.emailUrl),
+    validateWeight(event.triggerWeight),
+    validateBoolean(event.acknowledged, 'acknowledged')
+  ];
 
-  if (!event.timestamp || isNaN(Date.parse(event.timestamp))) {
-    errors.push('Invalid or missing timestamp (must be ISO 8601)');
-  }
+  // Collect errors from validators
+  validations.forEach(result => {
+    if (!result.valid) {
+      errors.push(result.error);
+    }
+  });
 
-  if (!event.emailSubject || event.emailSubject.length > 200) {
-    errors.push('Invalid emailSubject (max 200 chars)');
-  }
-
-  if (!event.sender || !event.sender.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-    errors.push('Invalid or missing sender (must be valid email)');
-  }
-
-  if (!event.detectedText || event.detectedText.length > 100) {
-    errors.push('Invalid detectedText (max 100 chars)');
-  }
-
+  // Validate triggerWord separately (special case)
   if (!event.triggerWord || typeof event.triggerWord !== 'string') {
     errors.push('Missing triggerWord');
   }
 
-  if (typeof event.triggerWeight !== 'number' || event.triggerWeight < 1 || event.triggerWeight > 10) {
-    errors.push('Invalid triggerWeight (must be 1-10)');
+  // Validate optional threadId if present
+  if (event.threadId) {
+    const threadIdResult = validateThreadId(event.threadId);
+    if (!threadIdResult.valid) {
+      errors.push(threadIdResult.error);
+    }
   }
 
-  if (!event.emailUrl || !event.emailUrl.startsWith('https://mail.google.com/')) {
-    errors.push('Invalid emailUrl (must be Gmail URL)');
-  }
-
-  // Validate threadId if present (Gmail uses 16 hex chars)
-  if (event.threadId && !/^[a-f0-9]{16}$/i.test(event.threadId)) {
-    errors.push('Invalid threadId format (must be 16 hex characters)');
-  }
-
-  // Validate messageId if present
-  if (event.messageId && typeof event.messageId !== 'string') {
-    errors.push('Invalid messageId (must be string)');
-  }
-
-  if (typeof event.acknowledged !== 'boolean') {
-    errors.push('Invalid acknowledged (must be boolean)');
+  // Validate optional messageId if present
+  if (event.messageId) {
+    const messageIdResult = validateMessageId(event.messageId);
+    if (!messageIdResult.valid) {
+      errors.push(messageIdResult.error);
+    }
   }
 
   return errors;
