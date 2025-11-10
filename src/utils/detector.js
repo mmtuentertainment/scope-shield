@@ -179,14 +179,14 @@ export function detectScopeCreep(text) {
  */
 function isQuestionWithoutAction(text) {
   // Check if it's a question
-  // eslint-disable-next-line max-len -- Regex pattern for readability
+   
   const questionPattern = /\b(what|when|where|who|how|why|is|are|was|were|will|would|could|should)\b/i;
   if (!questionPattern.test(text)) {
     return false;
   }
 
   // Check if it lacks action verbs
-  // eslint-disable-next-line max-len -- Regex pattern for readability
+   
   const actionPattern = /\b(add|create|build|implement|fix|update|change|modify|develop|design|integrate|include)\b/i;
   return !actionPattern.test(text);
 }
