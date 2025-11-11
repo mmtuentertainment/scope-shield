@@ -7,7 +7,13 @@ import { detectScopeCreep } from '../utils/detector.js';
 import { saveDetectionEvent } from '../utils/storage.js';
 import { generateUUID } from '../utils/uuid.js';
 import { debounce } from '../utils/helpers.js';
-import { SELECTORS as GMAIL_SELECTORS } from './gmail-dom.js';
+import {
+  SELECTORS as GMAIL_SELECTORS,
+  findMessages,
+  findMessageBody,
+  extractCleanText,
+  getEmailMetadata
+} from './gmail-dom.js';
 import { highlightText } from './highlighter.js';
 
 // Constants
@@ -185,11 +191,14 @@ function notifyBackgroundOfDetection(event) {
  * @param {number} messageCount - Number of messages processed
  */
 function sendPerformanceMetric(elapsed, messageCount) {
+  // Defensive: prevent division by zero
+  const avgLatency = messageCount > 0 ? elapsed / messageCount : elapsed;
+
   try {
     chrome.runtime.sendMessage({
       type: 'PERFORMANCE_METRIC',
       metric: 'detection_latency',
-      value: elapsed / messageCount,
+      value: avgLatency,
       messageCount
     });
   } catch (error) {
@@ -241,7 +250,13 @@ async function scanMessages() {
     // Save all events after loop (fixes await-in-loop)
     if (detectionEvents.length > 0) {
       const savePromises = detectionEvents.map(e => saveDetectionEvent(e));
-      await Promise.allSettled(savePromises);
+      const results = await Promise.allSettled(savePromises);
+
+      // Log failures for debugging
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        console.warn(`[ScopeShield] ${failures.length} events failed to save:`, failures);
+      }
     }
 
     reportScanResults(startTime, detectionEvents.length, messages.length);
@@ -253,24 +268,7 @@ async function scanMessages() {
   }
 }
 
-/**
- * Find all message elements in the current view
- * @returns {Element[]} Array of message elements
- */
-function findMessages() {
-  const messages = [];
-
-  // Try each selector
-  for (const selector of Object.values(GMAIL_SELECTORS)) {
-    const elements = document.querySelectorAll(selector);
-    if (elements.length > 0) {
-      messages.push(...elements);
-    }
-  }
-
-  // Remove duplicates
-  return [...new Set(messages)];
-}
+// Note: findMessages is now imported from gmail-dom.js
 
 /**
  * Extract clean text from a message element
@@ -285,36 +283,22 @@ function extractMessageText(messageEl) {
   };
 
   try {
-    // Get sender info
-    const senderEl = messageEl.querySelector('[email]') ||
-                    messageEl.querySelector('span[name]') ||
-                    messageEl.querySelector('.gD');
+    // Use gmail-dom's getEmailMetadata for sender info (better Gmail compatibility)
+    const metadata = getEmailMetadata(messageEl);
+    data.sender = metadata.sender;
+    data.senderName = metadata.senderName;
 
-    if (senderEl) {
-      data.sender = senderEl.getAttribute('email') || '';
-      data.senderName = senderEl.getAttribute('name') ||
-                        senderEl.textContent.trim() || '';
-    }
-
-    // Get message body
-    const bodyEl = messageEl.querySelector('.a3s') ||
-                  messageEl.querySelector('[role="listitem"]') ||
-                  messageEl;
+    // Get message body using gmail-dom's helper (fallback chain support)
+    const bodyEl = findMessageBody(messageEl);
 
     if (!bodyEl) {
       return data;
     }
 
-    // Get text content
-    let text = bodyEl.textContent || '';
+    // Use gmail-dom's extractCleanText (handles quotes and signatures)
+    let text = extractCleanText(bodyEl);
 
-    // Enhanced quoted text detection (T026)
-    text = removeQuotedText(text);
-
-    // Enhanced signature detection (T027)
-    text = removeSignature(text);
-
-    // Remove "On [date] [person] wrote:" lines
+    // Additional cleanup for quoted email headers
     text = text.replace(/On .+ wrote:?\s*$/gm, '');
 
     // Clean up whitespace
@@ -329,118 +313,7 @@ function extractMessageText(messageEl) {
   return data;
 }
 
-/**
- * Check if line indicates quoted content
- * @param {string} trimmed - Trimmed line text
- * @returns {boolean} True if line is a quote indicator
- */
-function isQuoteIndicator(trimmed) {
-  // Check for > prefix
-  if (trimmed.startsWith('>')) {
-    return true;
-  }
-
-  // Gmail quote blocks often start with "..."
-  if (trimmed === '...' || trimmed.startsWith('...')) {
-    return true;
-  }
-
-  // Check for "On [date] wrote:" pattern
-  if (/^On .+ wrote:?$/i.test(trimmed)) {
-    return true;
-  }
-
-  // Check for forward indicators
-  if (/^-+ Forwarded message -+$/i.test(trimmed)) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Remove quoted text from message (T026)
- * @param {string} text - Raw message text
- * @returns {string} Text without quotes
- */
-function removeQuotedText(text) {
-  const lines = text.split('\n');
-  const cleanLines = [];
-  let inQuoteBlock = false;
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    // Check for quote indicators
-    if (isQuoteIndicator(trimmed)) {
-      inQuoteBlock = true;
-      continue;
-    }
-
-    // Reset quote block on substantial new content
-    if (trimmed.length > 20) {
-      inQuoteBlock = false;
-    }
-
-    // Add line if not in quote block
-    if (!inQuoteBlock) {
-      cleanLines.push(line);
-    }
-  }
-
-  return cleanLines.join('\n');
-}
-
-/**
- * Remove email signature from message (T027)
- * @param {string} text - Message text
- * @returns {string} Text without signature
- */
-function removeSignature(text) {
-  // Extended signature patterns
-  const extendedPatterns = [
-    /^--\s*$/m,
-    /^-{3,}$/m,
-    /^_{3,}$/m,
-    /^regards[,.]?\s*$/mi,
-    /^best[,.]?\s*$/mi,
-    /^thanks[,.]?\s*$/mi,
-    /^thank you[,.]?\s*$/mi,
-    /^sincerely[,.]?\s*$/mi,
-    /^cheers[,.]?\s*$/mi,
-    /^best regards[,.]?\s*$/mi,
-    /^kind regards[,.]?\s*$/mi,
-    /^warm regards[,.]?\s*$/mi,
-    /^sent from my (iphone|ipad|android|phone|mobile)/mi,
-    /^get outlook for/mi,
-    /^this email was sent from/mi
-  ];
-
-  let shortestText = text;
-
-  // Find the earliest signature marker
-  for (const pattern of extendedPatterns) {
-    const match = text.match(pattern);
-    if (match && match.index !== undefined) {
-      const truncated = text.substring(0, match.index);
-      if (truncated.length < shortestText.length && truncated.length > 50) {
-        shortestText = truncated;
-      }
-    }
-  }
-
-  // Also check for common signature structures (name + title + company)
-  const structurePattern = /\n{2,}[\w\s]+\n[\w\s,]+\n[\w\s&,.-]+$/;
-  const structureMatch = shortestText.match(structurePattern);
-  if (structureMatch && structureMatch.index !== undefined) {
-    const beforeSig = shortestText.substring(0, structureMatch.index);
-    if (beforeSig.length > 50) {
-      shortestText = beforeSig;
-    }
-  }
-
-  return shortestText;
-}
+// Note: Quote and signature removal now handled by gmail-dom's extractCleanText
 
 /**
  * Get a unique ID for a message element
