@@ -350,7 +350,13 @@ function buildChangeOrderReport(unacknowledged) {
  */
 async function acknowledgeMultipleEvents(events) {
   const promises = events.map(event => acknowledgeEvent(event.id));
-  await Promise.allSettled(promises);
+  const results = await Promise.allSettled(promises);
+
+  // Log failures for debugging
+  const failures = results.filter(r => r.status === 'rejected');
+  if (failures.length > 0) {
+    console.warn(`[ScopeShield] ${failures.length} events failed to acknowledge:`, failures);
+  }
 
   // Mark all as acknowledged locally
   events.forEach(event => {

@@ -191,11 +191,14 @@ function notifyBackgroundOfDetection(event) {
  * @param {number} messageCount - Number of messages processed
  */
 function sendPerformanceMetric(elapsed, messageCount) {
+  // Defensive: prevent division by zero
+  const avgLatency = messageCount > 0 ? elapsed / messageCount : elapsed;
+
   try {
     chrome.runtime.sendMessage({
       type: 'PERFORMANCE_METRIC',
       metric: 'detection_latency',
-      value: elapsed / messageCount,
+      value: avgLatency,
       messageCount
     });
   } catch (error) {
@@ -247,7 +250,13 @@ async function scanMessages() {
     // Save all events after loop (fixes await-in-loop)
     if (detectionEvents.length > 0) {
       const savePromises = detectionEvents.map(e => saveDetectionEvent(e));
-      await Promise.allSettled(savePromises);
+      const results = await Promise.allSettled(savePromises);
+
+      // Log failures for debugging
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        console.warn(`[ScopeShield] ${failures.length} events failed to save:`, failures);
+      }
     }
 
     reportScanResults(startTime, detectionEvents.length, messages.length);

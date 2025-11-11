@@ -53,6 +53,7 @@ export default [
           ignoreUrls: true,
           ignoreStrings: true,
           ignoreTemplateLiterals: true,
+          ignoreRegExpLiterals: true,
           ignoreComments: true
         }
       ],
