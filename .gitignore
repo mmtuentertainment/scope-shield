@@ -18,4 +18,22 @@ build/
 # IDE
 .vscode/
 .idea/
-*.sw
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage/
+.nyc_output/
+*.log
+
+# OS
+Thumbs.db
+
+# Temporary files
+*.tmp
+.cache/
+
+# ESLint cache
+.eslintcache

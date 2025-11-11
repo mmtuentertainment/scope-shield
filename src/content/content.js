@@ -4,18 +4,18 @@
  */
 
 import { detectScopeCreep } from '../utils/detector.js';
-import { saveDetectionEvent, getDetectionEvents } from '../utils/storage.js';
+import { saveDetectionEvent } from '../utils/storage.js';
 import { generateUUID } from '../utils/uuid.js';
 import { debounce } from '../utils/helpers.js';
 import { SELECTORS as GMAIL_SELECTORS } from './gmail-dom.js';
-import { highlightText, removeHighlights, getHighlightStats } from './highlighter.js';
+import { highlightText } from './highlighter.js';
 
 // Constants
 const SCAN_DEBOUNCE_MS = 300;
 
 // State
 let isScanning = false;
-let processedMessages = new Set();
+const processedMessages = new Set();
 let observer = null;
 
 /**
@@ -114,6 +114,105 @@ function startObserver() {
 }
 
 /**
+ * Process a single message and return detection event if scope creep found
+ * @param {Element} messageEl - Message element to process
+ * @returns {Object|null} Detection event or null
+ */
+function processMessage(messageEl) {
+  const messageId = getMessageId(messageEl);
+
+  // Skip if already processed
+  if (processedMessages.has(messageId)) {
+    return null;
+  }
+
+  // Extract and analyze message
+  const messageData = extractMessageText(messageEl);
+  if (!messageData.text) {
+    processedMessages.add(messageId);
+    return null;
+  }
+
+  const result = detectScopeCreep(messageData.text);
+  if (!result.matched) {
+    processedMessages.add(messageId);
+    return null;
+  }
+
+  console.log('[ScopeShield] Scope creep detected:', result);
+
+  // Highlight the detected text
+  const highlighted = highlightText(messageEl, result);
+
+  // Mark as processed
+  processedMessages.add(messageId);
+
+  // Return detection event
+  return {
+    id: generateUUID(),
+    timestamp: Date.now(),
+    url: window.location.href,
+    sender: messageData.sender,
+    senderName: messageData.senderName,
+    detectedText: result.matchedText,
+    fullText: messageData.text.substring(0, 500),
+    triggerWord: result.triggerWord,
+    triggerWeight: result.triggerWeight,
+    context: result.context,
+    acknowledged: false,
+    highlighted
+  };
+}
+
+/**
+ * Send detection notification to background worker
+ * @param {Object} event - Detection event
+ */
+function notifyBackgroundOfDetection(event) {
+  try {
+    chrome.runtime.sendMessage({
+      type: 'SCOPE_CREEP_DETECTED',
+      event
+    });
+  } catch (error) {
+    console.error('[ScopeShield] Failed to send message to background:', error);
+  }
+}
+
+/**
+ * Send performance metric to background worker
+ * @param {number} elapsed - Elapsed time in ms
+ * @param {number} messageCount - Number of messages processed
+ */
+function sendPerformanceMetric(elapsed, messageCount) {
+  try {
+    chrome.runtime.sendMessage({
+      type: 'PERFORMANCE_METRIC',
+      metric: 'detection_latency',
+      value: elapsed / messageCount,
+      messageCount
+    });
+  } catch (error) {
+    console.error('[ScopeShield] Failed to send performance metric:', error);
+  }
+}
+
+/**
+ * Report scan results and performance metrics
+ * @param {number} startTime - Scan start timestamp
+ * @param {number} detectionCount - Number of detections
+ * @param {number} messageCount - Number of messages scanned
+ */
+function reportScanResults(startTime, detectionCount, messageCount) {
+  const elapsed = performance.now() - startTime;
+  console.log(`[ScopeShield] Scan complete in ${elapsed.toFixed(2)}ms, ${detectionCount} new detections`);
+
+  if (messageCount > 0) {
+    sendPerformanceMetric(elapsed, messageCount);
+  }
+}
+
+/**
  * Scan all visible messages for scope creep
  */
 async function scanMessages() {
@@ -126,88 +225,26 @@ async function scanMessages() {
   const startTime = performance.now();
 
   try {
-    // Find all message elements
     const messages = findMessages();
     console.log(`[ScopeShield] Found ${messages.length} messages to scan`);
 
-    let newDetections = 0;
-
+    // Process all messages and collect detection events
+    const detectionEvents = [];
     for (const messageEl of messages) {
-      // Get unique ID for this message
-      const messageId = getMessageId(messageEl);
-
-      // Skip if already processed
-      if (processedMessages.has(messageId)) {
-        continue;
-      }
-
-      // Extract message text
-      const messageData = extractMessageText(messageEl);
-      if (!messageData.text) {
-        continue;
-      }
-
-      // Detect scope creep
-      const result = detectScopeCreep(messageData.text);
-
-      if (result.matched) {
-        console.log('[ScopeShield] Scope creep detected:', result);
-
-        // Highlight the detected text (T035)
-        const highlighted = highlightText(messageEl, result);
-
-        // Create detection event
-        const event = {
-          id: generateUUID(),
-          timestamp: Date.now(),
-          url: window.location.href,
-          sender: messageData.sender,
-          senderName: messageData.senderName,
-          detectedText: result.matchedText,
-          fullText: messageData.text.substring(0, 500), // Limit stored text
-          triggerWord: result.triggerWord,
-          triggerWeight: result.triggerWeight,
-          context: result.context,
-          acknowledged: false,
-          highlighted: highlighted
-        };
-
-        // Save to storage (T040)
-        await saveDetectionEvent(event);
-
-        // Send message to background worker (T039)
-        try {
-          chrome.runtime.sendMessage({
-            type: 'SCOPE_CREEP_DETECTED',
-            event: event
-          });
-        } catch (error) {
-          console.error('[ScopeShield] Failed to send message to background:', error);
-        }
-
-        newDetections++;
-      }
-
-      // Mark as processed
-      processedMessages.add(messageId);
-    }
-
-    const elapsed = performance.now() - startTime;
-    console.log(`[ScopeShield] Scan complete in ${elapsed.toFixed(2)}ms, ${newDetections} new detections`);
-
-    // Send performance metric
-    if (messages.length > 0) {
-      try {
-        chrome.runtime.sendMessage({
-          type: 'PERFORMANCE_METRIC',
-          metric: 'detection_latency',
-          value: elapsed / messages.length,
-          messageCount: messages.length
-        });
-      } catch (error) {
-        console.error('[ScopeShield] Failed to send performance metric:', error);
+      const event = processMessage(messageEl);
+      if (event) {
+        detectionEvents.push(event);
+        notifyBackgroundOfDetection(event);
       }
     }
+
+    // Save all events after loop (fixes await-in-loop)
+    if (detectionEvents.length > 0) {
+      const savePromises = detectionEvents.map(e => saveDetectionEvent(e));
+      await Promise.allSettled(savePromises);
+    }
+
+    reportScanResults(startTime, detectionEvents.length, messages.length);
 
   } catch (error) {
     console.error('[ScopeShield] Error during scan:', error);
@@ -293,6 +330,35 @@ function extractMessageText(messageEl) {
 }
 
 /**
+ * Check if line indicates quoted content
+ * @param {string} trimmed - Trimmed line text
+ * @returns {boolean} True if line is a quote indicator
+ */
+function isQuoteIndicator(trimmed) {
+  // Check for > prefix
+  if (trimmed.startsWith('>')) {
+    return true;
+  }
+
+  // Gmail quote blocks often start with "..."
+  if (trimmed === '...' || trimmed.startsWith('...')) {
+    return true;
+  }
+
+  // Check for "On [date] wrote:" pattern
+  if (/^On .+ wrote:?$/i.test(trimmed)) {
+    return true;
+  }
+
+  // Check for forward indicators
+  if (/^-+ Forwarded message -+$/i.test(trimmed)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Remove quoted text from message (T026)
  * @param {string} text - Raw message text
  * @returns {string} Text without quotes
@@ -306,25 +372,7 @@ function removeQuotedText(text) {
     const trimmed = line.trim();
 
     // Check for quote indicators
-    if (trimmed.startsWith('>')) {
-      inQuoteBlock = true;
-      continue;
-    }
-
-    // Gmail quote blocks often start with "..."
-    if (trimmed === '...' || trimmed.startsWith('...')) {
-      inQuoteBlock = true;
-      continue;
-    }
-
-    // Check for "On [date] wrote:" pattern
-    if (/^On .+ wrote:?$/i.test(trimmed)) {
-      inQuoteBlock = true;
-      continue;
-    }
-
-    // Check for forward indicators
-    if (/^-+ Forwarded message -+$/i.test(trimmed)) {
+    if (isQuoteIndicator(trimmed)) {
       inQuoteBlock = true;
       continue;
     }

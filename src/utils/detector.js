@@ -40,7 +40,7 @@ function getHighConfidenceTriggerPattern() {
       .filter(phrase => phrase.length > 0 && phrase.length < 100); // Validate: non-empty and reasonable length
 
     // Create pattern with word boundaries
-    const patternString = '\\b(' + escapedPhrases.join('|') + ')\\b';
+    const patternString = `\\b(${  escapedPhrases.join('|')  })\\b`;
 
     // Validate total pattern length to prevent ReDoS
     if (patternString.length > 10000) {
@@ -54,6 +54,80 @@ function getHighConfidenceTriggerPattern() {
 }
 
 /**
+ * Remove email quote markers (lines starting with >)
+ * @param {string} text - Text to clean
+ * @returns {string} Text without quoted lines
+ */
+function removeEmailQuotes(text) {
+  const lines = text.split('\n');
+  const unquotedLines = lines.filter(line => !line.trim().startsWith('>'));
+  return unquotedLines.join('\n').trim();
+}
+
+/**
+ * Validate and normalize text for detection
+ * @param {string} text - Text to validate
+ * @returns {Object|null} Normalized text or null if invalid
+ */
+function validateAndNormalize(text) {
+  if (!text || text.trim().length === 0) {
+    return null;
+  }
+
+  const normalizedText = text.toLowerCase().trim();
+  const cleanText = removeEmailQuotes(normalizedText);
+
+  if (!cleanText) {
+    return null;
+  }
+
+  return { normalizedText, cleanText };
+}
+
+/**
+ * Check if text should be excluded from detection
+ * @param {string} cleanText - Cleaned text
+ * @returns {boolean} True if should skip
+ */
+function shouldSkipText(cleanText) {
+  if (shouldExclude(cleanText)) {
+    console.log('[ScopeShield] Text excluded by exclusion pattern');
+    return true;
+  }
+
+  if (isQuestionWithoutAction(cleanText)) {
+    console.log('[ScopeShield] Question without action verb excluded');
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Build detection result from match
+ * @param {Object} trigger - Matched trigger
+ * @param {Object} match - Regex match result
+ * @param {string} text - Original text
+ * @param {string} cleanText - Cleaned text
+ * @returns {Object} Detection result
+ */
+function buildDetectionResult(trigger, match, text, cleanText) {
+  const matchIndex = match.index || 0;
+  const matchLength = match[0].length;
+  const context = extractContext(text, matchIndex, matchLength);
+  const adjustedWeight = calculateAdjustedWeight(trigger, cleanText, matchIndex);
+
+  return {
+    matched: true,
+    triggerWord: trigger.phrase,
+    triggerWeight: adjustedWeight,
+    matchedText: match[0],
+    context,
+    matchIndex
+  };
+}
+
+/**
  * Detect scope creep in text
  * @param {string} text - Text to analyze
  * @returns {DetectionResult} Detection result
@@ -61,39 +135,21 @@ function getHighConfidenceTriggerPattern() {
 export function detectScopeCreep(text) {
   const startTime = performance.now();
 
-  // Skip empty text
-  if (!text || text.trim().length === 0) {
+  // Validate and normalize
+  const normalized = validateAndNormalize(text);
+  if (!normalized) {
     return { matched: false };
   }
 
-  // Normalize text for matching
-  const normalizedText = text.toLowerCase().trim();
+  const { cleanText } = normalized;
 
-  // Remove quoted email replies (lines starting with >)
-  const lines = normalizedText.split('\n');
-  const unquotedLines = lines.filter(line => !line.trim().startsWith('>'));
-  const cleanText = unquotedLines.join('\n').trim();
-
-  // Skip if all text was quoted
-  if (!cleanText) {
-    return { matched: false };
-  }
-
-  // Check exclusion patterns first (T024)
-  if (shouldExclude(cleanText)) {
-    console.log('[ScopeShield] Text excluded by exclusion pattern');
-    return { matched: false };
-  }
-
-  // Additional exclusion: pure questions without action verbs (T025)
-  if (isQuestionWithoutAction(cleanText)) {
-    console.log('[ScopeShield] Question without action verb excluded');
+  // Check exclusions
+  if (shouldSkipText(cleanText)) {
     return { matched: false };
   }
 
   // Find best matching trigger
   const trigger = findBestMatch(cleanText);
-
   if (!trigger) {
     return { matched: false };
   }
@@ -104,22 +160,8 @@ export function detectScopeCreep(text) {
     return { matched: false };
   }
 
-  // Extract context (preserve original case) - T028
-  const matchIndex = match.index || 0;
-  const matchLength = match[0].length;
-  const context = extractContext(text, matchIndex, matchLength);
-
-  // Calculate adjusted weight based on context (T029)
-  const adjustedWeight = calculateAdjustedWeight(trigger, cleanText, matchIndex);
-
-  const result = {
-    matched: true,
-    triggerWord: trigger.phrase,
-    triggerWeight: adjustedWeight,
-    matchedText: match[0],
-    context: context,
-    matchIndex: matchIndex
-  };
+  // Build result
+  const result = buildDetectionResult(trigger, match, text, cleanText);
 
   // Log performance
   const elapsed = performance.now() - startTime;
@@ -137,12 +179,14 @@ export function detectScopeCreep(text) {
  */
 function isQuestionWithoutAction(text) {
   // Check if it's a question
+  // eslint-disable-next-line max-len -- Regex pattern for readability
   const questionPattern = /\b(what|when|where|who|how|why|is|are|was|were|will|would|could|should)\b/i;
   if (!questionPattern.test(text)) {
     return false;
   }
 
   // Check if it lacks action verbs
+  // eslint-disable-next-line max-len -- Regex pattern for readability
   const actionPattern = /\b(add|create|build|implement|fix|update|change|modify|develop|design|integrate|include)\b/i;
   return !actionPattern.test(text);
 }

@@ -2,7 +2,7 @@
  * Unit tests for scope creep detector
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   detectScopeCreep,
   detectScopeCreepBatch,
@@ -189,7 +189,7 @@ describe('detectScopeCreep', () => {
     });
 
     it('should handle long texts efficiently', () => {
-      const longText = 'Lorem ipsum '.repeat(100) + 'Also, can you add a feature?';
+      const longText = `${'Lorem ipsum '.repeat(100)  }Also, can you add a feature?`;
 
       const start = performance.now();
       const result = detectScopeCreep(longText);

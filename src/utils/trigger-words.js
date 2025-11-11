@@ -15,6 +15,7 @@
  * Trigger word patterns organized by confidence level
  * @type {Array<TriggerWord>}
  */
+/* eslint-disable max-len -- Regex patterns legitimately exceed line length for readability */
 export const TRIGGER_WORDS = [
   // ============ HIGH-CONFIDENCE PATTERNS (weight: 8-10) ============
   // These patterns strongly indicate scope creep with explicit requests
@@ -148,11 +149,13 @@ export const TRIGGER_WORDS = [
     description: 'Simple feature request'
   }
 ];
+/* eslint-enable max-len */
 
 /**
  * Exclusion patterns - phrases that should NOT trigger detection
  * @type {Array<RegExp>}
  */
+/* eslint-disable max-len -- Regex patterns legitimately exceed line length for readability */
 export const EXCLUSION_PATTERNS = [
   // Pure questions without requests
   /\b(also|additionally|by the way|one more thing)[,\s-]+(what|when|where|who|how|why)\s+(is|are|was|were|will|would|could|should)(?!.*\b(add|create|build|change|implement|fix))/i,
@@ -180,6 +183,7 @@ export const EXCLUSION_PATTERNS = [
   // Negative requests (telling NOT to do something)
   /\b(do not|don'?t|stop|remove|delete|cancel|avoid)\s+(add|create|build|implement|change|modify)/i
 ];
+/* eslint-enable max-len */
 
 /**
  * Check if text matches any exclusion patterns
