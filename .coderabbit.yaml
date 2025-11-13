@@ -1,36 +1,408 @@
-# CodeRabbit Pro Configuration for ScopeShield
-# Use Anthropic Claude instead of OpenAI for better reliability
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 
-# AI Provider
-model:
-  provider: "anthropic"
-  name: "claude-3-5-sonnet-20241022"
+# CodeRabbit Pro Configuration for ScopeShield Chrome Extension
+# Optimized for constitutional compliance, modular architecture, and Chrome best practices
+# Copy this to CodeRabbit web app: Settings → Repository → Edit YAML
 
-# Review Settings
 reviews:
-  auto_review: true
+  # Use assertive profile for thorough feedback (nitpicky is good for quality)
+  profile: assertive
+
+  # Summary and walkthrough settings
   high_level_summary: true
-  poem: false
+  high_level_summary_in_walkthrough: false  # Keep summary separate
+  collapse_walkthrough: false  # Keep walkthrough expanded for visibility
+  changed_files_summary: true
+  sequence_diagrams: true  # Visual diagrams help understand flow
+  estimate_code_review_effort: true
+
+  # Issue and PR context
+  assess_linked_issues: true
+
+  # Labels
+  suggested_labels: true
+  auto_apply_labels: false  # Manual approval before applying
+  labeling_instructions:
+    - label: "phase-1"
+      instructions: "Apply when PR contains Phase 1 (foundation/utilities) changes"
+    - label: "phase-2"
+      instructions: "Apply when PR contains Phase 2 (settings) changes"
+    - label: "phase-3"
+      instructions: "Apply when PR contains Phase 3 (change order generation) changes"
+    - label: "phase-4"
+      instructions: "Apply when PR contains Phase 4 (pricing calculator) changes"
+    - label: "phase-5"
+      instructions: "Apply when PR contains Phase 5 (export) changes"
+    - label: "security"
+      instructions: "Apply when PR touches XSS prevention, chrome.storage, or authentication"
+    - label: "performance"
+      instructions: "Apply when PR affects detection latency, PDF generation, or bundle size"
+    - label: "breaking-change"
+      instructions: "Apply when PR changes public APIs or storage schemas"
+    - label: "modular-refactor"
+      instructions: "Apply when PR refactors files to meet 250-line standard"
+
+  # Reviewer suggestions
+  suggested_reviewers: true
+  auto_assign_reviewers: false
+
+  # Review messages
+  in_progress_fortune: false  # Skip fortune messages (reduce noise)
+  poem: false  # Skip poems (reduce noise)
   review_status: true
+  commit_status: true
+  fail_commit_status: true  # Block merge if review fails
 
-# Path Filters (focus on code, skip large docs)
-path_filters:
-  exclude:
-    - "**/*.md"  # Skip markdown to save tokens for code
-    - "**/node_modules/**"
-    - "**/dist/**"
-    - "**/package-lock.json"
-    - "**/manual-testing-assistant/**"
-    - "**/test-artifacts/**"
+  # Auto-review configuration
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false  # Don't review draft PRs
+    ignore_title_keywords:
+      - "wip"
+      - "draft"
+      - "do not merge"
+      - "dnm"
+    labels: []  # Review all labeled PRs
+    base_branches:
+      - "main"
+      - "develop"
+      - "feat/.*"  # Review feature branches
+    ignore_usernames: []
 
-# File Handling
-file_handling:
-  # Skip very large individual files
-  max_file_size_kb: 100
+  # Abort on close
+  abort_on_close: true
 
-# Focus Areas (ScopeShield specific)
-focus_areas:
-  - security  # XSS, unsafe DOM, chrome.storage
-  - performance  # <500ms detection, <3s PDF
-  - architecture  # 250-line modular standard
-  - chrome_extension  # Manifest V3, permissions
+  # Finishing touches (auto-generate improvements)
+  finishing_touches:
+    docstrings:
+      enabled: true  # Auto-generate JSDoc for undocumented functions
+    unit_tests:
+      enabled: false  # We write tests manually (TDD approach)
+
+  # Pre-merge checks (CRITICAL for ScopeShield)
+  pre_merge_checks:
+    # Docstring coverage check
+    docstrings:
+      mode: warning  # Warn but don't block
+      threshold: 80  # 80% of public functions should have JSDoc
+
+    # PR title check
+    title:
+      mode: warning
+      requirements: |
+        Title should follow conventional commits format:
+        - feat(scope): description
+        - fix(scope): description
+        - refactor(scope): description
+        - docs(scope): description
+        Maximum 72 characters.
+
+    # PR description check
+    description:
+      mode: warning
+
+    # Linked issue assessment
+    issue_assessment:
+      mode: warning
+
+    # CUSTOM PRE-MERGE CHECKS (ScopeShield specific)
+    custom_checks:
+      # Constitutional Compliance Check
+      - mode: error  # BLOCK merge if fails
+        name: "Constitutional Compliance (8 Principles)"
+        instructions: |
+          Verify ALL 8 constitutional principles from memory/constitution.md:
+
+          I. Privacy-First Architecture
+          - Check: No fetch(), XMLHttpRequest, axios, or external API calls in src/
+          - Check: Only chrome.storage.local (no chrome.storage.sync)
+          - Check: No analytics, tracking, or telemetry code
+          - FAIL if any network requests to external servers found
+
+          II. Simplicity-First for MVP
+          - Check: No AI/ML libraries (TensorFlow, PyTorch, etc.)
+          - Check: All production files ≤250 lines (.claude/code-standards.md)
+          - Check: Detection uses only string matching/regex (no LLMs)
+          - FAIL if any file >250 lines or AI dependencies added
+
+          III. Real-Time Performance
+          - Check: No synchronous operations in loops
+          - Check: Debouncing/throttling for expensive operations
+          - Check: No blocking chrome API calls
+          - WARN if performance-sensitive code lacks optimization comments
+
+          IV. Zero Infrastructure Dependency
+          - Check: No backend API endpoints, no server code
+          - Check: Code runs entirely client-side
+          - FAIL if backend dependencies added
+
+          V. User Value Over Feature Completeness
+          - Check: Changes map to user stories in spec
+          - WARN if adding features not in spec without justification
+
+          VI. Chrome Web Store Compliance
+          - Check: Manifest version 3
+          - Check: Only activeTab, storage, notifications permissions
+          - Check: No eval(), Function() constructors, inline scripts
+          - FAIL if new permissions added without justification
+
+          VII. Measurable Success Criteria
+          - Check: Performance targets defined for new features
+          - Check: Success criteria in spec
+          - WARN if metrics not defined
+
+          VIII. Graceful Degradation
+          - Check: All async operations have try/catch
+          - Check: Fallback behavior for failures
+          - Check: User-facing error messages
+          - FAIL if error handling missing in critical paths
+
+      # Modular Architecture Check
+      - mode: error
+        name: "250-Line Modular Standard"
+        instructions: |
+          Check file size compliance per .claude/code-standards.md:
+
+          - Production files MUST be ≤250 lines
+          - Functions MUST be ≤75 lines
+          - If file >250 lines, check if extraction patterns applied:
+            1. Template extraction (HTML templates)
+            2. Handler extraction (3+ event handlers)
+            3. State manager extraction (complex state sync)
+            4. Renderer extraction (5+ render methods)
+            5. Formatter extraction (data transformation)
+            6. Data extractor extraction (parsing logic)
+
+          - Check delegation pattern used (maintain API compatibility)
+          - Check module naming follows conventions:
+            - ComponentNameTemplate.js
+            - ComponentNameHandlers.js
+            - StateNameStateManager.js
+            - DocumentNameSectionRenderers.js
+            - DataNameFormatter.js
+
+          FAIL if:
+          - Any production file >250 lines without extraction
+          - Any function >75 lines
+          - Extraction pattern not followed correctly
+
+      # Security Check (Chrome Extension Specific)
+      - mode: error
+        name: "Chrome Extension Security"
+        instructions: |
+          Check for Chrome extension security violations:
+
+          CRITICAL (FAIL immediately):
+          - innerHTML, outerHTML, insertAdjacentHTML with user content
+          - eval(), Function() constructor
+          - document.write()
+          - Inline event handlers (onclick="...")
+          - Loading external scripts
+          - Unsafe JSON parsing without validation
+
+          HIGH (FAIL):
+          - chrome.storage without error handling
+          - Message passing without sender validation
+          - DOM manipulation without sanitization
+          - XSS vectors in template strings
+
+          MEDIUM (WARN):
+          - Missing input validation
+          - No CSP headers consideration
+          - Overly broad permissions
+
+          Reference: .claude/code-standards.md Security Best Practices
+
+      # Performance Check
+      - mode: warning
+        name: "Performance Budget Compliance"
+        instructions: |
+          Verify performance targets from memory/constitution.md Principle III:
+
+          - Content script load: <50ms (p95), <100ms (p99)
+          - Scope creep detection: <300ms (p95), <500ms (p99)
+          - Highlight rendering: <50ms (p95), <100ms (p99)
+          - Change order generation: <3s (p95), <5s (p99)
+          - Popup dashboard load: <200ms (p95), <500ms (p99)
+
+          Check for performance anti-patterns:
+          - Synchronous operations in loops
+          - Missing debouncing on user input
+          - DOM queries in loops
+          - Large data structures without pagination
+          - Blocking chrome API calls
+
+          WARN if performance-sensitive code lacks:
+          - performance.now() measurements
+          - Logging for operations >100ms
+          - Comments explaining optimization strategy
+
+      # Test Coverage Check
+      - mode: warning
+        name: "Test Coverage Standards"
+        instructions: |
+          Verify test coverage requirements:
+
+          - Business logic (src/lib/**/*.js): ≥80% coverage required
+          - Critical paths (change order generation, export): ≥90% coverage
+          - UI components: ≥60% coverage acceptable
+
+          Check for:
+          - New functions have corresponding tests
+          - Edge cases tested (null, undefined, empty, invalid)
+          - Error paths tested
+          - Integration tests for workflows
+
+          Reference test files in tests/ directory for patterns.
+
+          WARN if:
+          - New functions lack tests
+          - Only happy path tested
+          - Coverage drops below thresholds
+
+  # Path filters (save tokens, focus on code)
+  path_filters:
+    # Exclude from review (save tokens for code)
+    - "!**/*.md"  # Markdown documentation
+    - "!**/*.png"
+    - "!**/*.jpg"
+    - "!**/*.svg"
+    - "!**/package-lock.json"
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!**/.vscode/**"
+    - "!**/.idea/**"
+    - "!**/manual-testing-assistant/**"
+    - "!**/test-artifacts/**"
+    - "!**/coverage/**"
+
+    # Include in review (prioritize)
+    - "src/**/*.js"
+    - "tests/**/*.test.js"
+    - "*.config.js"
+    - "src/manifest.json"
+    - ".github/workflows/**"
+
+  # Path-based instructions (file-type specific review focus)
+  path_instructions:
+    # Core services - focus on orchestration and error handling
+    - path: "src/lib/change-order/ChangeOrderService.js"
+      instructions: |
+        CRITICAL - Review thoroughly:
+        - Multi-detection merge logic (array handling edge cases)
+        - Error recovery and fallback paths
+        - History save failures (best-effort, don't block user)
+        - Performance (generation should complete <5s)
+        - Validate delegation to extracted modules correct
+
+    - path: "src/lib/change-order/ChangeOrderHistory.js"
+      instructions: |
+        CRITICAL - Data integrity:
+        - FIFO pruning at 50 orders (no data loss bugs)
+        - Concurrent update handling (race conditions)
+        - Storage quota errors (graceful degradation)
+        - Schema versioning (backward compatibility)
+
+    - path: "src/lib/change-order/ChangeOrderNumbering.js"
+      instructions: |
+        CRITICAL - Uniqueness:
+        - Sequential numbering per client (no duplicates)
+        - Concurrent generation (race conditions)
+        - Number format validation (lenient vs strict)
+        - Edge cases (null, malformed inputs)
+
+    # Export system - focus on external dependencies and fallbacks
+    - path: "src/lib/export/**/*.js"
+      instructions: |
+        Focus on:
+        - jsPDF integration (version compatibility, error handling)
+        - Blob/download flow (browser compatibility)
+        - PDF → text fallback (graceful degradation)
+        - Performance (<3s PDF generation target)
+        - Memory management (large PDFs, cleanup)
+
+    # UI components - focus on state management and memory leaks
+    - path: "src/popup/**/*.js"
+      instructions: |
+        Focus on:
+        - Modal/dialog state management
+        - Event listener cleanup (removeEventListener on destroy)
+        - Chrome storage synchronization
+        - XSS prevention in template strings
+        - Memory leaks (DOM references, timers)
+
+    # Storage - focus on chrome.storage.local correctness
+    - path: "src/lib/storage/**/*.js"
+      instructions: |
+        Focus on:
+        - chrome.storage.local error handling (quota, permissions)
+        - Schema versioning and migrations
+        - Concurrent write handling
+        - Data validation before storage
+        - FIFO implementation correctness
+
+    # Tests - focus on isolation and chrome API mocks
+    - path: "tests/**/*.test.js"
+      instructions: |
+        Focus on:
+        - Test isolation (no shared state between tests)
+        - Chrome API mocks realistic
+        - Edge cases covered (null, undefined, empty, invalid)
+        - Integration test completeness
+        - Performance test thresholds realistic
+
+    # Config files - focus on correctness
+    - path: "*.config.js"
+      instructions: |
+        Focus on:
+        - Vite config: Chrome extension compatibility
+        - Vitest config: jsdom environment correct
+        - Build output structure matches manifest
+
+    # Manifest - focus on compliance
+    - path: "src/manifest.json"
+      instructions: |
+        CRITICAL - Chrome Web Store compliance:
+        - Manifest V3 only
+        - Minimal permissions (activeTab, storage, notifications)
+        - No overly broad permissions
+        - CSP policy secure
+        - Web accessible resources minimal
+
+  # Tools (enable all relevant analyzers)
+  tools:
+    # JavaScript linter
+    eslint:
+      enabled: true
+
+    # Security scanning
+    gitleaks:
+      enabled: true  # Detect secrets/API keys
+
+    # Markdown linting (for docs/specs)
+    markdownlint:
+      enabled: false  # We exclude .md files anyway
+
+    # Grammar/spelling (for comments/docs)
+    languagetool:
+      enabled: true
+      level: picky  # Thorough checking
+      enabled_only: false
+      # Disable categories already handled by Prettier
+      disabled_categories:
+        - "TYPOGRAPHY"
+        - "CASING"
+
+    # Shell script linting
+    shellcheck:
+      enabled: true  # For setup scripts
+
+    # GitHub checks integration
+    github-checks:
+      enabled: true
+      timeout_ms: 180000  # 3 minutes (test suite can be slow)
+
+    # Biome (fast JS/TS linter/formatter)
+    biome:
+      enabled: false  # We use ESLint + Prettier
