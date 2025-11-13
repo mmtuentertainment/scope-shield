@@ -12,7 +12,7 @@ export function sanitizeText(input, maxLength = 500) {
   return input
     .trim()
     .slice(0, maxLength)
-    .replace(/[<>]/g, '') // Remove HTML tags (XSS prevention) - allow apostrophes and quotes
+    .replace(/[<>"']/g, '') // Remove HTML-unsafe characters (XSS prevention)
     .replace(/\n{3,}/g, '\n\n'); // Limit consecutive newlines
 }
 
