@@ -112,7 +112,7 @@ export function validateGmailUrl(url) {
  * validateWeight('7') // { valid: false, error: '...' }
  */
 export function validateWeight(weight) {
-  if (typeof weight !== 'number') {
+  if (typeof weight !== 'number' || Number.isNaN(weight)) {
     return { valid: false, error: 'Invalid triggerWeight (must be number between 1-10)' };
   }
   if (weight < 1 || weight > 10) {

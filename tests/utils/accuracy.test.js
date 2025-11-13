@@ -93,7 +93,7 @@ describe('Extended Accuracy Validation', () => {
 
   describe('Edge Cases', () => {
     it('should handle mixed signal emails correctly', () => {
-      EDGE_CASE_CORPUS.forEach(({ text, shouldMatch, _reason }) => {
+      EDGE_CASE_CORPUS.forEach(({ text, shouldMatch }) => {
         const result = detectScopeCreep(text);
         expect(result.matched).toBe(shouldMatch);
       });

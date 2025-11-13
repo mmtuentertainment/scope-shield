@@ -377,7 +377,13 @@ function buildChangeOrderReport(unacknowledged) {
 async function acknowledgeMultipleEvents(events) {
   // Use batch update to prevent race condition
   const eventIds = events.map(event => event.id);
-  await updateMultipleEventsAcknowledged(eventIds, true);
+
+  try {
+    await updateMultipleEventsAcknowledged(eventIds, true);
+  } catch (error) {
+    console.warn(`[ScopeShield] Failed to batch acknowledge ${events.length} events:`, error);
+    throw error;
+  }
 
   // Mark all as acknowledged locally
   events.forEach(event => {
