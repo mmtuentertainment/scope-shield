@@ -1,0 +1,36 @@
+# CodeRabbit Pro Configuration for ScopeShield
+# Use Anthropic Claude instead of OpenAI for better reliability
+
+# AI Provider
+model:
+  provider: "anthropic"
+  name: "claude-3-5-sonnet-20241022"
+
+# Review Settings
+reviews:
+  auto_review: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+
+# Path Filters (focus on code, skip large docs)
+path_filters:
+  exclude:
+    - "**/*.md"  # Skip markdown to save tokens for code
+    - "**/node_modules/**"
+    - "**/dist/**"
+    - "**/package-lock.json"
+    - "**/manual-testing-assistant/**"
+    - "**/test-artifacts/**"
+
+# File Handling
+file_handling:
+  # Skip very large individual files
+  max_file_size_kb: 100
+
+# Focus Areas (ScopeShield specific)
+focus_areas:
+  - security  # XSS, unsafe DOM, chrome.storage
+  - performance  # <500ms detection, <3s PDF
+  - architecture  # 250-line modular standard
+  - chrome_extension  # Manifest V3, permissions
