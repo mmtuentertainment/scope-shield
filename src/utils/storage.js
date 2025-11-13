@@ -82,6 +82,47 @@ export async function updateEventAcknowledged(eventId, acknowledged = true) {
 }
 
 /**
+ * Update acknowledged status of multiple events in a single transaction (Bug #2 fix)
+ * Prevents race condition when acknowledging multiple events concurrently
+ * @param {Array<string>} eventIds - Array of event IDs to update
+ * @param {boolean} acknowledged - The new acknowledged status
+ * @returns {Promise<Object>} Object with success/failure counts
+ */
+export async function updateMultipleEventsAcknowledged(eventIds, acknowledged = true) {
+  try {
+    const { detectionEvents = [] } = await chrome.storage.local.get('detectionEvents');
+
+    let updatedCount = 0;
+    let notFoundCount = 0;
+
+    eventIds.forEach(eventId => {
+      const event = detectionEvents.find(e => e.id === eventId);
+      if (event) {
+        event.acknowledged = acknowledged;
+        updatedCount++;
+      } else {
+        console.warn(`[ScopeShield] Event ${eventId} not found`);
+        notFoundCount++;
+      }
+    });
+
+    // Single write for all updates
+    await chrome.storage.local.set({ detectionEvents });
+
+    console.log(`[ScopeShield] Updated ${updatedCount} events acknowledged: ${acknowledged}`, {
+      updatedCount,
+      notFoundCount,
+      totalRequested: eventIds.length
+    });
+
+    return { updatedCount, notFoundCount };
+  } catch (error) {
+    console.error('[ScopeShield] Failed to update multiple events acknowledged:', error);
+    return { updatedCount: 0, notFoundCount: eventIds.length };
+  }
+}
+
+/**
  * Acknowledge an event (alias for updateEventAcknowledged)
  * @param {string} eventId - The event ID to acknowledge
  */

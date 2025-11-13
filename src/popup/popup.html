@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ScopeShield - Scope Creep Detector</title>
   <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="change-order/change-order.css">
 </head>
 <body>
   <div class="popup-container">
@@ -20,7 +21,21 @@
       </div>
     </header>
 
-    <!-- Summary Section -->
+    <!-- T057: Tab Navigation -->
+    <nav class="tab-navigation">
+      <button class="tab-button active" data-tab="detections">
+        Detections
+      </button>
+      <button class="tab-button" data-tab="settings">
+        Settings
+      </button>
+    </nav>
+
+    <!-- Tab Content Container -->
+    <div class="tab-content">
+      <!-- Detections Tab -->
+      <div id="detections-tab" class="tab-pane active">
+        <!-- Summary Section -->
     <section class="summary-section">
       <h2>Detection Summary</h2>
       <div class="summary-stats">
@@ -55,10 +70,17 @@
       <button class="btn btn-primary" id="generate-report">
         Generate Change Order
       </button>
-      <button class="btn btn-secondary" id="open-options">
-        Settings
-      </button>
     </section>
+
+    <!-- Change Order View Container (hidden by default) -->
+    <div id="change-order-container" style="display: none; margin-top: 24px;"></div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div id="settings-tab" class="tab-pane">
+        <!-- Settings content will be dynamically loaded here -->
+      </div>
+    </div>
 
     <!-- Footer -->
     <footer class="popup-footer">

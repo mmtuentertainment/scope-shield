@@ -17,12 +17,20 @@ export default defineConfig({
         {
           src: 'assets/**/*',
           dest: 'assets'
+        },
+        {
+          src: 'src/assets/templates/**/*',
+          dest: 'assets/templates'
         }
       ]
     })
   ],
   build: {
+    target: 'esnext', // T003: Chrome 92+ supports modern JS (crypto.randomUUID, etc.)
     outDir: 'dist',
+    sourcemap: true, // Enable source maps for debugging
+    minify: 'terser', // Better compression than esbuild
+    chunkSizeWarningLimit: 600, // T006: Warn if chunks exceed 600KB
     rollupOptions: {
       input: {
         'popup': resolve(__dirname, 'src/popup/popup.html'),
@@ -33,8 +41,32 @@ export default defineConfig({
       output: {
         entryFileNames: '[name].js',
         chunkFileNames: 'chunks/[name].js',
-        assetFileNames: 'assets/[name].[ext]'
+        assetFileNames: 'assets/[name].[ext]',
+        // Prevent code splitting by returning undefined for all modules
+        manualChunks: undefined
+      },
+      // CRITICAL: Preserve entry signatures to prevent merging
+      preserveEntrySignatures: 'strict'
+    },
+    // T005: Terser options for maximum compression
+    terserOptions: {
+      compress: {
+        drop_console: true, // Remove console.logs in production
+        drop_debugger: true,
+        passes: 2 // Multiple compression passes
+      },
+      format: {
+        comments: false // Remove comments
       }
     }
+  },
+  // T007: Define global constants
+  define: {
+    __APP_VERSION__: JSON.stringify('0.2.0'),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString())
+  },
+  // Optimize dependencies during dev
+  optimizeDeps: {
+    include: [] // jsPDF lazy-loaded, don't pre-bundle
   }
 });

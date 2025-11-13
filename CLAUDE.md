@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code when working with the ScopeShield codebase.
 
+## Important: Read Parent Standards First
+
+This project follows the repository-wide standards defined in the parent directory:
+
+- **[Code Organization Standards](../.claude/code-standards.md)** - File size limits, complexity rules, security best practices
+- **[MCP Integration Guide](../.claude/mcp-integration.md)** - Context7 and Time MCP usage
+- **[Root CLAUDE.md](../CLAUDE.md)** - Repository overview and structure
+
+**All code must comply with these standards in addition to the ScopeShield-specific guidelines below.**
+
 ## Project Overview
 
 **ScopeShield** is a Chrome extension that automatically detects scope creep in freelance projects and helps freelancers generate billable change orders.
@@ -159,12 +169,35 @@ scope-shield/
 
 ### Code Quality Standards
 
+**CRITICAL**: All code must follow the [Code Organization Standards](../.claude/code-standards.md):
+
+✅ **File Size Limits**:
+- Production files: 200-400 lines (max 500, hard limit 800)
+- Functions: 10-50 lines (max 75, hard limit 100)
+- Cyclomatic complexity: <10 (max 15)
+- Function parameters: ≤4
+- Nesting depth: ≤4 levels
+
+✅ **ESLint Enforcement**:
+- Run `npm run lint` before every commit
+- All rules are set to "warn" to allow flexibility
+- Never disable rules with blanket `/* eslint-disable */`
+- Use specific disables with justification: `// eslint-disable-next-line rule-name -- Reason`
+
+✅ **Security Rules (Auto-enforced by ESLint)**:
+- ❌ Never use `innerHTML`, `outerHTML`, `insertAdjacentHTML` with user content
+- ❌ Never use `document.write()`, `eval()`, `Function()`, `XMLHttpRequest`
+- ✅ Use `textContent`, `createElement()`, `fetch()` instead
+- ✅ All Chrome API errors must be checked: `chrome.runtime.lastError`
+
+✅ **ScopeShield-Specific Standards**:
 - **Read before writing**: Always read existing files before editing
 - **Test-first approach**: Write tests before implementation for detection logic
 - **Vanilla JavaScript**: No frameworks for MVP (keeps bundle <500KB)
 - **Clear naming**: `detectScopeCreep()`, `generateChangeOrder()`, not `doThing()`
-- **JSDoc comments**: For complex functions
+- **JSDoc comments**: For all public functions
 - **Defensive programming**: Check if DOM elements exist before accessing
+- **Performance monitoring**: Use `performance.now()` for operations >100ms
 
 ### Error Handling
 

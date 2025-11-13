@@ -3,7 +3,16 @@
  * Handles notifications, badge updates, and message passing
  */
 
-import { getUnacknowledgedCount } from '../utils/storage.js';
+// Inline getUnacknowledgedCount to avoid code splitting issues with Vite
+async function getUnacknowledgedCount() {
+  try {
+    const { detectionEvents = [] } = await chrome.storage.local.get('detectionEvents');
+    return detectionEvents.filter(e => !e.acknowledged).length;
+  } catch (error) {
+    console.error('[ScopeShield] Failed to get unacknowledged count:', error);
+    return 0;
+  }
+}
 
 // Performance metrics storage with memory leak protection
 // Limits: Keep max 100 metrics, trim to 50 when exceeded

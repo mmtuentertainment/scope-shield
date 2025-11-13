@@ -35,6 +35,72 @@ body {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+/* T059: Tab Navigation */
+.tab-navigation {
+  display: flex;
+  background: #FAFAFA;
+  border-bottom: 2px solid #E0E0E0;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.tab-button:hover {
+  background: #F5F5F5;
+  color: #333;
+}
+
+.tab-button.active {
+  color: #FF9800;
+  background: white;
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #FF9800;
+}
+
+/* Accessibility: Focus-visible for keyboard navigation (WCAG 2.4.7) */
+.tab-button:focus-visible {
+  outline: 2px solid #FF9800;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
+}
+
+/* Tab Content */
+.tab-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-pane {
+  display: none;
+  flex: 1;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+.tab-pane.active {
+  display: flex;
+}
+
 .header-logo {
   display: flex;
   align-items: center;
@@ -387,6 +453,14 @@ body {
   color: #FF9800;
 }
 
+/* Accessibility: Focus-visible for footer links */
+.popup-footer button:focus-visible,
+.popup-footer a:focus-visible {
+  outline: 2px solid #FF9800;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .separator {
   color: #CCC;
   margin: 0 8px;
@@ -408,6 +482,181 @@ body {
 
 .detections-list::-webkit-scrollbar-thumb:hover {
   background: #999;
+}
+
+/* T062-T063: Welcome Modal Styles */
+.welcome-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
+}
+
+.welcome-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: slideInUp 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.welcome-modal.shake {
+  animation: shake 0.5s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.welcome-modal-overlay.fade-out {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.welcome-header {
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+  color: white;
+  padding: 24px;
+  border-radius: 12px 12px 0 0;
+  text-align: center;
+}
+
+.welcome-header img {
+  margin-bottom: 12px;
+}
+
+.welcome-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.welcome-content {
+  padding: 24px;
+}
+
+.welcome-content > p {
+  margin-bottom: 20px;
+  color: #666;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.welcome-error {
+  background: #fed7d7;
+  color: #742a2a;
+  border: 1px solid #fc8181;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.welcome-modal .form-group {
+  margin-bottom: 16px;
+}
+
+.welcome-modal .form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.welcome-modal .form-label .required {
+  color: #e53e3e;
+  margin-left: 2px;
+}
+
+.welcome-modal .form-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.welcome-modal .form-input:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.welcome-modal .form-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #718096;
+}
+
+.welcome-modal .form-actions {
+  margin-top: 20px;
+}
+
+.welcome-modal .btn {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.welcome-modal .btn-primary {
+  background: #FF9800;
+  color: white;
+}
+
+.welcome-modal .btn-primary:hover:not(:disabled) {
+  background: #F57C00;
+}
+
+.welcome-modal .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Dark mode support */
@@ -445,5 +694,231 @@ body {
 
   .btn-icon:hover {
     background: #3D3D3D;
+  }
+
+  .welcome-modal {
+    background: #2D2D2D;
+  }
+
+  .welcome-modal .form-input {
+    background: #1E1E1E;
+    border-color: #444;
+    color: #E0E0E0;
+  }
+}
+/* =====================================================
+   PRICING CALCULATOR WIDGET (Phase 4)
+   ===================================================== */
+
+.pricing-calculator-widget {
+  background: #F9FAFB;
+  border: 2px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.pricing-calculator-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.calc-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calc-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.calc-input-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6B7280;
+}
+
+.calc-input {
+  padding: 8px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.calc-input:focus {
+  outline: none;
+  border-color: #FF9800;
+  box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+}
+
+.calc-input:hover:not(:focus) {
+  border-color: #9CA3AF;
+}
+
+.calc-result {
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calc-result.success {
+  background: #ECFDF5;
+  color: #047857;
+  border: 1px solid #A7F3D0;
+}
+
+.calc-result.error {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+}
+
+.calc-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.calc-actions .btn {
+  flex: 1;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.calc-actions .btn-primary {
+  background: #FF9800;
+  color: white;
+}
+
+.calc-actions .btn-primary:hover:not(:disabled) {
+  background: #F57C00;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(245, 124, 0, 0.3);
+}
+
+.calc-actions .btn-primary:disabled {
+  background: #D1D5DB;
+  color: #9CA3AF;
+  cursor: not-allowed;
+}
+
+.calc-actions .btn-secondary {
+  background: white;
+  color: #6B7280;
+  border: 1px solid #D1D5DB;
+}
+
+.calc-actions .btn-secondary:hover {
+  background: #F9FAFB;
+  border-color: #9CA3AF;
+}
+
+/* Calculator toggle button/icon (for cost estimate field) */
+.cost-estimate-field-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calculator-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B7280;
+  transition: all 0.2s ease;
+}
+
+.calculator-toggle-btn:hover {
+  color: #FF9800;
+  transform: scale(1.1);
+}
+
+.calculator-toggle-btn.active {
+  color: #FF9800;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .pricing-calculator-widget {
+    background: #2D2D2D;
+    border-color: #444;
+  }
+
+  .calc-title {
+    color: #E0E0E0;
+  }
+
+  .calc-input-group label {
+    color: #B0B0B0;
+  }
+
+  .calc-input {
+    background: #1E1E1E;
+    border-color: #444;
+    color: #E0E0E0;
+  }
+
+  .calc-input:focus {
+    border-color: #FF9800;
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
+  }
+
+  .calc-result.success {
+    background: #064E3B;
+    color: #6EE7B7;
+    border-color: #065F46;
+  }
+
+  .calc-result.error {
+    background: #7F1D1D;
+    color: #FCA5A5;
+    border-color: #991B1B;
+  }
+
+  .calc-actions .btn-secondary {
+    background: #1E1E1E;
+    color: #B0B0B0;
+    border-color: #444;
+  }
+
+  .calc-actions .btn-secondary:hover {
+    background: #2D2D2D;
+    border-color: #555;
+  }
+
+  .calculator-toggle-btn {
+    color: #B0B0B0;
+  }
+
+  .calculator-toggle-btn:hover,
+  .calculator-toggle-btn.active {
+    color: #FF9800;
   }
 }

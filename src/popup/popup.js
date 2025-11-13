@@ -1,9 +1,16 @@
 /**
- * ScopeShield Popup Script (T042)
+ * ScopeShield Popup Script (T042, T058)
  * Displays detection events and provides management interface
  */
 
-import { getDetectionEvents, acknowledgeEvent, clearAllEvents, getUnacknowledgedCount } from '../utils/storage.js';
+import { getDetectionEvents, acknowledgeEvent, clearAllEvents, getUnacknowledgedCount, updateMultipleEventsAcknowledged } from '../utils/storage.js';
+import { SettingsView } from './settings/SettingsView.js';
+import { SettingsStorage } from '../lib/storage/SettingsStorage.js';
+import { WelcomeModal } from './WelcomeModal.js';
+import { FirstRunDetector } from '../lib/utils/FirstRunDetector.js';
+import ChangeOrderService from '../lib/change-order/ChangeOrderService.js';
+import changeOrderView from './change-order/ChangeOrderView.js';
+import multiItemSelector from './change-order/MultiItemSelector.js';
 
 // DOM Elements (with null checks)
 const totalDetectionsEl = document.getElementById('total-detections');
@@ -11,7 +18,6 @@ const unacknowledgedEl = document.getElementById('unacknowledged');
 const detectionsListEl = document.getElementById('detections-list');
 const clearAllBtn = document.getElementById('clear-all');
 const generateReportBtn = document.getElementById('generate-report');
-const openOptionsBtn = document.getElementById('open-options');
 const helpLink = document.getElementById('help-link');
 const feedbackLink = document.getElementById('feedback-link');
 
@@ -22,6 +28,11 @@ if (!totalDetectionsEl || !unacknowledgedEl || !detectionsListEl) {
 
 // State
 let detectionEvents = [];
+let settingsView = null;
+let settingsLoaded = false;
+
+// T060: Cached settings in memory to avoid repeated chrome.storage calls
+let cachedSettings = null;
 
 /**
  * Initialize popup
@@ -29,11 +40,26 @@ let detectionEvents = [];
 async function initialize() {
   console.log('[ScopeShield] Popup initializing...');
 
+  // T062: Check for first run and show welcome modal
+  const isFirstRun = await FirstRunDetector.isFirstRun();
+  if (isFirstRun) {
+    const welcomeModal = new WelcomeModal();
+    await welcomeModal.show();
+    // After welcome modal completes, reload cached settings
+    await loadCachedSettings();
+  } else {
+    // T060: Load and cache settings
+    await loadCachedSettings();
+  }
+
   // Load detection events
   await loadDetections();
 
   // Set up event listeners
   setupEventListeners();
+
+  // T058: Set up tab navigation
+  setupTabNavigation();
 
   // Update badge
   await updateBadge();
@@ -344,13 +370,14 @@ function buildChangeOrderReport(unacknowledged) {
 }
 
 /**
- * Acknowledge multiple events in batch (fixes await-in-loop)
+ * Acknowledge multiple events in batch (Bug #2 fix: single transaction prevents race condition)
  * @param {Array} events - Events to acknowledge
  * @returns {Promise<void>}
  */
 async function acknowledgeMultipleEvents(events) {
-  const promises = events.map(event => acknowledgeEvent(event.id));
-  await Promise.allSettled(promises);
+  // Use batch update to prevent race condition
+  const eventIds = events.map(event => event.id);
+  await updateMultipleEventsAcknowledged(eventIds, true);
 
   // Mark all as acknowledged locally
   events.forEach(event => {
@@ -359,7 +386,8 @@ async function acknowledgeMultipleEvents(events) {
 }
 
 /**
- * Generate change order report
+ * Generate change order using ChangeOrderService
+ * T118-T119: Integrate ChangeOrderService with popup
  */
 async function generateReport() {
   const unacknowledged = detectionEvents.filter(e => !e.acknowledged);
@@ -369,23 +397,155 @@ async function generateReport() {
     return;
   }
 
-  // Build report and copy to clipboard
-  const report = buildChangeOrderReport(unacknowledged);
-
   try {
-    await navigator.clipboard.writeText(report);
-    showToast('Change order copied to clipboard!');
+    console.log('[ScopeShield] Starting change order generation', {
+      totalDetections: unacknowledged.length
+    });
 
-    // Mark all as acknowledged (fixes await-in-loop)
-    await acknowledgeMultipleEvents(unacknowledged);
+    // T121-T122: Show multi-item selector if 2+ detections
+    let selectedDetections = unacknowledged;
 
+    if (unacknowledged.length >= 2) {
+      // Initialize multi-item selector
+      multiItemSelector.init(unacknowledged);
+      multiItemSelector.render();
+
+      // Wait for user to review selection (show modal or confirmation)
+      const proceed = await showSelectionDialog();
+
+      if (!proceed) {
+        multiItemSelector.hide();
+        return;
+      }
+
+      // Get selected detections
+      selectedDetections = multiItemSelector.getSelectedDetections();
+
+      if (selectedDetections.length === 0) {
+        showToast('Please select at least one detection');
+        return;
+      }
+
+      multiItemSelector.hide();
+    }
+
+    // Convert detection events to format expected by ChangeOrderService
+    const formattedDetections = selectedDetections.map(event => ({
+      sender: {
+        name: event.senderName || event.sender,
+        email: event.sender || 'unknown@client.com'
+      },
+      detectedText: event.detectedText || '',
+      timestamp: event.timestamp,
+      id: event.id
+    }));
+
+    // T083-T093: Generate change order using ChangeOrderService
+    showToast('Generating change order...');
+
+    const changeOrder = await ChangeOrderService.generate(formattedDetections);
+
+    console.log('[ScopeShield] Change order generated successfully', {
+      changeOrderId: changeOrder.id,
+      changeOrderNumber: changeOrder.changeOrderNumber
+    });
+
+    // T114-T120: Render change order using ChangeOrderView
+    changeOrderView.init();
+    await changeOrderView.render(changeOrder);
+
+    // Show success message
+    showToast('Change order generated successfully!');
+
+    // Mark selected detections as acknowledged
+    await acknowledgeMultipleEvents(selectedDetections);
+
+    // Update UI
     updateSummaryStats();
     renderDetectionsList();
     await updateBadge();
+
   } catch (error) {
-    console.error('[ScopeShield] Error generating report:', error);
-    showError('Failed to generate report');
+    console.error('[ScopeShield] Error generating change order:', error);
+    showError(`Failed to generate change order: ${error.message}`);
   }
+}
+
+/**
+ * Show selection dialog for multi-item selection
+ * Returns true if user wants to proceed
+ */
+async function showSelectionDialog() {
+  return new Promise((resolve) => {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    `;
+
+    const modal = document.createElement('div');
+    modal.className = 'selection-modal';
+    modal.style.cssText = `
+      background: white;
+      padding: 24px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    `;
+
+    modal.innerHTML = `
+      <h2 style="margin: 0 0 16px 0; font-size: 20px; color: #111827;">
+        Select Detections to Include
+      </h2>
+      <div id="multi-item-selector-container"></div>
+      <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+        <button id="cancel-selection-btn" class="btn btn-text">Cancel</button>
+        <button id="proceed-selection-btn" class="btn btn-primary">Generate Change Order</button>
+      </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Attach multi-item selector to modal
+    const container = modal.querySelector('#multi-item-selector-container');
+    if (container) {
+      multiItemSelector.containerSelector = '#multi-item-selector-container';
+      multiItemSelector.container = container;
+      multiItemSelector.render();
+    }
+
+    // Handle buttons
+    modal.querySelector('#cancel-selection-btn').addEventListener('click', () => {
+      overlay.remove();
+      resolve(false);
+    });
+
+    modal.querySelector('#proceed-selection-btn').addEventListener('click', () => {
+      overlay.remove();
+      resolve(true);
+    });
+
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+        resolve(false);
+      }
+    });
+  });
 }
 
 /**
@@ -441,14 +601,102 @@ function showError(message) {
 }
 
 /**
+ * T060: Load and cache settings
+ */
+async function loadCachedSettings() {
+  try {
+    cachedSettings = await SettingsStorage.get();
+    console.log('[ScopeShield] Settings loaded and cached');
+  } catch (error) {
+    console.error('[ScopeShield] Error loading settings:', error);
+  }
+}
+
+/**
+ * T060: Get cached settings (or load if not cached)
+ * @returns {Promise<FreelancerSettings>}
+ */
+async function getCachedSettings() {
+  if (!cachedSettings) {
+    await loadCachedSettings();
+  }
+  return cachedSettings;
+}
+
+/**
+ * T058: Set up tab navigation
+ */
+function setupTabNavigation() {
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabPanes = document.querySelectorAll('.tab-pane');
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', async () => {
+      const tabName = button.dataset.tab;
+
+      // Update active button
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+
+      // Update active pane
+      tabPanes.forEach(pane => pane.classList.remove('active'));
+      const targetPane = document.getElementById(`${tabName}-tab`);
+      if (targetPane) {
+        targetPane.classList.add('active');
+      }
+
+      // Load settings view if switching to settings tab
+      if (tabName === 'settings' && !settingsLoaded) {
+        await loadSettingsView();
+      }
+    });
+  });
+}
+
+/**
+ * T058: Load Settings View
+ */
+async function loadSettingsView() {
+  try {
+    const settingsTab = document.getElementById('settings-tab');
+    if (!settingsTab) return;
+
+    // Create settings view if not already created
+    if (!settingsView) {
+      settingsView = new SettingsView();
+      const settingsElement = await settingsView.render();
+
+      // Store reference to settingsView for event handling
+      settingsElement.__settingsView = settingsView;
+
+      settingsTab.innerHTML = '';
+      settingsTab.appendChild(settingsElement);
+
+      // Listen for settings saved/error events
+      window.addEventListener('settings-saved', (e) => {
+        settingsView.showSuccess(e.detail.message);
+        // T060: Update cached settings when saved
+        loadCachedSettings();
+      });
+
+      window.addEventListener('settings-error', (e) => {
+        settingsView.showError(e.detail.message);
+      });
+    }
+
+    settingsLoaded = true;
+    console.log('[ScopeShield] Settings view loaded');
+  } catch (error) {
+    console.error('[ScopeShield] Error loading settings view:', error);
+  }
+}
+
+/**
  * Set up event listeners
  */
 function setupEventListeners() {
   clearAllBtn.addEventListener('click', handleClearAll);
   generateReportBtn.addEventListener('click', generateReport);
-  openOptionsBtn.addEventListener('click', () => {
-    chrome.runtime.openOptionsPage();
-  });
 
   helpLink.addEventListener('click', (e) => {
     e.preventDefault();
@@ -464,6 +712,10 @@ function setupEventListeners() {
   chrome.storage.onChanged.addListener((changes, namespace) => {
     if (namespace === 'local' && changes.detectionEvents) {
       loadDetections();
+    }
+    // T060: Update cached settings when they change
+    if (namespace === 'local' && changes.scopeshield_settings_v1) {
+      loadCachedSettings();
     }
   });
 }

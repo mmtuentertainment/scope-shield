@@ -1,0 +1,719 @@
+# Tasks: Change Order Generator
+
+**Feature**: 002-change-order-generator
+**Created**: 2025-11-11
+**Last Updated**: 2025-11-12 (Context7 validation, Vite 7.0.0, Vitest 4.0.7 upgrades)
+**Status**: Ready for Implementation
+**Total Tasks**: 155 (updated with Context7 patterns)
+**Estimated Duration**: 35-45 hours
+
+---
+
+## Task Format Reference
+
+```
+- [ ] [T###] [P?] [Story?] Description with exact file path
+```
+
+- **T###**: Sequential task ID (T001, T002, etc.)
+- **[P]**: Parallelizable (different files, no dependencies)
+- **[Story]**: User story label ([US1], [US2], [US3], [US4])
+- **Description**: Clear action with exact file path
+
+---
+
+## Phase 1: Setup & Foundation (BLOCKS all user stories)
+
+**Duration**: 5-6 hours
+**Parallelization**: None (foundational setup must be sequential)
+
+### Project Dependencies
+
+- [ ] [T001] Install jsPDF dependency: `npm install jspdf@2.5.1`
+- [ ] [T002] Verify jsPDF installation with test PDF generation in `tests/jspdf-test.js`
+- [ ] [T003] Update `vite.config.js` - Set `build.target: 'esnext'` for Chrome 92+ modern JS features
+- [ ] [T004] Update `vite.config.js` - Configure `rollupOptions.output.manualChunks` to separate 'jspdf' into dedicated chunk
+- [ ] [T005] Update `vite.config.js` - Add `terserOptions` with `compress.drop_console: true`, `compress.passes: 2`
+- [ ] [T006] Update `vite.config.js` - Set `chunkSizeWarningLimit: 600` to enforce bundle size budget
+- [ ] [T007] Update `vite.config.js` - Add `define` for `__APP_VERSION__` and `__BUILD_TIME__` constants
+- [ ] [T008] Create `vitest.config.js` with environment: 'jsdom', setupFiles: ['./tests/setup.js'], globals: true
+- [ ] [T009] Add coverage configuration to `vitest.config.js` - provider: 'v8', thresholds: 80% for branches/functions/lines
+- [ ] [T010] Create `tests/setup.js` with chrome.storage.local mock using vi.stubGlobal (full implementation from Context7)
+
+### Directory Structure
+
+- [ ] [T011] Create directory `src/popup/change-order/`
+- [ ] [T012] Create directory `src/popup/settings/`
+- [ ] [T013] Create directory `src/lib/change-order/`
+- [ ] [T014] Create directory `src/lib/storage/`
+- [ ] [T015] Create directory `src/lib/utils/`
+- [ ] [T016] Create directory `src/assets/templates/`
+- [ ] [T017] Create directory `src/assets/icons/`
+- [ ] [T018] Create directory `tests/lib/change-order/`
+
+### Base Files & Schemas
+
+- [ ] [T019] Create `src/lib/storage/StorageSchemas.js` with schema version constants and migration helpers
+- [ ] [T020] Create `src/lib/utils/UUIDGenerator.js` wrapper for crypto.randomUUID()
+- [ ] [T021] Create `src/lib/utils/DateFormatter.js` wrapper for Intl.DateTimeFormat
+- [ ] [T022] Create `src/lib/utils/Sanitizer.js` with sanitizeText() and sanitizeNumber() functions
+- [ ] [T023] Create `src/lib/utils/Logger.js` with logInfo(), logError(), logPerformance() functions
+- [ ] [T024] Create `src/types/change-order.d.ts` with TypeScript definitions for ChangeOrder, FreelancerSettings entities
+
+### Base Entity Classes
+
+- [ ] [T025] Create `src/lib/change-order/ChangeOrder.js` entity class with validation
+- [ ] [T026] Add ChangeOrder.validate() method to check required fields
+- [ ] [T027] Add ChangeOrder.toJSON() method for storage serialization
+- [ ] [T028] Add ChangeOrder.fromJSON() static method for deserialization
+- [ ] [T029] Create `src/lib/storage/FreelancerSettings.js` entity class
+- [ ] [T030] Add FreelancerSettings.validate() method (freelancerName required, hourlyRate > 0)
+- [ ] [T031] Add FreelancerSettings.getDefaults() static method for first-run defaults
+
+### Test Setup
+
+- [ ] [T032] Create `tests/lib/change-order/ChangeOrder.test.js` with basic structure
+- [ ] [T033] Create `tests/lib/storage/StorageSchemas.test.js` for schema versioning tests
+- [ ] [T034] Create `tests/lib/utils/Sanitizer.test.js` for input sanitization tests
+- [ ] [T035] Run `npm test` to verify test infrastructure works
+
+**Checkpoint**: Foundation ready - all directories created, base classes defined, tests scaffolded
+
+---
+
+## Phase 2: Settings Page (Foundational for US4)
+
+**Duration**: 4-5 hours
+**Parallelization**: Limited (SettingsStorage first, then UI)
+
+### Settings Storage Service
+
+- [ ] [T031] Create `src/lib/storage/SettingsStorage.js` with get(), save(), validate() methods
+- [ ] [T032] Implement SettingsStorage.get() to load settings from chrome.storage.local with key `scopeshield_settings_v1`
+- [ ] [T033] Implement SettingsStorage.save() to persist settings with validation
+- [ ] [T034] Implement SettingsStorage.getDefaults() for first-run (empty freelancerName, no hourlyRate)
+- [ ] [T035] Add error handling for storage quota exceeded in SettingsStorage.save()
+- [ ] [T036] Create `tests/lib/storage/SettingsStorage.test.js` with CRUD tests
+- [ ] [T037] Write test: SettingsStorage.get() returns defaults if no settings exist
+- [ ] [T038] Write test: SettingsStorage.save() validates freelancerName is required
+- [ ] [T039] Write test: SettingsStorage.save() validates hourlyRate > 0 if provided
+
+### Settings UI
+
+- [ ] [T040] [P] Create `src/popup/settings/SettingsView.js` with render() method
+- [ ] [T041] [P] Create `src/popup/settings/SettingsForm.js` with form HTML structure
+- [ ] [T042] [P] Create `src/popup/settings/settings.css` with styling
+- [ ] [T043] Add freelancer name input field to SettingsForm with validation (required)
+- [ ] [T044] Add hourly rate input field to SettingsForm with validation (optional, must be > 0)
+- [ ] [T045] Add default export method dropdown to SettingsForm (clipboard/pdf/text)
+- [ ] [T046] Add auto-export enabled checkbox to SettingsForm
+- [ ] [T047] Add auto-export delay input to SettingsForm (1-10 seconds, default 3)
+- [ ] [T048] Implement SettingsForm.save() to call SettingsStorage.save() with sanitized inputs
+- [ ] [T049] Implement SettingsForm.load() to populate form from SettingsStorage.get()
+- [ ] [T050] Add success notification after saving settings
+- [ ] [T051] Add error notification if validation fails
+
+### Popup Integration
+
+- [ ] [T052] Update `src/popup/popup.html` to add Settings tab navigation
+- [ ] [T053] Update `src/popup/popup.js` to load SettingsView when Settings tab clicked
+- [ ] [T054] Add CSS for tab navigation in `src/popup/popup.css`
+- [ ] [T055] Cache loaded settings in memory to avoid repeated chrome.storage calls
+
+### First-Run Experience
+
+- [ ] [T056] Create `src/lib/utils/FirstRunDetector.js` to check if freelancerName is empty
+- [ ] [T057] Show welcome modal on first popup open if freelancerName empty
+- [ ] [T058] Prompt "Enter your name to get started" in welcome modal
+- [ ] [T059] Save freelancerName to settings after welcome modal submission
+
+**Checkpoint**: Settings page accessible, freelancer name + hourly rate saveable, validation works
+
+---
+
+## Phase 3: Template Engine & Change Order Generation (US1, US2)
+
+**Duration**: 5-6 hours
+**Parallelization**: Template creation parallel with service logic
+
+### Professional Template
+
+- [ ] [T060] [P] [US2] Create `src/assets/templates/professional-v1.html` with 7-section structure
+- [ ] [T061] [P] [US2] Add Header section to template: "Change Order #{{changeOrderNumber}}", date, client/freelancer names
+- [ ] [T062] [P] [US2] Add "Original Scope Agreement" section with {{originalScope}} placeholder
+- [ ] [T063] [P] [US2] Add "Requested Changes" section with bulleted list {{requestedChanges}}
+- [ ] [T064] [P] [US2] Add "Cost Impact" section with itemized {{costEstimate}}
+- [ ] [T065] [P] [US2] Add "Revised Timeline" section with {{revisedTimeline}} placeholder
+- [ ] [T066] [P] [US2] Add "Payment Terms" section with {{paymentTerms}} placeholder
+- [ ] [T067] [P] [US2] Add "Signatures" section with Client/Freelancer signature lines
+- [ ] [T068] [P] [US2] Add CSS styling to template: sans-serif font, 14-16px body, 18-24px headings, 1.5 line-spacing
+
+### Template Engine
+
+- [ ] [T069] [P] [US1] Create `src/lib/change-order/TemplateEngine.js` with interpolate() method
+- [ ] [T070] [P] [US1] Implement TemplateEngine.interpolate() to replace {{placeholder}} with values
+- [ ] [T071] [P] [US1] Handle missing placeholders gracefully (replace with empty string)
+- [ ] [T072] [P] [US1] Handle array placeholders for requestedChanges (convert to bulleted list)
+- [ ] [T073] [P] [US1] Cache loaded template in memory (load professional-v1.html once)
+- [ ] [T074] [P] [US1] Create `tests/lib/change-order/TemplateEngine.test.js`
+- [ ] [T075] [P] [US1] Write test: interpolate() replaces simple placeholders
+- [ ] [T076] [P] [US1] Write test: interpolate() handles missing placeholders
+- [ ] [T077] [P] [US1] Write test: interpolate() converts arrays to bulleted lists
+
+### Change Order Service
+
+- [ ] [T078] [US1] Create `src/lib/change-order/ChangeOrderService.js` with generate() method
+- [ ] [T079] [US1] Implement ChangeOrderService.generate(detectionEvent) to create ChangeOrder from detection
+- [ ] [T080] [US1] Extract clientName and clientEmail from detectionEvent.sender
+- [ ] [T081] [US1] Extract requestedChanges from detectionEvent.detectedText (truncate to 200 chars if >500)
+- [ ] [T082] [US1] Load freelancerName from SettingsStorage (prompt if empty)
+- [ ] [T083] [US1] Pre-fill originalScope from ChangeOrderHistory.getLastForClient(clientEmail)
+- [ ] [T084] [US1] Generate current date using DateFormatter
+- [ ] [T085] [US1] Assign sequential changeOrderNumber using getNextNumberForClient(clientEmail)
+- [ ] [T086] [US1] Set default values: costEstimate "$XXX", paymentTerms "Net 30", revisedTimeline ""
+- [ ] [T087] [US1] Save generated ChangeOrder to chrome.storage.local
+- [ ] [T088] [US1] Return ChangeOrder instance
+- [ ] [T089] [US1] Create `tests/lib/change-order/ChangeOrderService.test.js`
+- [ ] [T090] [US1] Write test: generate() creates ChangeOrder with all required fields
+- [ ] [T091] [US1] Write test: generate() pre-fills scope from history if available
+- [ ] [T092] [US1] Write test: generate() uses empty scope for first-time client
+
+### Change Order History Service
+
+- [ ] [T093] [US1] Create `src/lib/change-order/ChangeOrderHistory.js` with query methods
+- [ ] [T094] [US1] Implement getLastForClient(clientEmail) to query chrome.storage.local
+- [ ] [T095] [US1] Implement getAllForClient(clientEmail) to return all change orders (max 50)
+- [ ] [T096] [US1] Implement save(changeOrder) to append to client's history
+- [ ] [T097] [US1] Implement FIFO deletion if history exceeds 50 per client
+- [ ] [T098] [US1] Index change orders by clientEmail for fast queries
+- [ ] [T099] [US1] Create `tests/lib/change-order/ChangeOrderHistory.test.js`
+- [ ] [T100] [US1] Write test: getLastForClient() returns most recent order
+- [ ] [T101] [US1] Write test: save() enforces 50-order limit per client
+
+### Sequential Numbering
+
+- [ ] [T102] [US1] Create `src/lib/change-order/ChangeOrderNumbering.js` with getNextNumberForClient()
+- [ ] [T103] [US1] Implement getNextNumberForClient(clientEmail) to query history and increment
+- [ ] [T104] [US1] Format change order numbers as "001", "002", "003" (3 digits, zero-padded)
+- [ ] [T105] [US1] Handle first change order for client (return "001")
+- [ ] [T106] [US1] Create `tests/lib/change-order/ChangeOrderNumbering.test.js`
+- [ ] [T107] [US1] Write test: getNextNumberForClient() returns "001" for new client
+- [ ] [T108] [US1] Write test: getNextNumberForClient() increments from last number
+
+### Change Order View UI
+
+- [ ] [T109] [US1] [US2] Create `src/popup/change-order/ChangeOrderView.js` with render() method
+- [ ] [T110] [US1] [US2] Implement ChangeOrderView.render(changeOrder) to display formatted document
+- [ ] [T111] [US1] [US2] Use TemplateEngine to populate professional-v1.html with changeOrder data
+- [ ] [T112] [US1] [US2] Create `src/popup/change-order/change-order.css` with styling
+- [ ] [T113] [US1] [US2] Add "Generate Change Order" button to popup when detections exist
+- [ ] [T114] [US1] [US2] Show ChangeOrderView when "Generate Change Order" clicked
+- [ ] [T115] [US1] [US2] Measure generation time with performance.now() (log if >5s)
+
+**Checkpoint**: Change order generation works, all 7 sections present, pre-fill from history works, sequential numbering works
+
+---
+
+## Phase 4: Pricing Calculator Widget (US4)
+
+**Duration**: 3-4 hours
+**Parallelization**: Calculator logic and UI can be developed in parallel
+
+### Calculator Logic
+
+- [ ] [T116] [P] [US4] Create `src/lib/change-order/PricingCalculator.js` with calculate() method
+- [ ] [T117] [P] [US4] Implement PricingCalculator.calculate(hourlyRate, estimatedHours) → returns cost estimate
+- [ ] [T118] [P] [US4] Format output as currency string (e.g., "$1,200")
+- [ ] [T119] [P] [US4] Validate inputs: hourlyRate > 0, estimatedHours > 0
+- [ ] [T120] [P] [US4] Create `tests/lib/change-order/PricingCalculator.test.js`
+- [ ] [T121] [P] [US4] Write test: calculate(150, 8) returns "$1,200"
+- [ ] [T122] [P] [US4] Write test: calculate() validates inputs (throws if invalid)
+
+### Calculator Widget UI
+
+- [ ] [T123] [P] [US4] Create `src/popup/change-order/PricingCalculatorWidget.js` component
+- [ ] [T124] [P] [US4] Add calculator icon to cost estimate field (calculator-icon.svg)
+- [ ] [T125] [P] [US4] Implement inline expansion when cost field clicked (show/hide calculator)
+- [ ] [T126] [P] [US4] Add hourly rate input field to calculator widget
+- [ ] [T127] [P] [US4] Add estimated hours input field to calculator widget
+- [ ] [T128] [P] [US4] Pre-fill hourly rate from SettingsStorage if available
+- [ ] [T129] [P] [US4] Auto-calculate on input change (debounce 300ms)
+- [ ] [T130] [P] [US4] Show suggested cost estimate below inputs
+- [ ] [T131] [P] [US4] Add "Accept" button to apply suggestion to cost field
+- [ ] [T132] [P] [US4] Add "Override" option to manually enter different cost
+- [ ] [T133] [P] [US4] Remember hourly rate in SettingsStorage after first use
+
+**Checkpoint**: Calculator widget appears on cost field click, calculation accurate, hourly rate pre-filled from settings
+
+---
+
+## Phase 5: Export Functionality (US3)
+
+**Duration**: 6-7 hours
+**Parallelization**: PDF, clipboard, and text export services can be developed in parallel
+
+### PDF Generator Service
+
+- [ ] [T134] [P] [US3] Create `src/lib/change-order/PDFGenerator.js` with generatePDF() method
+- [ ] [T135] [P] [US3] Implement lazy loading for jsPDF: `await import('jspdf/dist/jspdf.es.min.js')`
+- [ ] [T136] [P] [US3] Implement PDFGenerator.generatePDF(changeOrder) to create PDF document
+- [ ] [T137] [P] [US3] Map change order sections to PDF layout (7 sections)
+- [ ] [T138] [P] [US3] Add professional typography to PDF (sans-serif font, 14-16px body, 18-24px headings)
+- [ ] [T139] [P] [US3] Format filename as "ChangeOrder_[ClientName]_[YYYY-MM-DD].pdf"
+- [ ] [T140] [P] [US3] Trigger browser download with jsPDF.save()
+- [ ] [T141] [P] [US3] Measure PDF generation time with performance.now() (log if >3s)
+- [ ] [T142] [P] [US3] Create `tests/lib/change-order/PDFGenerator.test.js`
+- [ ] [T143] [P] [US3] Write test: generatePDF() creates PDF with all 7 sections (mock jsPDF)
+- [ ] [T144] [P] [US3] Write test: generatePDF() formats filename correctly
+
+### Clipboard Export Service
+
+- [ ] [T145] [P] [US3] Create `src/lib/change-order/ClipboardExport.js` with copyToClipboard() method
+- [ ] [T146] [P] [US3] Implement ClipboardExport.copyToClipboard(changeOrder) to copy formatted text
+- [ ] [T147] [P] [US3] Format change order as rich text (preserve sections, headings, bullets)
+- [ ] [T148] [P] [US3] Use navigator.clipboard.writeText() API
+- [ ] [T149] [P] [US3] Measure clipboard write time with performance.now() (log if >500ms)
+- [ ] [T150] [P] [US3] Handle clipboard permission denied error (show manual selection fallback)
+- [ ] [T151] [P] [US3] Create `tests/lib/change-order/ClipboardExport.test.js`
+- [ ] [T152] [P] [US3] Write test: copyToClipboard() formats text correctly
+- [ ] [T153] [P] [US3] Write test: copyToClipboard() handles permission denied gracefully
+
+### Text Export Service
+
+- [ ] [T154] [P] [US3] Create `src/lib/change-order/TextExport.js` with exportAsText() method
+- [ ] [T155] [P] [US3] Implement TextExport.exportAsText(changeOrder) to create markdown-compatible plain text
+- [ ] [T156] [P] [US3] Format with markdown headers (#, ##) and lists (-)
+- [ ] [T157] [P] [US3] Copy to clipboard using navigator.clipboard.writeText()
+- [ ] [T158] [P] [US3] Create `tests/lib/change-order/TextExport.test.js`
+- [ ] [T159] [P] [US3] Write test: exportAsText() creates markdown-compatible format
+
+### Export Service Orchestrator
+
+- [ ] [T160] [US3] Create `src/lib/change-order/ExportService.js` to orchestrate all export methods
+- [ ] [T161] [US3] Implement ExportService.export(changeOrder, method) with method: "pdf" | "clipboard" | "text"
+- [ ] [T162] [US3] Route to appropriate export service based on method
+- [ ] [T163] [US3] Update ChangeOrder.status to "exported" after successful export
+- [ ] [T164] [US3] Save exportedAt timestamp and exportFormat to ChangeOrder
+- [ ] [T165] [US3] Add entry to ExportHistory (optional, Phase 2)
+- [ ] [T166] [US3] Return success/error result
+- [ ] [T167] [US3] Create `tests/lib/change-order/ExportService.test.js`
+- [ ] [T168] [US3] Write test: export() routes to correct service based on method
+
+### Export Controls UI
+
+- [ ] [T169] [US3] Create `src/popup/change-order/ExportControls.js` component
+- [ ] [T170] [US3] Add "Copy to Clipboard" button with click handler
+- [ ] [T171] [US3] Add "Export as PDF" button with click handler
+- [ ] [T172] [US3] Add "Export as Text" button with click handler
+- [ ] [T173] [US3] Show success notification after successful export ("Copied! Ready to paste")
+- [ ] [T174] [US3] Show error notification if export fails with fallback suggestion
+- [ ] [T175] [US3] Disable buttons during export (loading state)
+- [ ] [T176] [US3] Re-enable buttons after export completes or fails
+
+### Graceful Degradation
+
+- [ ] [T177] [US3] Implement PDF failure fallback: Show "Export as Text" button if PDF fails
+- [ ] [T178] [US3] Implement clipboard failure fallback: Show manual text selection UI
+- [ ] [T179] [US3] Log all export errors to console with error context
+
+**Checkpoint**: All 3 export methods work (PDF <3s, clipboard <500ms, text instant), error handling with fallbacks
+
+---
+
+## Phase 6: Auto-Export Feature (US3 Enhancement)
+
+**Duration**: 4-5 hours
+**Parallelization**: Timer logic and UI can be developed separately
+
+### Auto-Export Timer Logic
+
+- [ ] [T180] [P] [US3] Create `src/lib/change-order/AutoExportTimer.js` with start(), cancel() methods
+- [ ] [T181] [P] [US3] Implement AutoExportTimer.start(callback, delay) to trigger after delay seconds
+- [ ] [T182] [P] [US3] Implement debouncing: Reset timer if user edits before countdown completes
+- [ ] [T183] [P] [US3] Implement AutoExportTimer.cancel() to stop countdown
+- [ ] [T184] [P] [US3] Emit countdown events for UI (3... 2... 1...)
+- [ ] [T185] [P] [US3] Create `tests/lib/change-order/AutoExportTimer.test.js`
+- [ ] [T186] [P] [US3] Write test: start() triggers callback after delay
+- [ ] [T187] [P] [US3] Write test: cancel() stops countdown
+- [ ] [T188] [P] [US3] Write test: debouncing resets timer on new edit
+
+### Auto-Export Integration
+
+- [ ] [T189] [US3] Update ChangeOrderView to start auto-export timer after last field edit
+- [ ] [T190] [US3] Load auto-export settings (enabled, default method, delay) from SettingsStorage
+- [ ] [T191] [US3] Skip auto-export if autoExportEnabled is false
+- [ ] [T192] [US3] Call ExportService.export() with defaultExportMethod when timer completes
+- [ ] [T193] [US3] Handle auto-export failure: Show error notification + manual buttons
+- [ ] [T194] [US3] Don't disable auto-export setting if export fails (could be temporary)
+
+### Auto-Export UI
+
+- [ ] [T195] [P] [US3] Create countdown indicator component (toast notification)
+- [ ] [T196] [P] [US3] Show countdown progress bar (3s → 0s)
+- [ ] [T197] [P] [US3] Display message: "Auto-exporting in 3... 2... 1..."
+- [ ] [T198] [P] [US3] Allow user to cancel: Click anywhere to stop timer
+- [ ] [T199] [P] [US3] Show "Auto-export cancelled" notification if user clicks
+- [ ] [T200] [P] [US3] Show success notification after auto-export completes
+- [ ] [T201] [P] [US3] Show error notification with manual buttons if auto-export fails
+
+**Checkpoint**: Auto-export triggers after 3 seconds, countdown visible, user can cancel, failures fall back to manual buttons
+
+---
+
+## Phase 7: Draft Persistence & History (Cross-Cutting)
+
+**Duration**: 3-4 hours
+**Parallelization**: Draft and history logic are independent
+
+### Draft Persistence
+
+- [ ] [T202] [P] Create `src/lib/change-order/DraftStorage.js` with save(), load(), delete() methods
+- [ ] [T203] [P] Implement DraftStorage.save(changeOrder) to save to key `scopeshield_draft_changeorder_v1`
+- [ ] [T204] [P] Implement DraftStorage.load() to retrieve saved draft
+- [ ] [T205] [P] Implement DraftStorage.delete() to remove draft after export
+- [ ] [T206] [P] Save draft when popup closes (listen to window.onbeforeunload)
+- [ ] [T207] [P] Detect draft on popup open: Show "Resume Draft" button if draft exists
+- [ ] [T208] [P] Load draft into ChangeOrderView when "Resume Draft" clicked
+- [ ] [T209] [P] Delete draft after successful export
+- [ ] [T210] [P] Implement auto-deletion for drafts older than 7 days
+- [ ] [T211] [P] Create `tests/lib/change-order/DraftStorage.test.js`
+- [ ] [T212] [P] Write test: save() persists draft to storage
+- [ ] [T213] [P] Write test: auto-delete removes drafts older than 7 days
+
+### History Management
+
+- [ ] [T214] [P] Update ChangeOrderHistory to enforce 50-order limit per client
+- [ ] [T215] [P] Implement FIFO deletion: Remove oldest order when saving 51st
+- [ ] [T216] [P] Add index by clientEmail for fast queries
+- [ ] [T217] [P] Create history view UI (chronological list, no search for MVP)
+- [ ] [T218] [P] Show last 50 change orders in history view
+- [ ] [T219] [P] Add "View History" link in popup
+- [ ] [T220] [P] Allow clicking history item to view details (read-only)
+
+**Checkpoint**: Drafts save on popup close, resume on reopen, auto-delete after 7 days; History limited to 50 per client
+
+---
+
+## Phase 8: Edge Cases & Polish (All User Stories)
+
+**Duration**: 3-4 hours
+**Parallelization**: All edge case handlers are independent
+
+### Edge Case: Long Detected Text
+
+- [ ] [T221] [P] [US1] Truncate requestedChanges to 200 chars if >500 in ChangeOrderService.generate()
+- [ ] [T222] [P] [US1] Add "..." suffix to truncated text
+- [ ] [T223] [P] [US1] Create expandable "Details" section in ChangeOrderView for full text
+- [ ] [T224] [P] [US1] Write test: generate() truncates long text correctly
+
+### Edge Case: Missing Client Name
+
+- [ ] [T225] [P] [US1] Use "Client" as placeholder if clientName can't be extracted
+- [ ] [T226] [P] [US1] Highlight clientName field with yellow background to prompt edit
+- [ ] [T227] [P] [US1] Show tooltip: "Please edit client name before exporting"
+- [ ] [T228] [P] [US1] Remember edited client name in history for future reuse
+- [ ] [T229] [P] [US1] Write test: generate() uses "Client" placeholder if name missing
+
+### Edge Case: Missing Freelancer Name
+
+- [ ] [T230] [P] [US1] Detect empty freelancerName in SettingsStorage.get()
+- [ ] [T231] [P] [US1] Show prompt modal: "Enter your name to continue"
+- [ ] [T232] [P] [US1] Save entered name to SettingsStorage
+- [ ] [T233] [P] [US1] Pre-fill freelancerName in all future change orders
+- [ ] [T234] [P] [US1] Write test: FirstRunDetector prompts if freelancerName empty
+
+### Edge Case: First-Time Client
+
+- [ ] [T235] [P] [US1] Leave originalScope field empty if no history for client
+- [ ] [T236] [P] [US1] Show placeholder text: "Enter original project scope"
+- [ ] [T237] [P] [US1] Save entered scope to history for future pre-fill
+- [ ] [T238] [P] [US1] Write test: getLastForClient() returns null for new client
+
+### Edge Case: Auto-Export Failure
+
+- [ ] [T239] [P] [US3] Catch errors in AutoExportTimer callback
+- [ ] [T240] [P] [US3] Show error notification: "Auto-export failed. Please export manually."
+- [ ] [T241] [P] [US3] Display manual export buttons (Copy, PDF, Text)
+- [ ] [T242] [P] [US3] Don't disable auto-export setting (failure could be temporary)
+- [ ] [T243] [P] [US3] Log error to console for debugging
+- [ ] [T244] [P] [US3] Write test: AutoExportTimer handles callback errors gracefully
+
+### Edge Case: PDF Generation Failure
+
+- [ ] [T245] [P] [US3] Catch jsPDF errors in PDFGenerator.generatePDF()
+- [ ] [T246] [P] [US3] Show error notification: "PDF export failed. Use 'Export as Text' instead."
+- [ ] [T247] [P] [US3] Highlight "Export as Text" button as fallback
+- [ ] [T248] [P] [US3] Log error to console with jsPDF error details
+- [ ] [T249] [P] [US3] Write test: PDFGenerator handles jsPDF errors
+
+### Edge Case: Clipboard Permission Denied
+
+- [ ] [T250] [P] [US3] Catch clipboard permission errors in ClipboardExport
+- [ ] [T251] [P] [US3] Show error notification: "Clipboard access denied. Please select and copy manually."
+- [ ] [T252] [P] [US3] Display change order text with "Select All" button
+- [ ] [T253] [P] [US3] Auto-select text when "Select All" clicked
+- [ ] [T254] [P] [US3] Write test: ClipboardExport handles permission denied
+
+### Edge Case: Storage Quota Exceeded
+
+- [ ] [T255] [P] Add storage quota check in ChangeOrderHistory.save()
+- [ ] [T256] [P] Show error notification: "Storage full. Export change order history to free space."
+- [ ] [T257] [P] Offer CSV export button to download history
+- [ ] [T258] [P] Implement CSV export in ChangeOrderHistory.exportToCSV()
+- [ ] [T259] [P] Delete old change orders after CSV export confirmation
+- [ ] [T260] [P] Write test: ChangeOrderHistory handles quota exceeded
+
+### Manual Change Order Creation
+
+- [ ] [T261] [P] [US1] Add "Manual Change Order" button to popup when no detections exist
+- [ ] [T262] [P] [US1] Create blank ChangeOrder with empty fields
+- [ ] [T263] [P] [US1] Make all fields editable (no pre-fill)
+- [ ] [T264] [P] [US1] Use "001" as changeOrderNumber for manual orders
+- [ ] [T265] [P] [US1] Write test: Manual creation works without detection events
+
+### Inline Field Editing
+
+- [ ] [T266] [P] [US4] Make costEstimate field editable on click (contenteditable)
+- [ ] [T267] [P] [US4] Make revisedTimeline field editable on click
+- [ ] [T268] [P] [US4] Make paymentTerms field editable on click
+- [ ] [T269] [P] [US4] Make additionalNotes field editable on click
+- [ ] [T270] [P] [US4] Make originalScope field editable on click
+- [ ] [T271] [P] [US4] Persist changes on blur (save to ChangeOrder instance)
+- [ ] [T272] [P] [US4] Sanitize inputs before saving (use Sanitizer.sanitizeText())
+- [ ] [T273] [P] [US4] Reset auto-export timer on each edit (debounce)
+- [ ] [T274] [P] [US4] Write test: Inline editing updates ChangeOrder fields
+
+### Loading States
+
+- [ ] [T275] [P] [US1] Show loading spinner during change order generation
+- [ ] [T276] [P] [US3] Show loading spinner during PDF export
+- [ ] [T277] [P] [US3] Disable export buttons while exporting
+- [ ] [T278] [P] [US3] Re-enable buttons after export completes
+
+### Keyboard Shortcuts (Optional)
+
+- [ ] [T279] [P] Add Ctrl+Enter keyboard shortcut to trigger default export
+- [ ] [T280] [P] Add Esc keyboard shortcut to cancel auto-export countdown
+- [ ] [T281] [P] Add Tab navigation for editable fields
+
+**Checkpoint**: All 9 edge cases handled, manual creation works, inline editing works, loading states improve UX
+
+---
+
+## Phase 9: Testing & Validation (Quality Gates)
+
+**Duration**: 4-5 hours
+**Parallelization**: Different test types can run in parallel
+
+### Unit Tests
+
+- [ ] [T282] [P] Run all unit tests: `npm test`
+- [ ] [T283] [P] Verify 80%+ coverage for lib/ modules (business logic)
+- [ ] [T284] [P] Fix failing tests if any
+- [ ] [T285] [P] Add missing tests for uncovered code paths
+
+### Integration Tests
+
+- [ ] [T286] [P] Create `tests/integration/change-order-flow.test.js`
+- [ ] [T287] [P] Write test: Full flow - detect scope creep → generate → export PDF
+- [ ] [T288] [P] Write test: Edit fields → verify changes persist → export
+- [ ] [T289] [P] Write test: First-time user → prompt for name → save to settings
+- [ ] [T290] [P] Write test: Repeat user → scope pre-fills from history
+- [ ] [T291] [P] Write test: Auto-export → countdown → triggers default export
+- [ ] [T292] [P] Write test: Auto-export failure → manual buttons appear
+- [ ] [T293] [P] Run integration tests: `npm test tests/integration/`
+
+### Performance Testing
+
+- [ ] [T294] [P] Measure generation time (SC-001): Should be <5s (p95)
+- [ ] [T295] [P] Measure clipboard time (SC-002): Should be <500ms (p95)
+- [ ] [T296] [P] Measure PDF export time (SC-003): Should be <3s (p95)
+- [ ] [T297] [P] Run performance tests 10 times, calculate p95
+- [ ] [T298] [P] Log performance results to console
+- [ ] [T299] [P] Optimize if any metric exceeds threshold
+
+### Bundle Size Validation
+
+- [ ] [T300] [P] Build production bundle: `npm run build`
+- [ ] [T301] [P] Measure total bundle size: `ls -lh dist/*.js`
+- [ ] [T302] [P] Verify main bundle <600KB (SC-006)
+- [ ] [T303] [P] Verify jsPDF chunk is lazy-loaded (not in main bundle)
+- [ ] [T304] [P] Optimize if bundle exceeds 600KB (tree-shaking, compression)
+
+### Readability Testing
+
+- [ ] [T305] [P] Generate 5 sample change orders
+- [ ] [T306] [P] Calculate Flesch Reading Ease score for each (SC-005)
+- [ ] [T307] [P] Verify average score ≥60 (college level)
+- [ ] [T308] [P] Simplify language if score <60 (remove jargon, shorter sentences)
+
+### Manual Testing
+
+- [ ] [T309] Test: Generate change order from detection → Verify <5s, all fields pre-filled
+- [ ] [T310] Test: Copy to clipboard → Verify <500ms, paste into email works
+- [ ] [T311] Test: Export as PDF → Verify <3s, PDF renders correctly, filename correct
+- [ ] [T312] Test: Export as Text → Verify markdown-compatible, paste into Slack works
+- [ ] [T313] Test: Pricing calculator → Verify calculation accurate ($150 × 8 = $1,200)
+- [ ] [T314] Test: Settings page → Verify all fields save, validation works
+- [ ] [T315] Test: Auto-export → Verify countdown (3s), cancellation works, success notification
+- [ ] [T316] Test: Draft resume → Close popup mid-edit → Reopen → Verify draft restores
+- [ ] [T317] Test: Scope pre-fill → Generate 2nd order for same client → Verify scope pre-filled
+- [ ] [T318] Test: Long text → Verify truncation to 200 chars + "..."
+- [ ] [T319] Test: Missing client name → Verify "Client" placeholder, prompt to edit
+- [ ] [T320] Test: First-time client → Verify empty scope, prompt to enter
+- [ ] [T321] Test: Dark mode → Verify all UI readable in dark theme
+- [ ] [T322] Test: Chrome DevTools Console → Verify no errors during normal operation
+- [ ] [T323] Test: Network tab → Verify zero outbound requests (privacy check)
+
+### User Testing
+
+- [ ] [T324] Recruit 5 freelancers for user testing
+- [ ] [T325] Task: "Generate and export a change order in under 2 minutes"
+- [ ] [T326] Observe user workflow, note friction points
+- [ ] [T327] Measure completion time for each user
+- [ ] [T328] Calculate success rate: Should be 80%+ (SC-007)
+- [ ] [T329] Collect qualitative feedback (what was confusing, what worked well)
+- [ ] [T330] Fix critical usability issues discovered
+- [ ] [T331] Re-test with 2 users to verify fixes work
+
+### Bug Fixes
+
+- [ ] [T332] Create bug tracker spreadsheet (ID, description, severity, status)
+- [ ] [T333] Log all bugs discovered during testing
+- [ ] [T334] Prioritize bugs: CRITICAL (blocks export), HIGH (poor UX), MEDIUM (edge case), LOW (nice-to-have)
+- [ ] [T335] Fix all CRITICAL bugs before proceeding
+- [ ] [T336] Fix all HIGH bugs before proceeding
+- [ ] [T337] Fix MEDIUM bugs if time allows (or defer to Phase 2)
+- [ ] [T338] Defer LOW bugs to Phase 2 backlog
+
+### Final Validation
+
+- [ ] [T339] Re-run all tests after bug fixes: `npm test`
+- [ ] [T340] Re-measure performance metrics (SC-001, SC-002, SC-003)
+- [ ] [T341] Re-measure bundle size (SC-006)
+- [ ] [T342] Re-validate Constitution Check (all 8 principles still PASS)
+
+**Checkpoint**: All tests pass, performance metrics meet thresholds (<5s, <3s, <500ms), bundle <600KB, user testing 80%+ success
+
+---
+
+## Dependencies & Execution Order
+
+### Critical Path (Must Be Sequential)
+
+```
+T001-T030 (Setup) → BLOCKS ALL
+    ↓
+T031-T059 (Settings) → BLOCKS US4 calculator (needs hourly rate storage)
+    ↓
+T060-T115 (Generation) → BLOCKS US1, US2, US3, US4 (core functionality)
+    ↓
+T116-T133 (Calculator) → Enhances US4 (depends on Settings + Generation)
+    ↓
+T134-T179 (Export) → Completes US3 (depends on Generation)
+    ↓
+T180-T201 (Auto-Export) → Enhances US3 (depends on Export)
+    ↓
+T202-T220 (Draft/History) → Cross-cutting (depends on Generation)
+    ↓
+T221-T281 (Edge Cases) → Polish (depends on all features)
+    ↓
+T282-T342 (Testing) → Validation (depends on all implementation)
+```
+
+### Parallel Opportunities
+
+**Phase 1: Setup** - Sequential (foundational)
+
+**Phase 2: Settings** - Limited parallelization:
+- T031-T039 (Storage) BEFORE T040-T059 (UI)
+- T040-T051 (UI files) can be created in parallel
+
+**Phase 3: Generation** - Moderate parallelization:
+- T060-T068 (Template) [P] parallel with T069-T077 (TemplateEngine)
+- T078-T092 (Service), T093-T101 (History), T102-T108 (Numbering) can overlap after Setup
+- T109-T115 (UI) requires T060-T108 complete
+
+**Phase 4: Calculator** - High parallelization:
+- T116-T122 (Logic) [P] parallel with T123-T133 (UI)
+
+**Phase 5: Export** - High parallelization:
+- T134-T144 (PDF) [P] parallel with T145-T153 (Clipboard) [P] parallel with T154-T159 (Text)
+- T160-T168 (Orchestrator) requires above complete
+- T169-T179 (UI) can start after T160
+
+**Phase 6: Auto-Export** - High parallelization:
+- T180-T188 (Timer) [P] parallel with T195-T201 (UI)
+- T189-T194 (Integration) requires Timer complete
+
+**Phase 7: Draft/History** - High parallelization:
+- T202-T213 (Draft) [P] parallel with T214-T220 (History)
+
+**Phase 8: Edge Cases** - High parallelization:
+- All edge case handlers [P] independent (T221-T281)
+
+**Phase 9: Testing** - Moderate parallelization:
+- Unit tests [P], Integration tests [P], Performance tests [P] can run in parallel
+- Manual testing sequential
+- Bug fixes sequential (depends on test results)
+
+### Estimated Parallel Efficiency
+
+**Without Parallelization**: ~60 hours (sequential execution)
+**With Parallelization**: ~35-45 hours (40-50% time savings)
+
+**Maximum Parallelization**: Phases 4, 5, 7, 8 (up to 3-4 tasks simultaneously)
+
+---
+
+## MVP Scope (Phase 1 Launch)
+
+**Must-Have** (blocks launch):
+- T001-T030: Setup & Foundation ✅
+- T031-T059: Settings Page ✅
+- T060-T115: Template Engine & Generation ✅
+- T134-T179: Export Functionality (PDF, Clipboard, Text) ✅
+- T221-T274: Core Edge Cases ✅
+- T282-T342: Testing & Validation ✅
+
+**Should-Have** (high value, include if time allows):
+- T116-T133: Pricing Calculator ✅
+- T180-T201: Auto-Export ✅
+- T202-T220: Draft Persistence & History ✅
+
+**Could-Have** (nice-to-have, defer if tight deadline):
+- T275-T278: Loading States
+- T279-T281: Keyboard Shortcuts
+
+**Total MVP Tasks**: 320+ tasks (can defer T275-T281 to Phase 2)
+
+---
+
+## Post-Implementation Checklist
+
+### Before Creating PR
+
+- [ ] All tests pass (`npm test`)
+- [ ] Bundle size <600KB (`npm run build`)
+- [ ] Performance metrics validated (SC-001: <5s, SC-002: <500ms, SC-003: <3s)
+- [ ] Manual testing complete (all edge cases tested)
+- [ ] User testing 80%+ success rate
+- [ ] No console errors in production build
+- [ ] Constitution Check re-validated (all 8 principles PASS)
+
+### PR Description
+
+Include:
+- Summary of implementation (14 FRs, 4 user stories, 9 edge cases)
+- Performance metrics (generation time, export time, bundle size)
+- Screenshots (change order view, settings page, calculator widget, export options)
+- Test coverage report (80%+ for business logic)
+- User testing results (5 users, 80%+ success rate, completion times)
+- Known issues (if any, with workarounds)
+- Phase 2 backlog items (deferred features)
+
+---
+
+**Tasks Generated**: 2025-11-11
+**Ready for Implementation**: ✅ YES
+**Next Command**: `/speckit.implement` (or implement manually following task order)

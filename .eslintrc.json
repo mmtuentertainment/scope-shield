@@ -72,7 +72,30 @@
         "name": "XMLHttpRequest",
         "message": "Use fetch() instead of XMLHttpRequest for async operations"
       }
-    ]
+    ],
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "AssignmentExpression[left.property.name='innerHTML']",
+        "message": "Avoid innerHTML with user content - use textContent or createElement for security"
+      },
+      {
+        "selector": "AssignmentExpression[left.property.name='outerHTML']",
+        "message": "Avoid outerHTML with user content - use DOM APIs for security"
+      },
+      {
+        "selector": "CallExpression[callee.property.name='insertAdjacentHTML']",
+        "message": "Avoid insertAdjacentHTML with user content - use DOM APIs for security"
+      }
+    ],
+    "no-floating-promises": "off",
+    "require-await": "warn",
+    "no-return-await": "warn",
+    "eqeqeq": ["error", "always"],
+    "curly": ["error", "all"],
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error"
   },
   "overrides": [
     {

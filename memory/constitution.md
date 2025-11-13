@@ -53,15 +53,18 @@ System MUST NOT transmit any user data (scope definitions, detected messages, cl
 ### II. Simplicity-First for MVP
 
 System MUST use deterministic heuristic-based detection (keyword matching, phrase patterns) for MVP.
+System MUST maintain modular architecture with files ≤250 lines to enable rapid iteration and comprehension.
 System MUST NOT implement machine learning, AI models, or natural language processing until market validation achieved (100 active users for 30 consecutive days with 70%+ detection accuracy).
 
-**Rationale**: AI/ML adds massive complexity: model training infrastructure, TensorFlow/PyTorch dependencies (100MB+ bundle size), prompt engineering, API costs, accuracy tuning, and maintenance burden. Keyword heuristics can achieve 70%+ accuracy (validated by competitor research) with <10KB of JavaScript. Ship fast, validate market demand, iterate based on real user feedback.
+**Rationale**: AI/ML adds massive complexity: model training infrastructure, TensorFlow/PyTorch dependencies (100MB+ bundle size), prompt engineering, API costs, accuracy tuning, and maintenance burden. Keyword heuristics can achieve 70%+ accuracy (validated by competitor research) with <10KB of JavaScript. Ship fast, validate market demand, iterate based on real user feedback. Modular architecture (≤250 lines per file) ensures code remains scannable, testable, and maintainable during rapid MVP iteration.
 
 **Test Criteria**:
 - Detection logic uses only string matching and regular expressions
 - Extension bundle size <500KB
 - No ML library dependencies in package.json
 - Detection accuracy ≥70% on test corpus (20 sample messages)
+- All production files ≤250 lines (enforced via extraction patterns in .claude/code-standards.md)
+- All functions ≤75 lines
 
 ### III. Real-Time Performance (NON-NEGOTIABLE)
 

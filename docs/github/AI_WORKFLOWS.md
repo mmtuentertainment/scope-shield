@@ -97,6 +97,7 @@ Run coderabbit and verify all 8 constitutional principles
 
 Every PR is checked for:
 - ✅ Constitutional compliance (8 principles)
+- ✅ Modular architecture (250-line limit, extraction patterns)
 - ✅ Security vulnerabilities
 - ✅ Performance regressions
 - ✅ Gmail integration stability

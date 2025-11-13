@@ -1,0 +1,560 @@
+/**
+ * Change Order Component Styles
+ *
+ * Styling for ChangeOrderView and MultiItemSelector components.
+ */
+
+/* ============================================
+   Change Order View
+   ============================================ */
+
+.change-order-view {
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.change-order-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spinner-rotate 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.change-order-loading p {
+  font-size: 15px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.change-order-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.change-order-error .error-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.change-order-error h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #dc2626;
+  margin: 0 0 12px 0;
+}
+
+.change-order-error p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 24px 0;
+  max-width: 400px;
+}
+
+#change-order-retry-btn {
+  padding: 10px 24px;
+  font-size: 14px;
+}
+
+/* ============================================
+   Multi-Item Selector
+   ============================================ */
+
+.multi-item-selector {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto 24px auto;
+  padding: 20px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.multi-item-selector-header {
+  margin-bottom: 16px;
+}
+
+.multi-item-selector-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.multi-item-selector-header .subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.multi-item-selector-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.multi-item-selector-controls .btn {
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+.multi-item-selector-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.detection-item {
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.detection-item:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.detection-item.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.detection-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px;
+  cursor: pointer;
+  gap: 12px;
+  width: 100%;
+}
+
+.detection-checkbox {
+  margin-top: 4px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.detection-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.detection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.detection-sender {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detection-timestamp {
+  font-size: 12px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.detection-text {
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.5;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.multi-item-selector-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.selection-count {
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.selection-count strong {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .change-order-view {
+    padding: 12px;
+  }
+
+  .multi-item-selector {
+    padding: 16px;
+  }
+
+  .multi-item-selector-header h3 {
+    font-size: 16px;
+  }
+
+  .detection-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .detection-sender {
+    white-space: normal;
+  }
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+  .multi-item-selector {
+    display: none;
+  }
+
+  .change-order-view {
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .change-order-loading,
+  .change-order-error {
+    display: none;
+  }
+}
+
+/* ============================================
+   Button Styles (if not already defined)
+   ============================================ */
+
+.btn {
+  display: inline-block;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: none;
+  color: inherit;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.btn-primary:active {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.btn-text {
+  background: transparent;
+  color: #3b82f6;
+  border-color: transparent;
+}
+
+.btn-text:hover {
+  background: #eff6ff;
+}
+
+.btn-text:active {
+  background: #dbeafe;
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+
+.text-center {
+  text-align: center;
+}
+
+.mb-16 {
+  margin-bottom: 16px;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ============================================
+   Export Controls
+   ============================================ */
+
+.export-controls {
+  width: 100%;
+  max-width: 700px;
+  margin: 24px auto;
+  padding: 20px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.export-controls-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.export-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.export-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.export-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  min-height: 90px;
+}
+
+.export-btn:hover:not(:disabled) {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+}
+
+.export-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(59, 130, 246, 0.15);
+}
+
+.export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+.export-btn .btn-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.export-btn .btn-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  text-align: center;
+}
+
+.export-btn:hover:not(:disabled) .btn-text {
+  color: #3b82f6;
+}
+
+/* Export Notifications */
+.export-notification {
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.export-notification-success {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.export-notification-error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.export-notification-warning {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.export-notification-info {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+/* Responsive Design for Export Controls */
+@media (max-width: 768px) {
+  .export-controls {
+    padding: 16px;
+    margin: 16px auto;
+  }
+
+  .export-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .export-btn {
+    min-height: 80px;
+  }
+
+  .export-btn .btn-icon {
+    font-size: 28px;
+  }
+
+  .export-btn .btn-text {
+    font-size: 13px;
+  }
+}
+
+/* Print Styles for Export Controls */
+@media print {
+  .export-controls {
+    display: none;
+  }
+}
+
+/* Dark Mode Support for Export Controls */
+@media (prefers-color-scheme: dark) {
+  .export-controls {
+    background: #2d2d2d;
+    border-color: #444;
+  }
+
+  .export-title {
+    color: #f3f4f6;
+  }
+
+  .export-btn {
+    background: #374151;
+    border-color: #4b5563;
+  }
+
+  .export-btn .btn-text {
+    color: #e5e7eb;
+  }
+
+  .export-btn:hover:not(:disabled) {
+    background: #1e3a8a;
+    border-color: #3b82f6;
+  }
+
+  .export-btn:hover:not(:disabled) .btn-text {
+    color: #93c5fd;
+  }
+
+  .export-btn:disabled {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .export-notification-success {
+    background: #064e3b;
+    color: #6ee7b7;
+    border-color: #047857;
+  }
+
+  .export-notification-error {
+    background: #7f1d1d;
+    color: #fca5a5;
+    border-color: #dc2626;
+  }
+
+  .export-notification-warning {
+    background: #78350f;
+    color: #fde68a;
+    border-color: #b45309;
+  }
+
+  .export-notification-info {
+    background: #1e3a8a;
+    color: #bfdbfe;
+    border-color: #3b82f6;
+  }
+}
