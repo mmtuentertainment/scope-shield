@@ -71,11 +71,11 @@ export function extractRequestedChanges(detectionEvents) {
       continue;
     }
 
-    // Bug #4 fix: Pass high maxLength to sanitizer so service controls display truncation
-    let text = sanitizeText(event.detectedText, 10000).trim();
+    // Sanitize with max length to prevent excessive processing
+    let text = sanitizeText(event.detectedText, MAX_DETECTED_TEXT_LENGTH).trim();
 
-    // Truncate if too long
-    if (text.length > MAX_DETECTED_TEXT_LENGTH) {
+    // Truncate for display if still too long
+    if (text.length > TRUNCATED_TEXT_LENGTH) {
       text = text.substring(0, TRUNCATED_TEXT_LENGTH) + '...';
       logInfo('ChangeOrderDataExtractor.extractRequestedChanges: Text truncated', {
         originalLength: event.detectedText.length,
