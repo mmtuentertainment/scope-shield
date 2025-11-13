@@ -35,7 +35,10 @@ let settingsLoaded = false;
 let cachedSettings = null;
 
 /**
- * Initialize popup
+ * Initialize the popup UI and application state.
+ *
+ * Performs first-run flow (shows the welcome modal when appropriate), loads and caches settings,
+ * loads detection events, attaches event listeners, initializes tab navigation, and updates the extension badge.
  */
 async function initialize() {
   console.log('[ScopeShield] Popup initializing...');
@@ -335,9 +338,10 @@ async function handleClearAll() {
 }
 
 /**
- * Build change order report text
- * @param {Array} unacknowledged - Unacknowledged events
- * @returns {string} Report text
+ * Generate a plain-text change order report grouping detection events by sender.
+ *
+ * @param {Array} unacknowledged - Array of detection event objects to include. Each object is expected to contain fields used in the report such as `detectedText`, `triggerWord`, `triggerWeight`, `timestamp`, and either `senderName` or `sender`.
+ * @returns {string} The formatted report text with a header, generation timestamp, total item count, and per-sender sections listing each detection's text, trigger (with confidence as `weight/10`), and date.
  */
 function buildChangeOrderReport(unacknowledged) {
   // Group by sender
@@ -370,9 +374,12 @@ function buildChangeOrderReport(unacknowledged) {
 }
 
 /**
- * Acknowledge multiple events in batch (Bug #2 fix: single transaction prevents race condition)
- * @param {Array} events - Events to acknowledge
- * @returns {Promise<void>}
+ * Mark multiple detection events as acknowledged using a single batch update.
+ *
+ * Performs a single batch update for the provided events and sets each event object's
+ * `acknowledged` property to `true`.
+ * @param {Array<Object>} events - Array of detection event objects whose `id` values will be acknowledged.
+ * @returns {Promise<void>} Nothing.
  */
 async function acknowledgeMultipleEvents(events) {
   // Use batch update to prevent race condition
@@ -392,8 +399,13 @@ async function acknowledgeMultipleEvents(events) {
 }
 
 /**
- * Generate change order using ChangeOrderService
- * T118-T119: Integrate ChangeOrderService with popup
+ * Generate a change order from current unacknowledged detection events and render the result.
+ *
+ * If there are no unacknowledged detections, the function shows a toast and exits.
+ * When two or more unacknowledged detections exist, the user is prompted with a multi-item selector to choose which detections to include.
+ * Selected detections are converted to the format expected by ChangeOrderService, submitted to generate a change order, and rendered with ChangeOrderView.
+ * After successful generation the chosen detections are marked acknowledged and the UI (summary, list, and extension badge) is updated.
+ * User-facing progress and errors are communicated via toasts; errors are caught and displayed rather than thrown.
  */
 async function generateReport() {
   const unacknowledged = detectionEvents.filter(e => !e.acknowledged);
@@ -478,8 +490,9 @@ async function generateReport() {
 }
 
 /**
- * Show selection dialog for multi-item selection
- * Returns true if user wants to proceed
+ * Present a modal that lets the user select detections to include in a change order.
+ * Renders a multi-item selector with Cancel and Generate controls and closes when the overlay is dismissed.
+ * @returns {boolean} `true` if the user confirmed generation, `false` otherwise.
  */
 async function showSelectionDialog() {
   return new Promise((resolve) => {
@@ -599,15 +612,19 @@ function showToast(message) {
 }
 
 /**
- * Show error message
- * @param {string} message - Error message
+ * Display an error toast prefixed with "Error:".
+ * @param {string} message - The error message text to display.
  */
 function showError(message) {
   showToast(`Error: ${message}`);
 }
 
 /**
- * T060: Load and cache settings
+ * Load settings from persistent storage into the in-memory cache.
+ *
+ * Fetches settings via SettingsStorage.get() and assigns the result to the module-level
+ * `cachedSettings` variable. If loading fails, `cachedSettings` is left unchanged and the
+ * error is logged.
  */
 async function loadCachedSettings() {
   try {
@@ -619,8 +636,8 @@ async function loadCachedSettings() {
 }
 
 /**
- * T060: Get cached settings (or load if not cached)
- * @returns {Promise<FreelancerSettings>}
+ * Retrieve the cached settings, loading and caching them if not already present.
+ * @returns {Promise<FreelancerSettings>} The cached settings object.
  */
 async function getCachedSettings() {
   if (!cachedSettings) {
@@ -630,7 +647,9 @@ async function getCachedSettings() {
 }
 
 /**
- * T058: Set up tab navigation
+ * Initialize tabbed navigation and attach click handlers that switch the active tab button and corresponding content pane.
+ *
+ * When the Settings tab is activated for the first time, the settings view is loaded lazily.
  */
 function setupTabNavigation() {
   const tabButtons = document.querySelectorAll('.tab-button');
@@ -660,7 +679,12 @@ function setupTabNavigation() {
 }
 
 /**
- * T058: Load Settings View
+ * Load and render the Settings view into the settings tab and wire its UI events.
+ *
+ * If the Settings view has not been created, this initializes a SettingsView, renders
+ * its element into the '#settings-tab' container, attaches listeners for
+ * 'settings-saved' and 'settings-error' events, marks settings as loaded, and
+ * refreshes cached settings when a save occurs.
  */
 async function loadSettingsView() {
   try {

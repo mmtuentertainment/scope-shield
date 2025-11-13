@@ -8,10 +8,10 @@
  */
 
 /**
- * Validate detection event structure
+ * Validate the structure of a detection event object.
  *
- * @param {Object} detectionEvent - Detection event to validate
- * @returns {{valid: boolean, errors: string[]}}
+ * @param {Object} detectionEvent - Object to validate for required fields.
+ * @returns {{valid: boolean, errors: string[]}} Validation result where `valid` is true if required fields exist with correct types, `errors` is an array of descriptive error messages. 
  */
 export function validateDetectionEvent(detectionEvent) {
   const errors = [];

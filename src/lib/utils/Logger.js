@@ -1,8 +1,11 @@
 // T023: Logging utilities with environment detection
 
 /**
- * Check if running in development mode
- * @returns {boolean} True if development
+ * Determine whether the code is running in development mode.
+ *
+ * Checks the Chrome extension manifest's `update_url` to infer production vs development;
+ * if the manifest is unavailable or an error occurs, defaults to development mode.
+ * @returns {boolean} `true` if running in development mode, `false` otherwise.
  */
 function isDevelopment() {
   // In Chrome Extension, development mode has no update_url in manifest
@@ -19,9 +22,9 @@ function isDevelopment() {
 }
 
 /**
- * Log informational message (development only)
- * @param {string} message - Message to log
- * @param {*} data - Optional data to log
+ * Log an informational message when running in development mode.
+ * @param {string} message - The message to log.
+ * @param {*} [data] - Optional additional data to include with the message.
  */
 export function logInfo(message, data) {
   if (isDevelopment()) {
@@ -34,9 +37,11 @@ export function logInfo(message, data) {
 }
 
 /**
- * Log error message (always logged)
- * @param {string} message - Error message
- * @param {Error|*} error - Error object or details
+ * Log an error with a standardized "[ScopeShield ERROR]" prefix and include stack information when available.
+ *
+ * If `error` is an `Error` instance, `error.message` and `error.stack` are included; otherwise the `error` value is logged as provided.
+ * @param {string} message - Human-readable context message describing the error.
+ * @param {Error|*} error - An `Error` instance or any value containing error details.
  */
 export function logError(message, error) {
   if (error instanceof Error) {
@@ -47,9 +52,13 @@ export function logError(message, error) {
 }
 
 /**
- * Log performance metric (development only)
- * @param {string} operation - Operation name
- * @param {number} duration - Duration in milliseconds
+ * Log a performance metric when running in development mode.
+ *
+ * The message is written to the console with a "[ScopeShield PERF]" prefix and includes
+ * the operation name and the duration formatted to two decimal places followed by "ms".
+ *
+ * @param {string} operation - Name of the operation being measured.
+ * @param {number} duration - Elapsed time in milliseconds.
  */
 export function logPerformance(operation, duration) {
   if (isDevelopment()) {
@@ -58,9 +67,9 @@ export function logPerformance(operation, duration) {
 }
 
 /**
- * Log warning message (always logged)
- * @param {string} message - Warning message
- * @param {*} data - Optional data
+ * Log a warning message with an optional data payload.
+ * @param {string} message - Warning text to log.
+ * @param {*} [data] - Optional value to include alongside the warning.
  */
 export function logWarning(message, data) {
   if (data !== undefined) {

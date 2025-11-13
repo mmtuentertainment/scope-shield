@@ -10,13 +10,13 @@
 import { logInfo } from '../../lib/utils/Logger.js';
 
 /**
- * Show notification message
+ * Display a toast-style notification in a DOM element and schedule it to auto-hide.
  *
- * @param {string} elementId - ID of notification element
- * @param {string} message - Notification message
- * @param {string} type - Notification type ('success', 'error', 'warning', 'info')
- * @param {number} [duration=5000] - Auto-hide duration in milliseconds
- * @returns {number} Timeout ID for cleanup
+ * @param {string} elementId - ID of the notification DOM element.
+ * @param {string} message - Text to display inside the notification.
+ * @param {string} type - Notification style: 'success', 'error', 'warning', or 'info'.
+ * @param {number} [duration=5000] - Auto-hide delay in milliseconds.
+ * @returns {?number} The timeout ID returned by setTimeout, or `null` if the element was not found.
  */
 export function showNotification(elementId, message, type = 'info', duration = 5000) {
   const notification = document.getElementById(elementId);
@@ -42,10 +42,11 @@ export function showNotification(elementId, message, type = 'info', duration = 5
 }
 
 /**
- * Hide notification
+ * Hide the notification element identified by the given ID and optionally clear a pending auto-hide timeout.
  *
- * @param {string} elementId - ID of notification element
- * @param {number} [timeoutId] - Optional timeout ID to clear
+ * If the element is not found, no DOM change is performed; the provided timeoutId is still cleared when present.
+ * @param {string} elementId - ID of the notification DOM element to hide.
+ * @param {number} [timeoutId] - Optional timeout identifier (from `setTimeout`) to clear.
  */
 export function hideNotification(elementId, timeoutId = null) {
   const notification = document.getElementById(elementId);

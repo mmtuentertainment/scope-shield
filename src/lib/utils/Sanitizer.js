@@ -1,10 +1,12 @@
 // T022: Input sanitization utilities
 
 /**
- * Sanitize text input (remove unsafe characters, limit length)
- * @param {string} input - Text to sanitize
- * @param {number} maxLength - Maximum length (default: 500)
- * @returns {string} Sanitized text
+ * Normalize and sanitize a text input by trimming, truncating, removing angle brackets, and collapsing excessive newlines.
+ *
+ * If `input` is not a string, returns an empty string.
+ * @param {string} input - Text to sanitize.
+ * @param {number} [maxLength=500] - Maximum allowed length; result is truncated to this length.
+ * @returns {string} Sanitized string with `<` and `>` removed and sequences of three or more newlines reduced to two.
  */
 export function sanitizeText(input, maxLength = 500) {
   if (typeof input !== 'string') return '';
@@ -17,11 +19,13 @@ export function sanitizeText(input, maxLength = 500) {
 }
 
 /**
- * Sanitize number input (ensure valid number within range)
- * @param {number|string} input - Number to sanitize
- * @param {number} min - Minimum value (default: 0)
- * @param {number} max - Maximum value (default: 999999)
- * @returns {number} Sanitized number
+ * Normalize a numeric input and clamp it to a specified range.
+ *
+ * Parses the input as a float, returns 0 if parsing fails, and clamps the result to the inclusive [min, max] range.
+ * @param {number|string} input - Value to parse as a number.
+ * @param {number} [min=0] - Minimum allowed value (inclusive).
+ * @param {number} [max=999999] - Maximum allowed value (inclusive).
+ * @returns {number} The parsed and clamped number; `0` if the input cannot be parsed as a number.
  */
 export function sanitizeNumber(input, min = 0, max = 999999) {
   const num = parseFloat(input);
@@ -30,9 +34,9 @@ export function sanitizeNumber(input, min = 0, max = 999999) {
 }
 
 /**
- * Sanitize email address
- * @param {string} email - Email to sanitize
- * @returns {string} Sanitized email (lowercase, trimmed)
+ * Normalize an email address by trimming surrounding whitespace and converting it to lowercase.
+ * @param {string} email - Input email string.
+ * @returns {string} The trimmed, lowercased email; returns an empty string if the input is not a string.
  */
 export function sanitizeEmail(email) {
   if (typeof email !== 'string') return '';
@@ -40,9 +44,10 @@ export function sanitizeEmail(email) {
 }
 
 /**
- * Sanitize currency string (format as $X,XXX.XX)
- * @param {string|number} amount - Amount to sanitize
- * @returns {string} Formatted currency string
+ * Format an input amount as USD currency with no fractional digits.
+ *
+ * @param {string|number} amount - Amount to format; if not a valid number, the function returns "$0".
+ * @returns {string} Formatted USD currency string with no fractional digits (e.g., "$1,000").
  */
 export function sanitizeCurrency(amount) {
   const num = parseFloat(amount);
@@ -57,10 +62,10 @@ export function sanitizeCurrency(amount) {
 }
 
 /**
- * Truncate long text with ellipsis
- * @param {string} text - Text to truncate
- * @param {number} maxLength - Maximum length before truncation
- * @returns {string} Truncated text with "..." suffix
+ * Truncates text and appends an ellipsis when it exceeds the maximum length.
+ * @param {string} text - Input text to evaluate; non-strings produce an empty string.
+ * @param {number} [maxLength=200] - Maximum allowed length before truncation.
+ * @returns {string} The original text if its length is less than or equal to `maxLength`, otherwise the text truncated to `maxLength` characters followed by `...`.
  */
 export function truncateText(text, maxLength = 200) {
   if (typeof text !== 'string') return '';

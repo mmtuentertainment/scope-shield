@@ -91,10 +91,10 @@ export function formatAsText(changeOrder) {
 }
 
 /**
- * Generate filename for text file export
+ * Create a sanitized filename for a change order text export.
  *
- * @param {ChangeOrder} changeOrder - Change order
- * @returns {string} Filename
+ * @param {ChangeOrder} changeOrder - Object containing at least `changeOrderNumber` and optionally `clientName`.
+ * @returns {string} Filename in the format `ChangeOrder_<orderNum>_<clientName>_<YYYY-MM-DD>.txt`, where `orderNum` has any leading `#` removed and `clientName` is sanitized to alphanumeric/underscore characters (defaults to `Client` if missing).
  */
 export function generateTextFilename(changeOrder) {
   const date = new Date().toISOString().split('T')[0];

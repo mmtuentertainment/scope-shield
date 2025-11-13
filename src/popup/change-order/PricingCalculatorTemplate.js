@@ -8,9 +8,9 @@
  */
 
 /**
- * Get widget HTML structure
+ * HTML structure for the pricing calculator widget used in the inline calculator UI.
  *
- * @returns {string} HTML string for pricing calculator widget
+ * @returns {string} A string containing the widget HTML with labeled numeric inputs for hourly rate and estimated hours, a result container (`#calc-result`), and Accept/Cancel action buttons (Accept initially disabled).
  */
 export function getWidgetHTML() {
   return `

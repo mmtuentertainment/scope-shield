@@ -61,11 +61,12 @@ export const DEFAULTS = {
 };
 
 /**
- * Schema migration helper (for future versions)
- * @param {string} fromVersion - Current version
- * @param {string} toVersion - Target version
- * @param {object} data - Data to migrate
- * @returns {object} Migrated data
+ * Migrate stored data from one schema version to another.
+ * Currently a no-op that returns the input unchanged; future versions will perform transformations when migrating between schema versions.
+ * @param {string} fromVersion - Source schema version identifier.
+ * @param {string} toVersion - Target schema version identifier.
+ * @param {object} data - The data object to migrate.
+ * @returns {object} The migrated data object (or the original `data` when no migration is performed).
  */
 export function migrateSchema(fromVersion, toVersion, data) {
   // MVP: No migrations needed yet (all v1)
@@ -74,10 +75,10 @@ export function migrateSchema(fromVersion, toVersion, data) {
 }
 
 /**
- * Validate schema version compatibility
- * @param {string} currentVersion - Schema version from storage
- * @param {string} expectedVersion - Expected schema version
- * @returns {boolean} True if compatible
+ * Check whether a stored schema version matches the expected schema version.
+ * @param {string} currentVersion - Schema version read from storage.
+ * @param {string} expectedVersion - Schema version expected by the code.
+ * @returns {boolean} `true` if the versions match, `false` otherwise.
  */
 export function isSchemaCompatible(currentVersion, expectedVersion) {
   return currentVersion === expectedVersion;

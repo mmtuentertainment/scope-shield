@@ -11,9 +11,11 @@ import { SettingsStorage } from '../../lib/storage/SettingsStorage.js';
 import { logInfo, logError } from '../../lib/utils/Logger.js';
 
 /**
- * Load hourly rate from settings
+ * Retrieve the saved hourly rate from user settings.
  *
- * @returns {Promise<number|null>} Hourly rate from settings, or null if not found
+ * Attempts to read stored settings and returns the saved hourly rate when present and greater than zero.
+ *
+ * @returns {Promise<number|null>} The saved hourly rate when greater than 0, or `null` if no valid rate is stored or on error.
  */
 export async function loadHourlyRate() {
   try {
@@ -35,10 +37,10 @@ export async function loadHourlyRate() {
 }
 
 /**
- * Save hourly rate to settings for future use
+ * Persist the provided hourly rate in user settings for later use.
  *
- * @param {number} hourlyRate - Rate to save
- * @returns {Promise<boolean>} True if saved successfully, false otherwise
+ * @param {number} hourlyRate - Hourly rate to persist.
+ * @returns {boolean} `true` if saved successfully, `false` otherwise.
  */
 export async function saveHourlyRate(hourlyRate) {
   try {

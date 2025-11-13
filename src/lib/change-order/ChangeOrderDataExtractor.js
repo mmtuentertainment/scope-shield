@@ -23,10 +23,13 @@ const MAX_DETECTED_TEXT_LENGTH = 500;
 const TRUNCATED_TEXT_LENGTH = 200;
 
 /**
- * Extract client information from detection event
+ * Derives a sanitized client name and a validated email address from a detection event's sender.
  *
- * @param {Object} detectionEvent - Detection event
- * @returns {{clientName: string, clientEmail: string}}
+ * If the sender name or email is missing or invalid, the function falls back to the placeholders
+ * `Client` for the name and `unknown@client.com` for the email.
+ *
+ * @param {Object} detectionEvent - Event object expected to include a `sender` object with optional `name` and `email` properties.
+ * @returns {{clientName: string, clientEmail: string}} clientName is a trimmed, sanitized name (or `Client`); clientEmail is a trimmed, sanitized, lowercased email that contains an `@` (or `unknown@client.com`).
  */
 export function extractClientInfo(detectionEvent) {
   if (!detectionEvent || !detectionEvent.sender) {
@@ -58,10 +61,12 @@ export function extractClientInfo(detectionEvent) {
 }
 
 /**
- * Extract and combine requested changes from detection events
+ * Extracts sanitized, trimmed requested-change strings from detection events, truncating long entries for display.
  *
- * @param {Array<Object>} detectionEvents - Detection events
- * @returns {Array<string>} Array of requested changes
+ * Sanitizes each event's `detectedText`, trims whitespace, and if the result exceeds the display threshold it is truncated and appended with `...`. Logs truncation details when a text is truncated. If no valid texts are found, returns a single placeholder string.
+ *
+ * @param {Array<Object>} detectionEvents - Array of detection event objects; each may contain a `detectedText` string.
+ * @returns {Array<string>} Array of sanitized requested-change strings, or `['No specific changes detected']` if none were extracted.
  */
 export function extractRequestedChanges(detectionEvents) {
   const changes = [];

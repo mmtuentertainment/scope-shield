@@ -57,9 +57,12 @@ export async function getDetectionEvents() {
 }
 
 /**
- * Update acknowledged status of an event
- * @param {string} eventId - The event ID to update
- * @param {boolean} acknowledged - The new acknowledged status
+ * Set the acknowledged status for a detection event and persist the change to storage.
+ *
+ * Updates the event's `acknowledged` flag on the stored `detectionEvents` array and writes the updated array back to `chrome.storage.local`.
+ * @param {string} eventId - ID of the detection event to update.
+ * @param {boolean} [acknowledged=true] - New acknowledged status.
+ * @returns {boolean} `true` if the event was found and updated, `false` otherwise.
  */
 export async function updateEventAcknowledged(eventId, acknowledged = true) {
   try {
@@ -82,11 +85,10 @@ export async function updateEventAcknowledged(eventId, acknowledged = true) {
 }
 
 /**
- * Update acknowledged status of multiple events in a single transaction (Bug #2 fix)
- * Prevents race condition when acknowledging multiple events concurrently
- * @param {Array<string>} eventIds - Array of event IDs to update
- * @param {boolean} acknowledged - The new acknowledged status
- * @returns {Promise<Object>} Object with success/failure counts
+ * Mark multiple detection events' acknowledged status in storage.
+ * @param {Array<string>} eventIds - Detection event IDs to update.
+ * @param {boolean} [acknowledged=true] - The acknowledged value to set on matching events.
+ * @returns {{updatedCount: number, notFoundCount: number}} Counts of events successfully updated and IDs not found.
  */
 export async function updateMultipleEventsAcknowledged(eventIds, acknowledged = true) {
   try {

@@ -1,8 +1,8 @@
 // T020: UUID generation wrapper for crypto.randomUUID()
 
 /**
- * Generate RFC 4122 compliant UUID v4
- * Uses browser-built-in crypto.randomUUID() (Chrome 92+)
+ * Generate an RFC 4122 (version 4) compliant UUID string.
+ * Uses crypto.randomUUID() when available; falls back to a v4 generator otherwise.
  * @returns {string} UUID v4 string (e.g., "550e8400-e29b-41d4-a716-446655440000")
  */
 export function generateUUID() {
@@ -21,9 +21,9 @@ export function generateUUID() {
 }
 
 /**
- * Validate if string is valid UUID v4 format
- * @param {string} uuid - String to validate
- * @returns {boolean} True if valid UUID v4
+ * Determine whether a string is a valid RFC 4122 UUID version 4.
+ * @param {string} uuid - The string to validate.
+ * @returns {boolean} `true` if `uuid` matches the UUID v4 format, `false` otherwise.
  */
 export function isValidUUID(uuid) {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

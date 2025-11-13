@@ -3,7 +3,11 @@
  * Handles notifications, badge updates, and message passing
  */
 
-// Inline getUnacknowledgedCount to avoid code splitting issues with Vite
+/**
+ * Get the number of detection events that are not acknowledged.
+ *
+ * @returns {number} The count of detection events where `acknowledged` is false; returns `0` if reading storage fails.
+ */
 async function getUnacknowledgedCount() {
   try {
     const { detectionEvents = [] } = await chrome.storage.local.get('detectionEvents');

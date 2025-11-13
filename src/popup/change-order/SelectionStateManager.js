@@ -8,11 +8,17 @@
  */
 
 /**
- * Update UI to reflect current selection state
+ * Synchronize the DOM inside a container to reflect the current selection state.
  *
- * @param {HTMLElement} container - Selector container element
- * @param {Set<string>} selectedIds - Set of selected detection IDs
- * @param {number} totalDetections - Total number of detections
+ * If `container` is falsy, the function returns without making changes. For each
+ * element with class `detection-checkbox` it sets the checkbox state based on
+ * `selectedIds` and adds/removes the `selected` class on the nearest
+ * `.detection-item` ancestor. It also updates the `.selection-count` element
+ * (if present) to show the number of selected items against `totalDetections`.
+ *
+ * @param {HTMLElement} container - Container element that holds detection items and controls.
+ * @param {Set<string>} selectedIds - Set of selected detection IDs.
+ * @param {number} totalDetections - Total number of detection items to display in the count.
  */
 export function updateUI(container, selectedIds, totalDetections) {
   if (!container) return;
@@ -44,11 +50,11 @@ export function updateUI(container, selectedIds, totalDetections) {
 }
 
 /**
- * Notify selection change callback
+ * Invoke the provided callback with the subset of detections whose ids are contained in `selectedIds`.
  *
- * @param {Function} callback - Callback function to invoke
- * @param {Array<Object>} detections - All detections
- * @param {Set<string>} selectedIds - Set of selected detection IDs
+ * @param {Function} callback - Function to call with the selected detections; ignored if not a function.
+ * @param {Array<Object>} detections - Array of detection objects (each expected to have an `id` property).
+ * @param {Set<string>} selectedIds - Set of selected detection IDs.
  */
 export function notifySelectionChange(callback, detections, selectedIds) {
   if (callback && typeof callback === 'function') {
@@ -58,11 +64,11 @@ export function notifySelectionChange(callback, detections, selectedIds) {
 }
 
 /**
- * Get selected detection events
+ * Select detections whose id is contained in the provided set of selected IDs.
  *
- * @param {Array<Object>} detections - All detections
- * @param {Set<string>} selectedIds - Set of selected detection IDs
- * @returns {Array<Object>} Array of selected detections
+ * @param {Array<Object>} detections - Array of detection objects; each object is expected to have an `id` property.
+ * @param {Set<string>} selectedIds - Set of detection IDs to include.
+ * @returns {Array<Object>} Array of detection objects from `detections` whose `id` is present in `selectedIds`.
  */
 export function getSelectedDetections(detections, selectedIds) {
   return detections.filter(detection =>

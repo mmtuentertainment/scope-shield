@@ -10,10 +10,14 @@
 import { logInfo } from '../utils/Logger.js';
 
 /**
- * Trigger browser download for a blob
+ * Initiates a browser download for the provided Blob using a temporary link.
  *
- * @param {Blob} blob - Blob to download
- * @param {string} filename - Filename for download
+ * Creates an object URL for the Blob, appends a hidden anchor with the given filename,
+ * programmatically clicks it to start the download, and schedules removal of the anchor
+ * and revocation of the object URL.
+ *
+ * @param {Blob} blob - The Blob to download.
+ * @param {string} filename - Suggested filename for the downloaded file.
  */
 export function downloadBlob(blob, filename) {
   // Create object URL for blob

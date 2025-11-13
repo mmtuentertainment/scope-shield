@@ -13,10 +13,10 @@ import { sanitizeText } from '../utils/Sanitizer.js';
 import { logInfo, logError } from '../utils/Logger.js';
 
 /**
- * Load freelancer name from settings or options
+ * Obtain a freelancer name to pre-fill change orders.
  *
- * @param {Object} options - Generation options
- * @returns {Promise<string>} Freelancer name
+ * @param {Object} options - Options that may include `freelancerName`; when present and non-empty it is used.
+ * @returns {string} The freelancer name to use; sanitized and trimmed when sourced from options or settings, or the placeholder `'Your Name'` if none is available.
  */
 export async function loadFreelancerName(options) {
   // Check options first
@@ -40,11 +40,13 @@ export async function loadFreelancerName(options) {
 }
 
 /**
- * Load original scope from history for client
+ * Prefills the original scope for a client from provided options or change-order history.
  *
- * @param {string} clientEmail - Client email
- * @param {Object} options - Generation options
- * @returns {Promise<string>} Original scope or empty string
+ * If options.originalScope is provided and non-empty, it is sanitized and returned. Otherwise the function attempts to load the most recent change order for the given client and returns that order's original scope if available.
+ *
+ * @param {string} clientEmail - Client email used to look up the most recent change order.
+ * @param {Object} options - Generation options; may include `originalScope`.
+ * @returns {string} The original scope when available, otherwise an empty string.
  */
 export async function loadOriginalScope(clientEmail, options) {
   // Check options first

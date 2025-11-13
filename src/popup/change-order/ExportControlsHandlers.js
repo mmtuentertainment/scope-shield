@@ -11,11 +11,10 @@ import ExportService from '../../lib/export/ExportService.js';
 import { logInfo, logError } from '../../lib/utils/Logger.js';
 
 /**
- * Handle PDF export button click
+ * Export the given change order as a PDF, manage the export button state, and notify the user of the outcome.
  *
- * @param {ChangeOrder} changeOrder - Change order to export
- * @param {Function} showNotification - Callback to show notification
- * @returns {Promise<void>}
+ * @param {ChangeOrder} changeOrder - The change order to export.
+ * @param {Function} showNotification - Callback that accepts (message, type) to display user notifications.
  */
 export async function handlePdfExport(changeOrder, showNotification) {
   if (!changeOrder) {
@@ -65,11 +64,11 @@ export async function handlePdfExport(changeOrder, showNotification) {
 }
 
 /**
- * Handle clipboard export button click
+ * Copy the provided change order to the clipboard, manage the clipboard button state during the operation, and notify the user of success or failure.
  *
- * @param {ChangeOrder} changeOrder - Change order to export
- * @param {Function} showNotification - Callback to show notification
- * @returns {Promise<void>}
+ * @param {ChangeOrder} changeOrder - The change order to copy.
+ * @param {function(string, string):void} showNotification - Callback to display a notification; receives (message, type) where `type` is e.g. 'success' or 'error'.
+ * @returns {Promise<void>} Resolves when the export flow (including UI updates and notifications) has completed.
  */
 export async function handleClipboardExport(changeOrder, showNotification) {
   if (!changeOrder) {
@@ -112,11 +111,10 @@ export async function handleClipboardExport(changeOrder, showNotification) {
 }
 
 /**
- * Handle text export button click
+ * Export the provided change order as text, updating the export button state and showing notifications for success, fallback, or error conditions.
  *
- * @param {ChangeOrder} changeOrder - Change order to export
- * @param {Function} showNotification - Callback to show notification
- * @returns {Promise<void>}
+ * @param {ChangeOrder} changeOrder - The change order to export.
+ * @param {Function} showNotification - Callback to display notifications. Called as showNotification(message, type) where type is typically 'success', 'error', or 'warning'.
  */
 export async function handleTextExport(changeOrder, showNotification) {
   if (!changeOrder) {

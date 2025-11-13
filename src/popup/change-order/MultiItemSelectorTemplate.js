@@ -8,12 +8,15 @@
  */
 
 /**
- * Render main selector container HTML
+ * Generate the HTML for the multi-item selector container.
  *
- * @param {Array<Object>} detections - Array of detection events
- * @param {Set<string>} selectedIds - Set of selected detection IDs
- * @param {Function} renderDetectionItem - Function to render individual items
- * @returns {string} HTML string for selector container
+ * Renders the header, select/deselect controls, the list of detection items (via the provided renderer),
+ * and a summary showing how many items are selected.
+ *
+ * @param {Array<Object>} detections - Array of detection objects to render as list items.
+ * @param {Set<string>} selectedIds - Set of detection IDs that are currently selected.
+ * @param {Function} renderDetectionItem - Function(detection, index) that returns HTML for a single item.
+ * @returns {string} The HTML markup for the selector container.
  */
 export function renderContainer(detections, selectedIds, renderDetectionItem) {
   return `
@@ -44,12 +47,14 @@ export function renderContainer(detections, selectedIds, renderDetectionItem) {
 }
 
 /**
- * Render individual detection item HTML
+ * Generate HTML for a single detection item, including a checkbox, sender, timestamp, and truncated text.
  *
- * @param {Object} detection - Detection event
- * @param {number} index - Index in array
- * @param {Set<string>} selectedIds - Set of selected detection IDs
- * @returns {string} HTML string for detection item
+ * The function applies sensible fallbacks for missing fields (id, sender, timestamp), truncates long text to 100 characters, marks the item as selected when its id is present in `selectedIds`, and escapes text content for safe HTML insertion.
+ *
+ * @param {Object} detection - Detection object. Expected fields used: `id`, `detectedText`, `sender` (may contain `name` or `email`), and `timestamp`.
+ * @param {number} index - Index of the detection in the list; used to construct a fallback id when `detection.id` is absent.
+ * @param {Set<string>} selectedIds - Set of selected detection IDs; if it contains the item's id the item is marked selected and its checkbox is checked.
+ * @returns {string} HTML string representing the detection item.
  */
 export function renderDetectionItem(detection, index, selectedIds) {
   const id = detection.id || `detection-${index}`;
@@ -83,10 +88,10 @@ export function renderDetectionItem(detection, index, selectedIds) {
 }
 
 /**
- * Escape HTML to prevent XSS attacks
+ * Escape a string for safe insertion into HTML to prevent injection.
  *
- * @param {string} text - Text to escape
- * @returns {string} Escaped text safe for HTML insertion
+ * @param {string} text - Value to escape; non-string inputs will be converted to string.
+ * @returns {string} The input as an HTML-escaped string.
  */
 export function escapeHtml(text) {
   const div = document.createElement('div');
