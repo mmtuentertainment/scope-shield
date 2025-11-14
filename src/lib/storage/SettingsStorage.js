@@ -26,9 +26,15 @@ export class SettingsStorage {
           const settingsData = result[STORAGE_KEYS.SETTINGS];
 
           if (settingsData) {
-            logInfo('Settings loaded from storage');
-            const settings = FreelancerSettings.fromJSON(settingsData);
-            resolve(settings);
+            try {
+              logInfo('Settings loaded from storage');
+              const settings = FreelancerSettings.fromJSON(settingsData);
+              resolve(settings);
+            } catch (parseError) {
+              logError('Failed to parse stored settings, returning defaults', parseError);
+              const defaults = FreelancerSettings.getDefaults();
+              resolve(defaults);
+            }
           } else {
             // T039: Return defaults for first-run
             logInfo('No settings found, returning defaults');

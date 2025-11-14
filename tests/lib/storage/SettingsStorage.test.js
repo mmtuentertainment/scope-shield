@@ -1,4 +1,5 @@
 // T041-T044: SettingsStorage tests
+/* global chrome */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SettingsStorage } from '../../../src/lib/storage/SettingsStorage.js';

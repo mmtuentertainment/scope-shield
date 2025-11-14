@@ -50,8 +50,13 @@ describe('Sanitizer', () => {
       expect(sanitizeNumber(2000, 0, 1000)).toBe(1000);
     });
 
-    it('should return 0 for invalid input', () => {
+    it('should return min for invalid input (default min=0)', () => {
       expect(sanitizeNumber('not-a-number')).toBe(0);
+    });
+
+    it('should return custom min value for NaN input', () => {
+      expect(sanitizeNumber('invalid', 5, 100)).toBe(5);
+      expect(sanitizeNumber('abc', 1, 10)).toBe(1);
       expect(sanitizeNumber(null)).toBe(0);
       expect(sanitizeNumber(undefined)).toBe(0);
     });

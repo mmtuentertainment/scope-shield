@@ -115,7 +115,15 @@ export class FreelancerSettings {
 
   /**
    * Update settings and refresh timestamp
+   *
+   * NOTE: This method does NOT validate updates. Caller MUST call validate()
+   * after updating and before calling SettingsStorage.save().
+   *
    * @param {object} updates - Partial settings to update
+   * @example
+   * settings.update({ freelancerName: 'New Name' });
+   * settings.validate();  // Required before save
+   * await SettingsStorage.save(settings);
    */
   update(updates) {
     Object.assign(this, updates);

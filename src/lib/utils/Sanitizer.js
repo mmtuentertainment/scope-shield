@@ -25,7 +25,9 @@ export function sanitizeText(input, maxLength = 500) {
  */
 export function sanitizeNumber(input, min = 0, max = 999999) {
   const num = parseFloat(input);
-  if (isNaN(num)) return 0;
+  if (Number.isNaN(num)) {
+    return min;
+  }
   return Math.max(min, Math.min(max, num));
 }
 

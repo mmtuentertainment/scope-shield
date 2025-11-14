@@ -65,7 +65,15 @@ const mockRuntime = {
     version: '0.2.0',
     name: 'ScopeShield',
     manifest_version: 3
-  }))
+  })),
+  // Helper to simulate quota errors
+  simulateQuotaError: () => {
+    mockRuntime.lastError = { message: 'QUOTA_BYTES quota exceeded' };
+  },
+  // Helper to clear errors
+  clearError: () => {
+    mockRuntime.lastError = null;
+  }
 };
 
 // Stub global chrome object

@@ -1,5 +1,7 @@
 // T019: Storage schema version constants and migration helpers
 
+import { sanitizeEmail } from '../utils/Sanitizer.js';
+
 /**
  * Storage schema versions for change order feature
  */
@@ -18,8 +20,11 @@ export const STORAGE_KEYS = {
   SETTINGS: 'scopeshield_settings_v1',
 
   // Change orders by client (array per client)
-  changeOrdersForClient: (clientEmail) =>
-    `scopeshield_changeorders_${clientEmail}_v1`,
+  changeOrdersForClient: (clientEmail) => {
+    // Normalize: lowercase, trim, replace special chars for consistent keys
+    const normalized = sanitizeEmail(clientEmail).replace(/[@.+]/g, '_');
+    return `scopeshield_changeorders_${normalized}_v1`;
+  },
 
   // Draft change order (temporary)
   DRAFT: 'scopeshield_draft_changeorder_v1',

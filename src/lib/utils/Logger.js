@@ -4,7 +4,7 @@
  * Check if running in development mode
  * @returns {boolean} True if development
  */
-function isDevelopment() {
+export function isDevelopment() {
   // In Chrome Extension, development mode has no update_url in manifest
   try {
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest) {
@@ -53,6 +53,13 @@ export function logError(message, error) {
  */
 export function logPerformance(operation, duration) {
   if (isDevelopment()) {
+    if (typeof duration !== 'number' || Number.isNaN(duration)) {
+      console.warn(
+        `[ScopeShield WARNING] Invalid duration for ${operation}:`,
+        duration
+      );
+      return;
+    }
     console.log(`[ScopeShield PERF] ${operation}: ${duration.toFixed(2)}ms`);
   }
 }

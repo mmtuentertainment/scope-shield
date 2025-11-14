@@ -1,4 +1,5 @@
 // T061: FirstRunDetector tests
+/* global chrome */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { FirstRunDetector } from '../../../src/lib/utils/FirstRunDetector.js';

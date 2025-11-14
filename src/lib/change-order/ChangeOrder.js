@@ -125,6 +125,13 @@ export class ChangeOrder {
    * @param {string} format - Export format ('pdf', 'text', 'clipboard')
    */
   markAsExported(format) {
+    const validFormats = ['pdf', 'text', 'clipboard'];
+    if (!validFormats.includes(format)) {
+      throw new Error(
+        `Invalid export format: ${format}. Must be one of: ${validFormats.join(', ')}`
+      );
+    }
+
     this.status = 'exported';
     this.exportFormat = format;
     this.exportedAt = getCurrentDateTimeISO();

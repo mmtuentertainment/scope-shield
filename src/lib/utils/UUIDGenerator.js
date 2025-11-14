@@ -12,6 +12,8 @@ export function generateUUID() {
   }
 
   // Fallback for older browsers (shouldn't happen with Manifest V3)
+  console.warn('[UUIDGenerator] Using Math.random() fallback - crypto.randomUUID() not available');
+
   // Simple UUID v4 implementation
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     const r = Math.random() * 16 | 0;

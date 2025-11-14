@@ -161,4 +161,22 @@ describe('ChangeOrder', () => {
       expect(changeOrder.canExport()).toBe(false);
     });
   });
+
+  describe('markAsExported', () => {
+    it('should validate export format', () => {
+      const changeOrder = new ChangeOrder(validChangeOrderData);
+
+      // Valid formats should work
+      expect(() => changeOrder.markAsExported('pdf')).not.toThrow();
+      expect(() => changeOrder.markAsExported('text')).not.toThrow();
+      expect(() => changeOrder.markAsExported('clipboard')).not.toThrow();
+
+      // Invalid format should throw
+      expect(() => changeOrder.markAsExported('invalid'))
+        .toThrow('Invalid export format: invalid. Must be one of: pdf, text, clipboard');
+
+      expect(() => changeOrder.markAsExported('xml'))
+        .toThrow('Invalid export format: xml');
+    });
+  });
 });

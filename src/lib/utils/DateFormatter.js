@@ -10,6 +10,10 @@
 export function formatDateLong(date, locale = 'en-US') {
   const dateObj = date instanceof Date ? date : new Date(date);
 
+  if (Number.isNaN(dateObj.getTime())) {
+    throw new Error(`Invalid date provided: ${date}`);
+  }
+
   const formatter = new Intl.DateTimeFormat(locale, {
     year: 'numeric',
     month: 'long',
@@ -26,6 +30,11 @@ export function formatDateLong(date, locale = 'en-US') {
  */
 export function formatDateISO(date) {
   const dateObj = date instanceof Date ? date : new Date(date);
+
+  if (Number.isNaN(dateObj.getTime())) {
+    throw new Error(`Invalid date provided: ${date}`);
+  }
+
   return dateObj.toISOString();
 }
 
@@ -37,6 +46,10 @@ export function formatDateISO(date) {
  */
 export function formatDateShort(date, locale = 'en-US') {
   const dateObj = date instanceof Date ? date : new Date(date);
+
+  if (Number.isNaN(dateObj.getTime())) {
+    throw new Error(`Invalid date provided: ${date}`);
+  }
 
   const formatter = new Intl.DateTimeFormat(locale, {
     year: 'numeric',
@@ -55,11 +68,12 @@ export function formatDateShort(date, locale = 'en-US') {
 export function formatDateForFilename(date) {
   const dateObj = date instanceof Date ? date : new Date(date);
 
-  const year = dateObj.getFullYear();
-  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const day = String(dateObj.getDate()).padStart(2, '0');
+  if (Number.isNaN(dateObj.getTime())) {
+    throw new Error(`Invalid date provided: ${date}`);
+  }
 
-  return `${year}-${month}-${day}`;
+  // Reuse formatDateISO and extract date portion
+  return formatDateISO(dateObj).split('T')[0];
 }
 
 /**

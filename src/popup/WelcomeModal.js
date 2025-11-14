@@ -46,7 +46,7 @@ export class WelcomeModal {
                 />
                 <span class="form-hint">This will appear on your change orders</span>
               </div>
-              <div id="welcome-error" class="welcome-error" style="display: none;"></div>
+              <div id="welcome-error" class="welcome-error" role="alert" aria-live="polite" style="display: none;"></div>
               <div class="form-actions">
                 <button type="submit" class="btn btn-primary">
                   Get Started

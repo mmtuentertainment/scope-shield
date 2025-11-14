@@ -22,9 +22,26 @@ describe('StorageSchemas', () => {
       const key1 = STORAGE_KEYS.changeOrdersForClient('client@example.com');
       const key2 = STORAGE_KEYS.changeOrdersForClient('other@example.com');
 
-      expect(key1).toBe('scopeshield_changeorders_client@example.com_v1');
-      expect(key2).toBe('scopeshield_changeorders_other@example.com_v1');
+      expect(key1).toBe('scopeshield_changeorders_client_example_com_v1');
+      expect(key2).toBe('scopeshield_changeorders_other_example_com_v1');
       expect(key1).not.toBe(key2);
+    });
+
+    it('should normalize client email in changeOrdersForClient key', () => {
+      const key1 = STORAGE_KEYS.changeOrdersForClient('John@Example.com');
+      const key2 = STORAGE_KEYS.changeOrdersForClient('john@example.com');
+      const key3 = STORAGE_KEYS.changeOrdersForClient('john+test@example.com');
+      const key4 = STORAGE_KEYS.changeOrdersForClient('  JOHN@EXAMPLE.COM  ');
+
+      // All variations of same base email should normalize to same key
+      expect(key1).toBe('scopeshield_changeorders_john_example_com_v1');
+      expect(key2).toBe('scopeshield_changeorders_john_example_com_v1');
+      expect(key1).toBe(key2); // Case-insensitive
+      expect(key4).toBe(key2); // Whitespace trimmed
+
+      // Email with + should be different (plus sign replaced with underscore)
+      expect(key3).toBe('scopeshield_changeorders_john_test_example_com_v1');
+      expect(key3).not.toBe(key1);
     });
 
     it('should define draft key', () => {

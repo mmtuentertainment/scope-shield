@@ -30,11 +30,12 @@
     "globals": "^16.5.0",
     "jsdom": "^27.2.0",
     "prettier": "^3.6.2",
+    "terser": "^5.44.1",
     "vite": "^6.0.3",
     "vite-plugin-static-copy": "^2.3.2",
     "vitest": "^2.1.8"
   },
   "dependencies": {
-    "jspdf": "^2.5.1"
+    "jspdf": "^3.0.3"
   }
 }
