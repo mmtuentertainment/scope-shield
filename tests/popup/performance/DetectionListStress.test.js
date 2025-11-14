@@ -69,9 +69,7 @@ describe('DetectionListRenderer Stress Tests', () => {
 
       const notice = container.querySelector('.truncation-notice');
       expect(notice).toBeTruthy();
-      expect(notice.textContent).toContain('Showing 50 of 500');
-
-      console.log(`[Stress Test] 500→50 items rendered in ${duration.toFixed(2)}ms`);
+      expect(notice.textContent).toContain(`Showing ${MAX_DISPLAYED_DETECTIONS} of 500`);
     });
 
     it('should handle 1000 detections without memory issues', () => {
@@ -95,10 +93,8 @@ describe('DetectionListRenderer Stress Tests', () => {
       // Should still be fast (sorting 1000 + slicing to 50)
       expect(duration).toBeLessThan(500);
 
-      // Only 50 should be rendered
-      expect(container.querySelectorAll('.detection-item').length).toBe(50);
-
-      console.log(`[Stress Test] 1000→50 items in ${duration.toFixed(2)}ms`);
+      // Only MAX_DISPLAYED_DETECTIONS should be rendered
+      expect(container.querySelectorAll('.detection-item').length).toBe(MAX_DISPLAYED_DETECTIONS);
     });
 
     it('should maintain sort order with large dataset', () => {

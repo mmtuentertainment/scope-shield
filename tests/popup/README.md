@@ -5,16 +5,17 @@
 ```
 tests/popup/
 ├── components/          # Unit tests for individual components
-│   ├── DetectionListRenderer.test.js (29 tests)
-│   ├── DetectionEventHandlers.test.js (25 tests)
-│   ├── BadgeManager.test.js (6 tests)
+│   ├── DetectionListRenderer.test.js
+│   ├── DetectionEventHandlers.test.js
+│   ├── BadgeManager.test.js
 ├── utils/              # Utility function tests
-│   ├── FormatHelpers.test.js (9 tests)
-│   ├── debounce.test.js (4 tests)
+│   ├── FormatHelpers.test.js
+│   ├── debounce.test.js
 ├── integration/        # Integration/workflow tests
-│   └── PopupFlow.test.js (5 tests)
+│   └── PopupFlow.test.js
 └── performance/        # Performance benchmarks (Constitution III)
-    └── DetectionListPerformance.test.js (6 tests)
+    ├── DetectionListPerformance.test.js
+    └── DetectionListStress.test.js
 ```
 
 ## Test Environment
@@ -45,9 +46,6 @@ npm test tests/popup/components/DetectionListRenderer.test.js
 
 ## Coverage
 
-**Current**: 65+ tests across 6 test files
-- Unit tests: 56 tests
-- Integration tests: 5 tests
-- Performance tests: 6 tests
+Run `npm test tests/popup` for current test counts and `npm test -- --coverage` for detailed coverage metrics.
 
 **Target**: 80%+ code coverage (vitest.config.js thresholds)

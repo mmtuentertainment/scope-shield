@@ -240,8 +240,7 @@ describe('DetectionListRenderer', () => {
       expect(itemEl.querySelector('.trigger-word').textContent).toBe('also');
     });
 
-    // Template missing case tested implicitly - if template doesn't exist,
-    // createDetectionItem logs error and returns null (line 104-106 in DetectionListRenderer.js)
+    // Template missing case tested explicitly in "Edge Cases" section below (lines 326-354)
   });
 
   describe('setConfidenceBadge', () => {
