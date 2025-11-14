@@ -9,13 +9,12 @@
 
 /**
  * Format timestamp as relative time (e.g., "5m ago", "2d ago")
- * @param {number} timestamp - Unix timestamp
+ * @param {number} timestamp - Unix timestamp in milliseconds since epoch
  * @returns {string} Formatted relative time
  */
 export function formatRelativeTime(timestamp) {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diff = now - date;
+  const now = Date.now();
+  const diff = now - timestamp;
 
   // Less than 1 hour
   if (diff < 3600000) {
@@ -35,6 +34,7 @@ export function formatRelativeTime(timestamp) {
     return `${days}d ago`;
   }
 
-  // Format date
+  // Format date for >7 days old
+  const date = new Date(timestamp);
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }

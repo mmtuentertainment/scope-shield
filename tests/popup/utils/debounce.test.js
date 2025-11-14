@@ -10,6 +10,27 @@ describe('debounce', () => {
     vi.useRealTimers();
   });
 
+  describe('Input Validation', () => {
+    it('should throw TypeError if func is not a function', () => {
+      expect(() => debounce('not a function', 100)).toThrow(TypeError);
+      expect(() => debounce('not a function', 100)).toThrow('func must be a function');
+    });
+
+    it('should throw TypeError if wait is not a number', () => {
+      expect(() => debounce(() => {}, 'invalid')).toThrow(TypeError);
+      expect(() => debounce(() => {}, 'invalid')).toThrow('wait must be a non-negative number');
+    });
+
+    it('should throw TypeError if wait is negative', () => {
+      expect(() => debounce(() => {}, -100)).toThrow(TypeError);
+      expect(() => debounce(() => {}, -100)).toThrow('wait must be a non-negative number');
+    });
+
+    it('should accept wait of 0', () => {
+      expect(() => debounce(() => {}, 0)).not.toThrow();
+    });
+  });
+
   it('should delay function execution', async () => {
     const func = vi.fn().mockResolvedValue('result');
     const debounced = debounce(func, 100);

@@ -12,6 +12,8 @@
  */
 
 import { formatRelativeTime } from '../utils/FormatHelpers.js';
+import { logError } from '../../lib/utils/Logger.js';
+import { MAX_DISPLAYED_DETECTIONS } from '../constants.js';
 
 /**
  * Detection List Renderer Class
@@ -23,6 +25,7 @@ export class DetectionListRenderer {
    */
   constructor(containerElement) {
     this.container = containerElement;
+    this.eventListeners = []; // Track listeners for cleanup
   }
 
   /**
@@ -33,33 +36,41 @@ export class DetectionListRenderer {
   render(detectionEvents, handlers) {
     if (!this.container) return;
 
+    // Clean up existing listeners before re-render
+    this.destroy();
+
     if (detectionEvents.length === 0) {
       this.renderEmptyState();
       return;
     }
 
-    // Clear list
+    // Clear list (safe: textContent removes content and detaches listeners automatically)
     this.container.textContent = '';
 
     // Sort by timestamp (newest first)
     const sortedEvents = [...detectionEvents]
       .sort((a, b) => b.timestamp - a.timestamp);
 
-    // Render limited set
-    const maxDisplay = 50;
+    // Render limited set using DocumentFragment for batching (performance optimization)
     // TODO: Consider virtual scrolling for 100+ items to maintain <500ms render time
-    const displayEvents = sortedEvents.slice(0, maxDisplay);
+    const displayEvents = sortedEvents.slice(0, MAX_DISPLAYED_DETECTIONS);
+
+    // Use DocumentFragment to batch DOM operations (single reflow instead of N reflows)
+    const fragment = document.createDocumentFragment();
 
     displayEvents.forEach(event => {
       const itemEl = this.createDetectionItem(event, handlers);
       if (itemEl) {
-        this.container.appendChild(itemEl);
+        fragment.appendChild(itemEl);
       }
     });
 
+    // Single DOM append (triggers one reflow)
+    this.container.appendChild(fragment);
+
     // Add truncation notice if needed
-    if (sortedEvents.length > maxDisplay) {
-      this.showTruncationNotice(sortedEvents.length, maxDisplay);
+    if (sortedEvents.length > MAX_DISPLAYED_DETECTIONS) {
+      this.showTruncationNotice(sortedEvents.length, MAX_DISPLAYED_DETECTIONS);
     }
   }
 
@@ -75,7 +86,7 @@ export class DetectionListRenderer {
     emptyState.className = 'empty-state';
 
     const icon = document.createElement('img');
-    icon.src = '../assets/icons/icon48.png';
+    icon.src = '../../assets/icons/icon48.png';
     icon.alt = 'No detections';
     icon.width = 48;
     icon.height = 48;
@@ -102,12 +113,17 @@ export class DetectionListRenderer {
   createDetectionItem(event, handlers) {
     const template = document.getElementById('detection-item-template');
     if (!template) {
-      console.error('[ScopeShield] Detection item template not found');
+      logError('DetectionListRenderer.createDetectionItem: Template not found', new Error('detection-item-template missing from DOM'));
       return null;
     }
 
     const clone = template.content.cloneNode(true);
     const itemEl = clone.querySelector('.detection-item');
+
+    if (!itemEl) {
+      logError('DetectionListRenderer.createDetectionItem: .detection-item not found in template', new Error('Template structure incomplete'));
+      return null;
+    }
 
     // Set data attributes
     itemEl.dataset.id = event.id;
@@ -129,10 +145,15 @@ export class DetectionListRenderer {
    * @param {Object} event - Detection event
    */
   populateText(itemEl, event) {
-    itemEl.querySelector('.detection-sender').textContent = event.senderName || event.sender || 'Unknown';
-    itemEl.querySelector('.detection-time').textContent = formatRelativeTime(event.timestamp);
-    itemEl.querySelector('.detection-text').textContent = event.detectedText || event.context || 'No text available';
-    itemEl.querySelector('.trigger-word').textContent = event.triggerWord || 'Unknown trigger';
+    const senderEl = itemEl.querySelector('.detection-sender');
+    const timeEl = itemEl.querySelector('.detection-time');
+    const textEl = itemEl.querySelector('.detection-text');
+    const triggerEl = itemEl.querySelector('.trigger-word');
+
+    if (senderEl) senderEl.textContent = event.senderName || event.sender || 'Unknown';
+    if (timeEl) timeEl.textContent = formatRelativeTime(event.timestamp);
+    if (textEl) textEl.textContent = event.detectedText || event.context || 'No text available';
+    if (triggerEl) triggerEl.textContent = event.triggerWord || 'Unknown trigger';
   }
 
   /**
@@ -142,6 +163,8 @@ export class DetectionListRenderer {
    */
   setConfidenceBadge(itemEl, weight) {
     const badge = itemEl.querySelector('.confidence-badge');
+    if (!badge) return;
+
     badge.textContent = `${weight}/10`;
 
     if (weight >= 8) {
@@ -165,15 +188,21 @@ export class DetectionListRenderer {
     const copyBtn = itemEl.querySelector('.copy');
 
     if (acknowledgeBtn && handlers.onAcknowledge) {
-      acknowledgeBtn.addEventListener('click', () => handlers.onAcknowledge(event.id));
+      const handler = () => handlers.onAcknowledge(event.id);
+      acknowledgeBtn.addEventListener('click', handler);
+      this.eventListeners.push({ element: acknowledgeBtn, type: 'click', handler });
     }
 
     if (viewBtn && handlers.onView) {
-      viewBtn.addEventListener('click', () => handlers.onView(event.url));
+      const handler = () => handlers.onView(event.url);
+      viewBtn.addEventListener('click', handler);
+      this.eventListeners.push({ element: viewBtn, type: 'click', handler });
     }
 
     if (copyBtn && handlers.onCopy) {
-      copyBtn.addEventListener('click', () => handlers.onCopy(event));
+      const handler = () => handlers.onCopy(event);
+      copyBtn.addEventListener('click', handler);
+      this.eventListeners.push({ element: copyBtn, type: 'click', handler });
     }
   }
 
@@ -187,5 +216,17 @@ export class DetectionListRenderer {
     notice.className = 'truncation-notice';
     notice.textContent = `Showing ${displayed} of ${total} detections. Clear old items to see more.`;
     this.container.appendChild(notice);
+  }
+
+  /**
+   * Clean up event listeners to prevent memory leaks
+   * Call before re-rendering or when component is destroyed
+   */
+  destroy() {
+    // Remove all tracked event listeners
+    this.eventListeners.forEach(({ element, type, handler }) => {
+      element.removeEventListener(type, handler);
+    });
+    this.eventListeners = [];
   }
 }

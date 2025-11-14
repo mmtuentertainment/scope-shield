@@ -6,6 +6,9 @@ describe('DetectionListRenderer', () => {
   let renderer;
 
   beforeEach(() => {
+    // Reset DOM to avoid leaking templates/containers between tests
+    document.body.innerHTML = '';
+
     // Create container
     container = document.createElement('div');
     container.id = 'detections-list';

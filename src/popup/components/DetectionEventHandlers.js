@@ -13,6 +13,7 @@
 
 import { acknowledgeEvent, clearAllEvents } from '../../utils/storage.js';
 import { showNotification } from './NotificationManager.js';
+import { logError } from '../../lib/utils/Logger.js';
 
 /**
  * Detection Event Handlers Class
@@ -52,7 +53,7 @@ export class DetectionEventHandlers {
       // Trigger callbacks
       this.onEventsChanged();
     } catch (error) {
-      console.error('[ScopeShield] Error acknowledging event:', error);
+      logError('DetectionEventHandlers.handleAcknowledge failed', error);
     }
   }
 
@@ -81,7 +82,7 @@ Time: ${new Date(event.timestamp).toLocaleString()}`;
       await navigator.clipboard.writeText(text);
       showNotification('toast-notification', 'Copied to clipboard!', 'success', 3000);
     } catch (error) {
-      console.error('[ScopeShield] Error copying:', error);
+      logError('DetectionEventHandlers.handleCopy failed', error);
       showNotification('toast-notification', 'Failed to copy', 'error', 3000);
     }
   }
@@ -99,7 +100,7 @@ Time: ${new Date(event.timestamp).toLocaleString()}`;
       this.onEventsChanged();
       showNotification('toast-notification', 'All detections cleared', 'success', 3000);
     } catch (error) {
-      console.error('[ScopeShield] Error clearing:', error);
+      logError('DetectionEventHandlers.handleClearAll failed', error);
       showNotification('toast-notification', 'Failed to clear detections', 'error', 3000);
     }
   }
@@ -127,7 +128,7 @@ Time: ${new Date(event.timestamp).toLocaleString()}`;
 
       this.onEventsChanged();
     } catch (error) {
-      console.error('[ScopeShield] Error generating report:', error);
+      logError('DetectionEventHandlers.generateReport failed', error);
       showNotification('toast-notification', 'Failed to generate report', 'error', 3000);
     }
   }

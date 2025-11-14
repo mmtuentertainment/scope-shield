@@ -9,6 +9,13 @@
  * @returns {Function} Debounced function
  */
 export function debounce(func, wait) {
+  if (typeof func !== 'function') {
+    throw new TypeError('debounce: func must be a function');
+  }
+  if (typeof wait !== 'number' || wait < 0) {
+    throw new TypeError('debounce: wait must be a non-negative number');
+  }
+
   let timeoutId;
 
   return function debounced(...args) {
