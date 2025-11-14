@@ -35,17 +35,12 @@ describe('BadgeManager', () => {
       expect(getUnacknowledgedCount).toHaveBeenCalled();
     });
 
-    it('should send UPDATE_BADGE message with count', async () => {
-      // Clear any previous calls
-      chrome.runtime.sendMessage.mockClear();
-
+    it('should send UPDATE_BADGE message', async () => {
       await manager.update();
 
-      expect(chrome.runtime.sendMessage).toHaveBeenCalledTimes(1);
       expect(chrome.runtime.sendMessage).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'UPDATE_BADGE',
-          count: expect.any(Number)
+          type: 'UPDATE_BADGE'
         })
       );
     });

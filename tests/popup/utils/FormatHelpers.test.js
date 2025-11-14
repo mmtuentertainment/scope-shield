@@ -2,17 +2,15 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { formatRelativeTime } from '../../../src/popup/utils/FormatHelpers.js';
 
 describe('FormatHelpers', () => {
-  let dateNowSpy;
-
   beforeEach(() => {
-    // Mock Date.now() to a fixed time
-    const fixedTime = new Date('2025-11-14T12:00:00.000Z').getTime();
-    dateNowSpy = vi.spyOn(Date, 'now').mockReturnValue(fixedTime);
+    // Use fake timers to control time
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-11-14T12:00:00.000Z'));
   });
 
   afterEach(() => {
-    // Restore original Date.now()
-    dateNowSpy.mockRestore();
+    // Restore real timers
+    vi.useRealTimers();
   });
 
   describe('formatRelativeTime', () => {
