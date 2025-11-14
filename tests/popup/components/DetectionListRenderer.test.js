@@ -321,4 +321,91 @@ describe('DetectionListRenderer', () => {
       expect(emptyState.textContent).toContain('Open Gmail to start monitoring');
     });
   });
+
+  describe('Edge Cases', () => {
+    it('should handle missing template gracefully during render', () => {
+      // Remove template completely
+      const templateEl = document.getElementById('detection-item-template');
+      templateEl.remove();
+
+      const events = [
+        {
+          id: '1',
+          senderName: 'Test',
+          detectedText: 'Test',
+          triggerWord: 'test',
+          triggerWeight: 5,
+          timestamp: Date.now()
+        }
+      ];
+
+      // Should not throw, just skip null items
+      expect(() => {
+        renderer.render(events, {
+          onAcknowledge: vi.fn(),
+          onView: vi.fn(),
+          onCopy: vi.fn()
+        });
+      }).not.toThrow();
+
+      // Should have rendered nothing (all items returned null)
+      const items = container.querySelectorAll('.detection-item');
+      expect(items.length).toBe(0);
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('should preserve ARIA labels from template', () => {
+      const template = document.getElementById('detection-item-template');
+      const ackBtn = template.content.querySelector('.acknowledge');
+      ackBtn.setAttribute('aria-label', 'Acknowledge this detection');
+
+      const event = {
+        id: 'test-123',
+        senderName: 'Test',
+        detectedText: 'Test',
+        triggerWord: 'test',
+        triggerWeight: 5,
+        timestamp: Date.now()
+      };
+
+      const itemEl = renderer.createDetectionItem(event, {
+        onAcknowledge: vi.fn(),
+        onView: vi.fn(),
+        onCopy: vi.fn()
+      });
+
+      const button = itemEl.querySelector('.acknowledge');
+      expect(button.getAttribute('aria-label')).toBe('Acknowledge this detection');
+    });
+
+    it('should maintain semantic HTML structure for screen readers', () => {
+      const events = [
+        {
+          id: '1',
+          senderName: 'John Doe',
+          detectedText: 'Can you also add this?',
+          triggerWord: 'also',
+          triggerWeight: 8,
+          timestamp: Date.now()
+        }
+      ];
+
+      renderer.render(events, {
+        onAcknowledge: vi.fn(),
+        onView: vi.fn(),
+        onCopy: vi.fn()
+      });
+
+      // Verify semantic structure
+      const item = container.querySelector('.detection-item');
+      expect(item).toBeTruthy();
+
+      // All text content should be in text nodes (not aria-hidden)
+      const textContent = item.textContent;
+      expect(textContent).toContain('John Doe');
+      expect(textContent).toContain('Can you also add this?');
+      expect(textContent).toContain('also');
+    });
+  });
 });
