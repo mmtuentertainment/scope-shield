@@ -18,6 +18,11 @@ export class WelcomeModal {
    * @returns {Promise<void>}
    */
   show() {
+    // Guard against multiple show() calls
+    if (this.modal) {
+      return Promise.resolve();
+    }
+
     return new Promise((resolve) => {
       // Create modal overlay
       this.modal = document.createElement('div');
@@ -164,10 +169,12 @@ export class WelcomeModal {
       this.timeouts = [];
 
       this.modal.classList.add('fade-out');
-      setTimeout(() => {
+
+      const timeoutId = setTimeout(() => {
         this.modal.remove();
         this.modal = null;
       }, 300);
+      this.timeouts.push(timeoutId);
     }
   }
 }

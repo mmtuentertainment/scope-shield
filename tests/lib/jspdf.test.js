@@ -3,6 +3,9 @@
 import { describe, it, expect } from 'vitest';
 import { jsPDF } from 'jspdf';
 
+// Minimum size in bytes for a valid PDF with text content
+const MIN_VALID_PDF_SIZE = 1000;
+
 describe('jsPDF Integration', () => {
   it('should generate valid PDF with text content', () => {
     // Create new PDF document
@@ -17,7 +20,7 @@ describe('jsPDF Integration', () => {
     // Validate PDF generation
     expect(pdfDataUri).toBeDefined();
     expect(pdfDataUri).toMatch(/^data:application\/pdf/);
-    expect(pdfDataUri.length).toBeGreaterThan(1000); // PDF has reasonable size
+    expect(pdfDataUri.length).toBeGreaterThan(MIN_VALID_PDF_SIZE);
   });
 
   it('should support PDF blob output format', () => {

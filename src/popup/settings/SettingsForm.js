@@ -57,11 +57,15 @@ export class SettingsForm {
 
     autoExportCheckbox.addEventListener('change', (e) => {
       // Show/hide delay input based on checkbox
-      delayGroup.style.display = e.target.checked ? 'block' : 'none';
+      const isVisible = e.target.checked;
+      delayGroup.style.display = isVisible ? 'block' : 'none';
+      delayGroup.setAttribute('aria-hidden', !isVisible);
     });
 
-    // Initialize delay group visibility
-    delayGroup.style.display = autoExportCheckbox.checked ? 'block' : 'none';
+    // Initialize delay group visibility and accessibility state
+    const isVisible = autoExportCheckbox.checked;
+    delayGroup.style.display = isVisible ? 'block' : 'none';
+    delayGroup.setAttribute('aria-hidden', !isVisible);
   }
 
   /**
@@ -160,10 +164,12 @@ export class SettingsForm {
     if (autoExportCheckbox) autoExportCheckbox.checked = settings.autoExportEnabled;
     if (delayInput) delayInput.value = settings.autoExportDelay || 3;
 
-    // Update delay group visibility
+    // Update delay group visibility and accessibility state
     const delayGroup = this.formElement.querySelector('#auto-export-delay-group');
     if (delayGroup) {
-      delayGroup.style.display = settings.autoExportEnabled ? 'block' : 'none';
+      const isVisible = settings.autoExportEnabled;
+      delayGroup.style.display = isVisible ? 'block' : 'none';
+      delayGroup.setAttribute('aria-hidden', !isVisible);
     }
   }
 
