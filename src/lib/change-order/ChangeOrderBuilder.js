@@ -132,7 +132,7 @@ export class ChangeOrderBuilder {
         return dateString; // Return as-is if invalid
       }
       return date.toISOString().split('T')[0];
-    } catch (error) {
+    } catch {
       return dateString;
     }
   }

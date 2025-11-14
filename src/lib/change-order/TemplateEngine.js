@@ -65,47 +65,56 @@ export class TemplateEngine {
    * @private
    */
   processSingleConditionalPass(text, data) {
-    let result = text;
-
-    // Find first {{@if ...}}
     const openMatch = text.match(/\{\{@if\s+([^}]+)\}\}/);
     if (!openMatch) {
-      return result;
+      return text;
     }
 
     const condition = openMatch[1].trim();
     const startPos = openMatch.index;
     const contentStart = startPos + openMatch[0].length;
 
-    // Find matching {{/@if}} by counting nesting
-    const endInfo = this.findMatchingClose(result, contentStart, '{{@if', '{{/@if}}');
+    const endInfo = this.findMatchingClose(text, contentStart, '{{@if', '{{/@if}}');
     if (!endInfo) {
-      return result;
+      return text;
     }
 
-    const content = result.substring(contentStart, endInfo.pos);
+    const content = text.substring(contentStart, endInfo.pos);
+    const { ifContent, elseContent } = this.splitConditionalContent(content);
 
-    // Check for @else block (only at this level, not nested)
-    const elseIndex = this.findElseAtLevel(content);
-    let ifContent, elseContent;
-
-    if (elseIndex >= 0) {
-      ifContent = content.substring(0, elseIndex);
-      elseContent = content.substring(elseIndex + '{{@else}}'.length);
-    } else {
-      ifContent = content;
-      elseContent = '';
-    }
-
-    // Evaluate condition
     const value = this.getValue(condition, data);
     const isTruthy = this.isTruthy(value);
-
-    // Replace this conditional
     const replacement = isTruthy ? ifContent : elseContent;
-    result = result.substring(0, startPos) + replacement + result.substring(endInfo.pos + endInfo.closeTag.length);
 
-    return result;
+    return this.replaceBlock(text, startPos, endInfo, replacement);
+  }
+
+  /**
+   * Split conditional content into if and else parts
+   * @private
+   */
+  splitConditionalContent(content) {
+    const elseIndex = this.findElseAtLevel(content);
+
+    if (elseIndex >= 0) {
+      return {
+        ifContent: content.substring(0, elseIndex),
+        elseContent: content.substring(elseIndex + '{{@else}}'.length)
+      };
+    }
+
+    return {
+      ifContent: content,
+      elseContent: ''
+    };
+  }
+
+  /**
+   * Replace a block in the text
+   * @private
+   */
+  replaceBlock(text, startPos, endInfo, replacement) {
+    return text.substring(0, startPos) + replacement + text.substring(endInfo.pos + endInfo.closeTag.length);
   }
 
   /**
@@ -180,7 +189,7 @@ export class TemplateEngine {
 
     // Handle missing or non-array values
     if (!Array.isArray(array)) {
-      result = result.substring(0, startPos) + '' + result.substring(endInfo.pos + endInfo.closeTag.length);
+      result = `${result.substring(0, startPos)}${result.substring(endInfo.pos + endInfo.closeTag.length)}`;
       return result;
     }
 
@@ -203,9 +212,7 @@ export class TemplateEngine {
     }).join('');
 
     // Replace this loop
-    result = result.substring(0, startPos) + rendered + result.substring(endInfo.pos + endInfo.closeTag.length);
-
-    return result;
+    return this.replaceBlock(result, startPos, endInfo, rendered);
   }
 
   /**
