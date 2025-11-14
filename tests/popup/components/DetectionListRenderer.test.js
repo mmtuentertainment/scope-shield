@@ -6,8 +6,10 @@ describe('DetectionListRenderer', () => {
   let renderer;
 
   beforeEach(() => {
-    // Reset DOM to avoid leaking templates/containers between tests
-    document.body.innerHTML = '';
+    // Reset DOM to avoid leaking templates/containers between tests (safe method)
+    while (document.body.firstChild) {
+      document.body.removeChild(document.body.firstChild);
+    }
 
     // Create container
     container = document.createElement('div');
