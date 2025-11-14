@@ -37,23 +37,35 @@ export class DetectionEventHandlers {
   async handleAcknowledge(eventId) {
     try {
       await acknowledgeEvent(eventId);
-
-      // Update local state
-      const event = this.getEvents().find(e => e.id === eventId);
-      if (event) {
-        event.acknowledged = true;
-      }
-
-      // Update UI
-      const itemEl = document.querySelector(`[data-id="${eventId}"]`);
-      if (itemEl) {
-        itemEl.classList.add('acknowledged');
-      }
-
-      // Trigger callbacks
+      this.updateLocalState(eventId);
+      this.updateDOMElement(eventId);
       this.onEventsChanged();
     } catch (error) {
       logError('DetectionEventHandlers.handleAcknowledge failed', error);
+    }
+  }
+
+  /**
+   * Update local state for acknowledged event
+   * @private
+   * @param {string} eventId - Event ID
+   */
+  updateLocalState(eventId) {
+    const event = this.getEvents().find(e => e.id === eventId);
+    if (event) {
+      event.acknowledged = true;
+    }
+  }
+
+  /**
+   * Update DOM element visual state
+   * @private
+   * @param {string} eventId - Event ID
+   */
+  updateDOMElement(eventId) {
+    const itemEl = document.querySelector(`[data-id="${eventId}"]`);
+    if (itemEl) {
+      itemEl.classList.add('acknowledged');
     }
   }
 
