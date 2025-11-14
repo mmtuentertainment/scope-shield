@@ -14,6 +14,7 @@
 import { acknowledgeEvent, clearAllEvents } from '../../utils/storage.js';
 import { showNotification } from './NotificationManager.js';
 import { logError } from '../../lib/utils/Logger.js';
+import { ChangeOrderBuilder } from '../../lib/change-order/ChangeOrderBuilder.js';
 
 /**
  * Detection Event Handlers Class
@@ -118,7 +119,7 @@ Time: ${new Date(event.timestamp).toLocaleString()}`;
   }
 
   /**
-   * Generate change order report
+   * Generate change order report using ChangeOrderBuilder
    */
   async generateReport() {
     const unacknowledged = this.getEvents().filter(e => !e.acknowledged);
@@ -128,10 +129,20 @@ Time: ${new Date(event.timestamp).toLocaleString()}`;
       return;
     }
 
-    // Build report and copy to clipboard
-    const report = this.buildChangeOrderReport(unacknowledged);
-
     try {
+      // Transform events to detection format
+      const detections = unacknowledged.map(event => ({
+        sender: event.senderName || event.sender,
+        text: event.detectedText,
+        trigger: event.triggerWord,
+        date: event.timestamp
+      }));
+
+      // Build professional change order
+      const builder = new ChangeOrderBuilder();
+      const report = await builder.build(detections);
+
+      // Copy to clipboard
       await navigator.clipboard.writeText(report);
       showNotification('toast-notification', 'Change order copied to clipboard!', 'success', 3000);
 
@@ -143,41 +154,6 @@ Time: ${new Date(event.timestamp).toLocaleString()}`;
       logError('DetectionEventHandlers.generateReport failed', error);
       showNotification('toast-notification', 'Failed to generate report', 'error', 3000);
     }
-  }
-
-  /**
-   * Build change order report text
-   * @param {Array} unacknowledged - Unacknowledged events
-   * @returns {string} Report text
-   */
-  buildChangeOrderReport(unacknowledged) {
-    // Group by sender
-    const bySender = {};
-    unacknowledged.forEach(event => {
-      const sender = event.senderName || event.sender || 'Unknown';
-      if (!bySender[sender]) {
-        bySender[sender] = [];
-      }
-      bySender[sender].push(event);
-    });
-
-    // Generate report text
-    let report = 'SCOPE CREEP CHANGE ORDER\n';
-    report += '========================\n\n';
-    report += `Generated: ${new Date().toLocaleString()}\n`;
-    report += `Total Items: ${unacknowledged.length}\n\n`;
-
-    Object.entries(bySender).forEach(([sender, events]) => {
-      report += `From: ${sender}\n`;
-      report += `${'-'.repeat(40)}\n`;
-      events.forEach((event, index) => {
-        report += `${index + 1}. "${event.detectedText}"\n`;
-        report += `   Trigger: ${event.triggerWord} (Confidence: ${event.triggerWeight}/10)\n`;
-        report += `   Date: ${new Date(event.timestamp).toLocaleDateString()}\n\n`;
-      });
-    });
-
-    return report;
   }
 
   /**

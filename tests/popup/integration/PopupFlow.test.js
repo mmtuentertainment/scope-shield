@@ -21,6 +21,19 @@ vi.mock('../../../src/lib/utils/Logger.js', () => ({
   logError: vi.fn()
 }));
 
+// Mock FreelancerSettings for ChangeOrderBuilder
+vi.mock('../../../src/lib/storage/FreelancerSettings.js', () => ({
+  FreelancerSettings: {
+    async load() {
+      return {
+        freelancerName: 'Test Freelancer',
+        hourlyRate: 100,
+        currency: 'USD'
+      };
+    }
+  }
+}));
+
 describe('Popup Integration', () => {
   let container;
   let listRenderer;
@@ -162,8 +175,8 @@ describe('Popup Integration', () => {
       // Should copy report
       expect(navigator.clipboard.writeText).toHaveBeenCalled();
       const report = navigator.clipboard.writeText.mock.calls[0][0];
-      expect(report).toContain('SCOPE CREEP CHANGE ORDER');
-      expect(report).toContain('Total Items: 2');
+      expect(report).toContain('CHANGE ORDER REQUEST');
+      expect(report).toContain('2 items'); // New format shows count as "N items"
 
       // Should acknowledge all
       expect(acknowledgeEvent).toHaveBeenCalledTimes(2);
