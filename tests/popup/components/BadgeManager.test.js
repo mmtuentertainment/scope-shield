@@ -16,14 +16,14 @@ describe('BadgeManager', () => {
   let manager;
 
   beforeEach(() => {
-    manager = new BadgeManager();
-
-    // Mock chrome.runtime
+    // Mock chrome.runtime before creating manager
     global.chrome = {
       runtime: {
         sendMessage: vi.fn()
       }
     };
+
+    manager = new BadgeManager();
   });
 
   describe('update', () => {

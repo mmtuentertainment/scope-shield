@@ -60,9 +60,16 @@ async function initialize() {
  * Load detection events from storage
  */
 async function loadDetections() {
+  const startTime = performance.now();
   try {
     detectionEvents = await getDetectionEvents();
+    const loadTime = performance.now() - startTime;
+
     console.log(`[ScopeShield] Loaded ${detectionEvents.length} detection events`);
+
+    if (loadTime > 200) {
+      console.warn(`[ScopeShield] Popup load took ${loadTime.toFixed(1)}ms (target: <200ms)`);
+    }
 
     updateSummaryStats();
     renderList();

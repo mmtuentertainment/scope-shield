@@ -8,16 +8,31 @@
 
 import { getUnacknowledgedCount } from '../../utils/storage.js';
 import { logError } from '../../lib/utils/Logger.js';
+import { debounce } from '../utils/debounce.js';
 
 /**
  * Badge Manager Class
  */
 export class BadgeManager {
+  constructor() {
+    // Debounce updates to prevent excessive messaging
+    this.updateDebounced = debounce(this._update.bind(this), 100);
+  }
+
   /**
-   * Update extension badge with unacknowledged count
+   * Update extension badge with unacknowledged count (debounced)
    * @returns {Promise<void>}
    */
   async update() {
+    return this.updateDebounced();
+  }
+
+  /**
+   * Internal update method
+   * @private
+   * @returns {Promise<void>}
+   */
+  async _update() {
     try {
       const count = await getUnacknowledgedCount();
 

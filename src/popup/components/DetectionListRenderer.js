@@ -47,6 +47,7 @@ export class DetectionListRenderer {
 
     // Render limited set
     const maxDisplay = 50;
+    // TODO: Consider virtual scrolling for 100+ items to maintain <500ms render time
     const displayEvents = sortedEvents.slice(0, maxDisplay);
 
     displayEvents.forEach(event => {
