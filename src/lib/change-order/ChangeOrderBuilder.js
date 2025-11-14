@@ -1,0 +1,190 @@
+import { TemplateEngine } from './TemplateEngine.js';
+import { FreelancerSettings } from '../storage/FreelancerSettings.js';
+
+/**
+ * Builds professional change order documents from scope creep detections
+ *
+ * Features:
+ * - Groups detections by sender
+ * - Estimates hours (2h per detection heuristic)
+ * - Calculates costs if hourly rate available
+ * - Generates formatted document using TemplateEngine
+ *
+ * Performance:
+ * - <5s for 50 detections (Constitution Principle III)
+ */
+export class ChangeOrderBuilder {
+  constructor() {
+    this.engine = new TemplateEngine();
+  }
+
+  /**
+   * Build a change order document from detections
+   * @param {Array} detections - Array of scope creep detections
+   * @param {Object} settings - Optional freelancer settings (will load defaults if not provided)
+   * @returns {Promise<string>} Formatted change order document
+   */
+  async build(detections, settings = null) {
+    // Validate input
+    if (detections === null || detections === undefined) {
+      throw new Error('Detections array is required');
+    }
+    if (!Array.isArray(detections)) {
+      throw new Error('Detections must be an array');
+    }
+
+    // Load settings if not provided
+    const freelancerSettings = settings || await FreelancerSettings.load();
+
+    // Handle empty detections
+    if (detections.length === 0) {
+      return this.buildEmptyChangeOrder(freelancerSettings);
+    }
+
+    // Prepare data for template
+    const templateData = this.prepareTemplateData(detections, freelancerSettings);
+
+    // Render using template engine
+    const template = this.getTemplate();
+    return this.engine.render(template, templateData);
+  }
+
+  /**
+   * Prepare data object for template rendering
+   * @private
+   */
+  prepareTemplateData(detections, settings) {
+    const totalHours = this.estimateHours(detections);
+    const hasHourlyRate = settings.hourlyRate && settings.hourlyRate > 0;
+
+    return {
+      generatedDate: new Date().toISOString().split('T')[0],
+      freelancerName: settings.freelancerName || 'Freelancer',
+      detections: detections.map((detection, index) => ({
+        index: index + 1,
+        sender: detection.sender || 'Unknown',
+        text: detection.text || '(No text)',
+        trigger: detection.trigger || 'Unknown',
+        date: this.formatDate(detection.date)
+      })),
+      totalDetections: detections.length,
+      totalHours,
+      hasHourlyRate,
+      hourlyRate: hasHourlyRate ? settings.hourlyRate : null,
+      totalCost: hasHourlyRate ? this.calculateCost(totalHours, settings.hourlyRate) : null
+    };
+  }
+
+  /**
+   * Group detections by sender email
+   * @param {Array} detections - Array of detections
+   * @returns {Object} Object with sender as key, array of detections as value
+   */
+  groupBySender(detections) {
+    const grouped = {};
+
+    for (const detection of detections) {
+      const sender = detection.sender || 'Unknown';
+      if (!grouped[sender]) {
+        grouped[sender] = [];
+      }
+      grouped[sender].push(detection);
+    }
+
+    return grouped;
+  }
+
+  /**
+   * Estimate hours for detections using simple heuristic
+   * @param {Array} detections - Array of detections
+   * @returns {number} Estimated hours (2 hours per detection)
+   */
+  estimateHours(detections) {
+    return detections.length * 2;
+  }
+
+  /**
+   * Calculate cost from hours and hourly rate
+   * @param {number} hours - Number of hours
+   * @param {number} rate - Hourly rate
+   * @returns {number} Total cost
+   */
+  calculateCost(hours, rate) {
+    if (!hours || !rate) {
+      return 0;
+    }
+    return hours * rate;
+  }
+
+  /**
+   * Format date string to readable format
+   * @param {string} dateString - ISO date string or date
+   * @returns {string} Formatted date (YYYY-MM-DD)
+   */
+  formatDate(dateString) {
+    if (!dateString) {
+      return 'Unknown';
+    }
+
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return dateString; // Return as-is if invalid
+      }
+      return date.toISOString().split('T')[0];
+    } catch (error) {
+      return dateString;
+    }
+  }
+
+  /**
+   * Build empty change order when no detections
+   * @private
+   */
+  buildEmptyChangeOrder(settings) {
+    return `CHANGE ORDER REQUEST
+
+Generated: ${new Date().toISOString().split('T')[0]}
+Freelancer: ${settings.freelancerName || 'Freelancer'}
+
+No scope creep detected.
+
+This document can be generated when scope creep is detected.`;
+  }
+
+  /**
+   * Get change order template
+   * @private
+   */
+  getTemplate() {
+    return `CHANGE ORDER REQUEST
+
+Generated: {{generatedDate}}
+Freelancer: {{freelancerName}}
+
+SCOPE CREEP DETECTIONS ({{totalDetections}} items):
+
+{{@each detections}}{{index}}. From: {{sender}}
+   Date: {{date}}
+   Message: "{{text}}"
+   Trigger Word: "{{trigger}}"
+
+{{/@each}}
+
+SUMMARY:
+- Total Additional Work Detected: {{totalDetections}} items
+- Estimated Additional Hours: {{totalHours}} hours (at 2 hours per item)
+{{@if hasHourlyRate}}- Your Hourly Rate: \${{hourlyRate}}
+- Estimated Additional Cost: \${{totalCost}}
+{{/@if}}
+
+NEXT STEPS:
+1. Review each item above for accuracy
+2. Adjust hour estimates if needed
+3. Send this change order to your client for approval
+4. Update your project scope and timeline accordingly
+
+---
+Generated by ScopeShield - Protecting Freelancers from Scope Creep`;
+  }
+}
