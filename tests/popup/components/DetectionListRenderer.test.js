@@ -236,7 +236,16 @@ describe('DetectionListRenderer', () => {
     });
 
     it('should return null if template missing', () => {
-      document.getElementById('detection-item-template').remove();
+      // Remove template and create new container without template
+      const templateEl = document.getElementById('detection-item-template');
+      if (templateEl) {
+        templateEl.remove();
+      }
+
+      // Create new renderer with container that has no template
+      const newContainer = document.createElement('div');
+      document.body.appendChild(newContainer);
+      const newRenderer = new DetectionListRenderer(newContainer);
 
       const event = {
         id: 'test-123',
@@ -247,8 +256,10 @@ describe('DetectionListRenderer', () => {
         timestamp: Date.now()
       };
 
-      const itemEl = renderer.createDetectionItem(event, {});
+      const itemEl = newRenderer.createDetectionItem(event, {});
       expect(itemEl).toBeNull();
+
+      newContainer.remove();
     });
   });
 
