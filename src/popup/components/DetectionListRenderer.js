@@ -36,6 +36,12 @@ export class DetectionListRenderer {
   render(detectionEvents, handlers) {
     if (!this.container) return;
 
+    // Type safety validation
+    if (!Array.isArray(detectionEvents)) {
+      logError('DetectionListRenderer.render: detectionEvents not an array', new TypeError('Expected array'));
+      return;
+    }
+
     // Clean up existing listeners before re-render
     this.destroy();
 

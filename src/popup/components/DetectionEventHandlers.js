@@ -189,10 +189,15 @@ Time: ${new Date(event.timestamp).toLocaleString()}`;
     const promises = events.map(event => acknowledgeEvent(event.id));
     const results = await Promise.allSettled(promises);
 
-    // Log failures for debugging
+    // Log and notify user of failures
     const failures = results.filter(r => r.status === 'rejected');
     if (failures.length > 0) {
       console.warn(`[ScopeShield] ${failures.length} events failed to acknowledge:`, failures);
+      showNotification('toast-notification',
+        `${failures.length} items failed to acknowledge`,
+        'warning',
+        5000
+      );
     }
 
     // Mark all as acknowledged locally
