@@ -148,6 +148,8 @@ export class WelcomeModal {
    * Shake animation when user tries to close without completing
    */
   shake() {
+    if (!this.modal) return;
+
     const modalContent = this.modal.querySelector('.welcome-modal');
     modalContent.classList.add('shake');
 
