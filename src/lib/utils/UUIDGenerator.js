@@ -7,7 +7,7 @@
  */
 export function generateUUID() {
   // Chrome 92+ supports crypto.randomUUID()
-  if (crypto && crypto.randomUUID) {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
 

@@ -10,6 +10,7 @@ import { sanitizeText } from '../lib/utils/Sanitizer.js';
 export class WelcomeModal {
   constructor() {
     this.modal = null;
+    this.timeouts = []; // Track timeouts for cleanup
   }
 
   /**
@@ -130,9 +131,12 @@ export class WelcomeModal {
     errorEl.style.display = 'block';
 
     // Auto-hide after 3 seconds
-    setTimeout(() => {
-      errorEl.style.display = 'none';
+    const timeoutId = setTimeout(() => {
+      if (this.modal) {
+        errorEl.style.display = 'none';
+      }
     }, 3000);
+    this.timeouts.push(timeoutId);
   }
 
   /**
@@ -141,9 +145,13 @@ export class WelcomeModal {
   shake() {
     const modalContent = this.modal.querySelector('.welcome-modal');
     modalContent.classList.add('shake');
-    setTimeout(() => {
-      modalContent.classList.remove('shake');
+
+    const timeoutId = setTimeout(() => {
+      if (modalContent) {
+        modalContent.classList.remove('shake');
+      }
     }, 500);
+    this.timeouts.push(timeoutId);
   }
 
   /**
@@ -151,6 +159,10 @@ export class WelcomeModal {
    */
   close() {
     if (this.modal) {
+      // Clear pending timeouts
+      this.timeouts.forEach(clearTimeout);
+      this.timeouts = [];
+
       this.modal.classList.add('fade-out');
       setTimeout(() => {
         this.modal.remove();

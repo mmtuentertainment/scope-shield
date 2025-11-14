@@ -74,18 +74,21 @@ describe('Sanitizer', () => {
   });
 
   describe('sanitizeCurrency', () => {
-    it('should format number as currency', () => {
-      expect(sanitizeCurrency(1200)).toBe('$1,200');
-      expect(sanitizeCurrency('1500')).toBe('$1,500');
+    it('should format number as currency with cents', () => {
+      expect(sanitizeCurrency(1200)).toBe('$1,200.00');
+      expect(sanitizeCurrency('1500')).toBe('$1,500.00');
+      expect(sanitizeCurrency(10.99)).toBe('$10.99');
+      expect(sanitizeCurrency(125.5)).toBe('$125.50');
     });
 
-    it('should return $0 for invalid input', () => {
-      expect(sanitizeCurrency('invalid')).toBe('$0');
-      expect(sanitizeCurrency(null)).toBe('$0');
+    it('should return $0.00 for invalid input', () => {
+      expect(sanitizeCurrency('invalid')).toBe('$0.00');
+      expect(sanitizeCurrency(null)).toBe('$0.00');
     });
 
     it('should format with commas for large numbers', () => {
-      expect(sanitizeCurrency(123456)).toBe('$123,456');
+      expect(sanitizeCurrency(123456)).toBe('$123,456.00');
+      expect(sanitizeCurrency(123456.78)).toBe('$123,456.78');
     });
   });
 

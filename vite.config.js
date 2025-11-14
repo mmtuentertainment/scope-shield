@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { resolve } from 'path';
+import { readFileSync } from 'fs';
+
+const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
 export default defineConfig({
   plugins: [
@@ -51,7 +54,8 @@ export default defineConfig({
     // T005: Terser options for maximum compression
     terserOptions: {
       compress: {
-        drop_console: true, // Remove console.logs in production
+        // Remove only debug logs, preserve console.error/warn for production error reporting
+        pure_funcs: ['console.log', 'console.debug', 'console.trace'],
         drop_debugger: true,
         passes: 2 // Multiple compression passes
       },
@@ -62,7 +66,7 @@ export default defineConfig({
   },
   // T007: Define global constants
   define: {
-    __APP_VERSION__: JSON.stringify('0.2.0'),
+    __APP_VERSION__: JSON.stringify(pkg.version),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString())
   },
   // Optimize dependencies during dev

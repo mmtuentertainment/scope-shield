@@ -11,9 +11,9 @@ export function sanitizeText(input, maxLength = 500) {
 
   return input
     .trim()
-    .slice(0, maxLength)
     .replace(/[<>"']/g, '') // Remove HTML-unsafe characters (XSS prevention)
-    .replace(/\n{3,}/g, '\n\n'); // Limit consecutive newlines
+    .replace(/\n{3,}/g, '\n\n') // Limit consecutive newlines
+    .slice(0, maxLength); // Truncate after sanitization for accurate length
 }
 
 /**
@@ -48,13 +48,13 @@ export function sanitizeEmail(email) {
  */
 export function sanitizeCurrency(amount) {
   const num = parseFloat(amount);
-  if (isNaN(num)) return '$0';
+  if (isNaN(num)) return '$0.00';
 
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   }).format(num);
 }
 

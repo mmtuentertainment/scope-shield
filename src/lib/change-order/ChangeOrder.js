@@ -4,6 +4,10 @@ import { generateUUID } from '../utils/UUIDGenerator.js';
 import { getCurrentDateTimeISO } from '../utils/DateFormatter.js';
 import { DEFAULTS } from '../storage/StorageSchemas.js';
 
+// Valid values for change order status and export format
+const VALID_STATUSES = ['draft', 'generated', 'exported'];
+const VALID_EXPORT_FORMATS = ['pdf', 'text', 'clipboard'];
+
 /**
  * ChangeOrder entity class
  * Represents a generated change order document
@@ -21,7 +25,7 @@ export class ChangeOrder {
     this.dateCreated = merged.dateCreated || getCurrentDateTimeISO();
     this.originalScope = merged.originalScope;
     this.requestedChanges = Array.isArray(merged.requestedChanges)
-      ? merged.requestedChanges
+      ? [...merged.requestedChanges]
       : [];
     this.costEstimate = merged.costEstimate;
     this.revisedTimeline = merged.revisedTimeline;
@@ -65,15 +69,13 @@ export class ChangeOrder {
     }
 
     // Validate status
-    const validStatuses = ['draft', 'generated', 'exported'];
-    if (!validStatuses.includes(this.status)) {
-      errors.push(`Status must be one of: ${validStatuses.join(', ')}`);
+    if (!VALID_STATUSES.includes(this.status)) {
+      errors.push(`Status must be one of: ${VALID_STATUSES.join(', ')}`);
     }
 
     // Validate export format if exported
     if (this.status === 'exported') {
-      const validFormats = ['pdf', 'text', 'clipboard'];
-      if (!this.exportFormat || !validFormats.includes(this.exportFormat)) {
+      if (!this.exportFormat || !VALID_EXPORT_FORMATS.includes(this.exportFormat)) {
         errors.push('Export format required when status is "exported"');
       }
       if (!this.exportedAt) {
@@ -125,10 +127,9 @@ export class ChangeOrder {
    * @param {string} format - Export format ('pdf', 'text', 'clipboard')
    */
   markAsExported(format) {
-    const validFormats = ['pdf', 'text', 'clipboard'];
-    if (!validFormats.includes(format)) {
+    if (!VALID_EXPORT_FORMATS.includes(format)) {
       throw new Error(
-        `Invalid export format: ${format}. Must be one of: ${validFormats.join(', ')}`
+        `Invalid export format: ${format}. Must be one of: ${VALID_EXPORT_FORMATS.join(', ')}`
       );
     }
 

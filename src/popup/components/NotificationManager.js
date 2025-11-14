@@ -53,14 +53,23 @@ export function showNotification(
  *
  * @param {string} elementId - ID of notification element
  * @param {number} [timeoutId] - Optional timeout ID to clear
+ * @returns {boolean} True if element was found and hidden
  */
 export function hideNotification(elementId, timeoutId = null) {
   const notification = document.getElementById(elementId);
+
   if (notification) {
     notification.style.display = 'none';
+
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    return true;
   }
 
   if (timeoutId) {
     clearTimeout(timeoutId);
   }
+
+  return false;
 }

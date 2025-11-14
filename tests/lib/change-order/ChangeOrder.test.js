@@ -125,17 +125,6 @@ describe('ChangeOrder', () => {
     });
   });
 
-  describe('markAsExported', () => {
-    it('should mark change order as exported with PDF format', () => {
-      const changeOrder = new ChangeOrder(validChangeOrderData);
-      changeOrder.markAsExported('pdf');
-
-      expect(changeOrder.status).toBe('exported');
-      expect(changeOrder.exportFormat).toBe('pdf');
-      expect(changeOrder.exportedAt).toBeDefined();
-    });
-  });
-
   describe('canExport', () => {
     it('should return true for valid generated change order', () => {
       const changeOrder = new ChangeOrder(validChangeOrderData);
@@ -163,6 +152,15 @@ describe('ChangeOrder', () => {
   });
 
   describe('markAsExported', () => {
+    it('should mark change order as exported with PDF format', () => {
+      const changeOrder = new ChangeOrder(validChangeOrderData);
+      changeOrder.markAsExported('pdf');
+
+      expect(changeOrder.status).toBe('exported');
+      expect(changeOrder.exportFormat).toBe('pdf');
+      expect(changeOrder.exportedAt).toBeDefined();
+    });
+
     it('should validate export format', () => {
       const changeOrder = new ChangeOrder(validChangeOrderData);
 

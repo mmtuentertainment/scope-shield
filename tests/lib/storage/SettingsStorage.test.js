@@ -146,4 +146,33 @@ describe('SettingsStorage', () => {
       expect(chrome.storage.local.data[STORAGE_KEYS.SETTINGS]).toBeUndefined();
     });
   });
+
+  describe('Error handling', () => {
+    it('should handle storage quota exceeded error', async () => {
+      const settings = new FreelancerSettings({
+        freelancerName: 'Test User',
+        hourlyRate: 100,
+        defaultExportMethod: 'pdf'
+      });
+
+      // Simulate quota exceeded
+      chrome.runtime.simulateQuotaError();
+
+      await expect(SettingsStorage.save(settings))
+        .rejects.toThrow('Storage quota exceeded');
+
+      chrome.runtime.clearError();
+    });
+
+    it('should handle JSON parse error gracefully', async () => {
+      // Store invalid JSON
+      chrome.storage.local.data[STORAGE_KEYS.SETTINGS] = '{invalid json}';
+
+      // Should return defaults instead of throwing
+      const settings = await SettingsStorage.get();
+
+      expect(settings.freelancerName).toBe('');
+      expect(settings.hourlyRate).toBe(0);
+    });
+  });
 });
