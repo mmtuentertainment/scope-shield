@@ -4,9 +4,9 @@
  */
 
 import { detectScopeCreep } from '../utils/detector.js';
-import { saveDetectionEvent } from '../utils/storage.js';
 import { generateUUID } from '../utils/uuid.js';
 import { debounce } from '../utils/helpers.js';
+import { logError, logWarning } from '../lib/utils/Logger.js';
 import {
   SELECTORS as GMAIL_SELECTORS,
   findMessages,
@@ -66,7 +66,7 @@ function waitForGmail() {
     // Timeout after 30 seconds
     setTimeout(() => {
       clearInterval(checkInterval);
-      console.warn('[ScopeShield] Gmail interface not detected after 30s');
+      logWarning('Gmail interface not detected after 30s');
       resolve();
     }, 30000);
   });
@@ -181,7 +181,7 @@ function notifyBackgroundOfDetection(event) {
       event
     });
   } catch (error) {
-    console.error('[ScopeShield] Failed to send message to background:', error);
+    logError('Failed to send message to background', error);
   }
 }
 
@@ -202,7 +202,7 @@ function sendPerformanceMetric(elapsed, messageCount) {
       messageCount
     });
   } catch (error) {
-    console.error('[ScopeShield] Failed to send performance metric:', error);
+    logError('Failed to send performance metric', error);
   }
 }
 
@@ -237,34 +237,56 @@ async function scanMessages() {
     const messages = findMessages();
     console.log(`[ScopeShield] Found ${messages.length} messages to scan`);
 
-    // Process all messages and collect detection events
-    const detectionEvents = [];
-    for (const messageEl of messages) {
-      const event = processMessage(messageEl);
-      if (event) {
-        detectionEvents.push(event);
-        notifyBackgroundOfDetection(event);
-      }
-    }
-
-    // Save all events after loop (fixes await-in-loop)
-    if (detectionEvents.length > 0) {
-      const savePromises = detectionEvents.map(e => saveDetectionEvent(e));
-      const results = await Promise.allSettled(savePromises);
-
-      // Log failures for debugging
-      const failures = results.filter(r => r.status === 'rejected');
-      if (failures.length > 0) {
-        console.warn(`[ScopeShield] ${failures.length} events failed to save:`, failures);
-      }
-    }
-
+    const detectionEvents = processAllMessages(messages);
+    await saveAllDetections(detectionEvents);
     reportScanResults(startTime, detectionEvents.length, messages.length);
 
   } catch (error) {
-    console.error('[ScopeShield] Error during scan:', error);
+    logError('Error during scan', error);
   } finally {
     isScanning = false;
+  }
+}
+
+/**
+ * Process all messages and collect detection events
+ * @private
+ * @param {Element[]} messages - Array of message elements to process
+ * @returns {Object[]} Array of detection events
+ */
+function processAllMessages(messages) {
+  const detectionEvents = [];
+
+  for (const messageEl of messages) {
+    const event = processMessage(messageEl);
+    if (event) {
+      detectionEvents.push(event);
+      notifyBackgroundOfDetection(event);
+    }
+  }
+
+  return detectionEvents;
+}
+
+/**
+ * Save all detection events to storage atomically
+ * @private
+ * @param {Object[]} detectionEvents - Array of detection events to save
+ * @returns {Promise<void>}
+ */
+async function saveAllDetections(detectionEvents) {
+  if (detectionEvents.length === 0) {
+    return;
+  }
+
+  try {
+    // Use bulk save to prevent race condition
+    const { saveDetectionEvents } = await import('../utils/storage.js');
+    await saveDetectionEvents(detectionEvents);
+  } catch (error) {
+    // Import logError dynamically to avoid circular dependency
+    const { logError } = await import('../lib/utils/Logger.js');
+    logError('Failed to save detection events', error);
   }
 }
 
@@ -307,7 +329,7 @@ function extractMessageText(messageEl) {
     data.text = text;
 
   } catch (error) {
-    console.error('[ScopeShield] Error extracting message text:', error);
+    logError('Error extracting message text', error);
   }
 
   return data;

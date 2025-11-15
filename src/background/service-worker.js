@@ -4,6 +4,7 @@
  */
 
 import { getUnacknowledgedCount } from '../utils/storage.js';
+import { logError, logWarning } from '../lib/utils/Logger.js';
 
 // Performance metrics storage with memory leak protection
 // Limits: Keep max 100 metrics, trim to 50 when exceeded
@@ -59,7 +60,7 @@ async function sendNotification(event) {
   try {
     // Validate required fields
     if (!event || !event.detectedText || !event.id) {
-      console.warn('[ScopeShield] Invalid event data for notification:', event);
+      logWarning('Invalid event data for notification', event);
       return;
     }
 
@@ -90,7 +91,7 @@ async function sendNotification(event) {
     await chrome.notifications.create(event.id, notificationOptions);
     console.log(`[ScopeShield] Notification sent for event: ${event.id}`);
   } catch (error) {
-    console.error('[ScopeShield] Failed to send notification:', error);
+    logError('Failed to send notification', error);
   }
 }
 
@@ -102,7 +103,7 @@ async function updateBadge() {
     const count = await getUnacknowledgedCount();
     await updateBadgeCount(count);
   } catch (error) {
-    console.error('[ScopeShield] Failed to update badge:', error);
+    logError('Failed to update badge', error);
   }
 }
 
@@ -124,7 +125,7 @@ async function updateBadgeCount(count) {
 
     console.log(`[ScopeShield] Badge updated: ${count}`);
   } catch (error) {
-    console.error('[ScopeShield] Failed to set badge:', error);
+    logError('Failed to set badge', error);
   }
 }
 
@@ -204,7 +205,7 @@ function recordPerformanceMetric(metric) {
 
       // Warn if performance budget exceeded
       if (metric.metric === 'detection_latency' && p95 > 500) {
-        console.warn(`[ScopeShield] Detection latency exceeds budget: ${p95.toFixed(2)}ms > 500ms`);
+        logWarning(`Detection latency exceeds budget: ${p95.toFixed(2)}ms > 500ms`);
       }
     }
   }

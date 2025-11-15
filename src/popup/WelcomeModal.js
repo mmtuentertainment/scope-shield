@@ -2,6 +2,7 @@
 
 import { FirstRunDetector } from '../lib/utils/FirstRunDetector.js';
 import { sanitizeText } from '../lib/utils/Sanitizer.js';
+import { logError } from '../lib/utils/Logger.js';
 
 /**
  * Welcome Modal
@@ -18,68 +19,100 @@ export class WelcomeModal {
    * @returns {Promise<void>}
    */
   show() {
-    // Guard against multiple show() calls
     if (this.modal) {
       return Promise.resolve();
     }
 
-    return new Promise((resolve) => {
-      // Create modal overlay
-      this.modal = document.createElement('div');
-      this.modal.className = 'welcome-modal-overlay';
-      this.modal.innerHTML = `
-        <div class="welcome-modal">
-          <div class="welcome-header">
-            <img src="../assets/icons/icon48.png" alt="ScopeShield" width="48" height="48">
-            <h2>Welcome to ScopeShield!</h2>
-          </div>
-          <div class="welcome-content">
-            <p>Let's get you set up. We need your name to personalize change order documents.</p>
-            <form id="welcome-form">
-              <div class="form-group">
-                <label for="welcome-name" class="form-label">
-                  Your Name <span class="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="welcome-name"
-                  name="name"
-                  class="form-input"
-                  placeholder="e.g., Jane Doe"
-                  required
-                  maxlength="100"
-                  autofocus
-                />
-                <span class="form-hint">This will appear on your change orders</span>
-              </div>
-              <div id="welcome-error" class="welcome-error" role="alert" aria-live="polite" style="display: none;"></div>
-              <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
-                  Get Started
-                </button>
-              </div>
-            </form>
-          </div>
+    return new Promise((resolve, reject) => {
+      this.createModalElement();
+      this.setupEventListeners(resolve, reject);
+    });
+  }
+
+  /**
+   * Create modal DOM element
+   * @private
+   */
+  createModalElement() {
+    this.modal = document.createElement('div');
+    this.modal.className = 'welcome-modal-overlay';
+    
+    this.modal.innerHTML = this.getModalTemplate();
+    
+    document.body.appendChild(this.modal);
+  }
+
+  /**
+   * Get modal HTML template
+   * @private
+   * @returns {string} Modal HTML
+   */
+  getModalTemplate() {
+    return `
+      <div class="welcome-modal">
+        <div class="welcome-header">
+          <img src="../assets/icons/icon48.png" alt="ScopeShield" width="48" height="48">
+          <h2>Welcome to ScopeShield!</h2>
         </div>
-      `;
+        <div class="welcome-content">
+          <p>Let's get you set up. We need your name to personalize change order documents.</p>
+          <form id="welcome-form">
+            <div class="form-group">
+              <label for="welcome-name" class="form-label">
+                Your Name <span class="required">*</span>
+              </label>
+              <input
+                type="text"
+                id="welcome-name"
+                name="name"
+                class="form-input"
+                placeholder="e.g., Jane Doe"
+                required
+                maxlength="100"
+                autofocus
+              />
+              <span class="form-hint">This will appear on your change orders</span>
+            </div>
+            <div id="welcome-error" class="welcome-error" role="alert" aria-live="polite" style="display: none;"></div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">
+                Get Started
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+  }
 
-      // Append to body
-      document.body.appendChild(this.modal);
+  /**
+   * Setup event listeners for modal
+   * @private
+   * @param {Function} resolve - Promise resolve callback
+   * @param {Function} reject - Promise reject callback
+   */
+  setupEventListeners(resolve, reject) {
+    const form = this.modal.querySelector('#welcome-form');
+    if (!form) {
+      // Clean up modal before rejecting
+      if (this.modal) {
+        this.modal.remove();
+        this.modal = null;
+      }
+      logError('WelcomeModal.setupEventListeners: Form element #welcome-form not found', new Error('Form element not found in template'));
+      reject(new Error('Form element #welcome-form not found in modal template'));
+      return;
+    }
 
-      // Set up form submission
-      const form = this.modal.querySelector('#welcome-form');
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await this.handleSubmit(resolve);
-      });
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await this.handleSubmit(resolve);
+    });
 
-      // Prevent closing by clicking overlay (user must complete setup)
-      this.modal.addEventListener('click', (e) => {
-        if (e.target === this.modal) {
-          // Don't close - first run is required
-          this.shake();
-        }
-      });
+    this.modal.addEventListener('click', (e) => {
+      if (e.target === this.modal) {
+        this.shake();
+      }
     });
   }
 
@@ -90,7 +123,6 @@ export class WelcomeModal {
   async handleSubmit(resolve) {
     try {
       const nameInput = this.modal.querySelector('#welcome-name');
-      const errorEl = this.modal.querySelector('#welcome-error');
       const submitBtn = this.modal.querySelector('button[type="submit"]');
 
       // Get and sanitize name
@@ -116,7 +148,7 @@ export class WelcomeModal {
       resolve();
 
     } catch (error) {
-      console.error('[WelcomeModal] Error saving name:', error);
+      logError('WelcomeModal.handleSubmit: Error saving name', error);
       this.showError('Failed to save. Please try again.');
 
       // Reset button

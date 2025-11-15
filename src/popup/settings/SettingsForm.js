@@ -72,65 +72,76 @@ export class SettingsForm {
    * T053: Handle form submission and save settings
    */
   async handleSubmit() {
+    const submitBtn = this.formElement.querySelector('#save-settings-btn');
+    if (!submitBtn) {
+      logError('SettingsForm.handleSubmit: Submit button not found');
+      return;
+    }
+
+    const originalText = submitBtn.textContent;
+
     try {
-      // Show loading state
-      const submitBtn = this.formElement.querySelector('#save-settings-btn');
-      const originalText = submitBtn.textContent;
-      submitBtn.textContent = 'Saving...';
-      submitBtn.disabled = true;
+      this.setLoadingState(submitBtn, true);
 
-      // Collect and sanitize form data
-      const formData = new FormData(this.formElement);
-
-      const freelancerName = sanitizeText(formData.get('freelancerName'), 100);
-      const hourlyRateRaw = formData.get('hourlyRate');
-      const hourlyRate = hourlyRateRaw ? sanitizeNumber(hourlyRateRaw, 0, 10000) : 0;
-      const defaultExportMethod = formData.get('defaultExportMethod');
-      const autoExportEnabled = formData.get('autoExportEnabled') === 'on';
-      const autoExportDelayRaw = formData.get('autoExportDelay');
-      const autoExportDelay = autoExportDelayRaw ? sanitizeNumber(autoExportDelayRaw, 1, 10) : 3;
-
-      // Create settings instance
-      const settings = new FreelancerSettings({
-        freelancerName,
-        hourlyRate,
-        defaultExportMethod,
-        autoExportEnabled,
-        autoExportDelay
-      });
-
-      // Validate
-      const validation = settings.validate();
-      if (!validation.valid) {
-        this.showValidationErrors(validation.errors);
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
+      const settings = this.collectAndValidateSettings();
+      if (!settings) {
+        this.setLoadingState(submitBtn, false, originalText);
         return;
       }
 
-      // Save to storage
       await SettingsStorage.save(settings);
-
       logInfo('Settings saved successfully', settings.toJSON());
 
-      // T055: Show success notification
       this.showSuccessNotification();
-
-      // Reset button state
-      submitBtn.textContent = originalText;
-      submitBtn.disabled = false;
+      this.setLoadingState(submitBtn, false, originalText);
 
     } catch (error) {
       logError('Failed to save settings', error);
-
-      // T056: Show error notification
       this.showErrorNotification(error.message);
-
-      // Reset button state
-      const submitBtn = this.formElement.querySelector('#save-settings-btn');
-      submitBtn.textContent = 'Save Settings';
-      submitBtn.disabled = false;
+      this.setLoadingState(submitBtn, false, originalText);
     }
+  }
+
+  /**
+   * Set button loading state
+   * @private
+   */
+  setLoadingState(button, isLoading, originalText = 'Save Settings') {
+    button.textContent = isLoading ? 'Saving...' : originalText;
+    button.disabled = isLoading;
+  }
+
+  /**
+   * Collect and validate form data
+   * @private
+   * @returns {FreelancerSettings|null} Settings instance or null if invalid
+   */
+  collectAndValidateSettings() {
+    const formData = new FormData(this.formElement);
+
+    const freelancerName = sanitizeText(formData.get('freelancerName'), 100);
+    const hourlyRateRaw = formData.get('hourlyRate');
+    const hourlyRate = hourlyRateRaw ? sanitizeNumber(hourlyRateRaw, 0, 10000) : 0;
+    const defaultExportMethod = formData.get('defaultExportMethod');
+    const autoExportEnabled = formData.get('autoExportEnabled') === 'on';
+    const autoExportDelayRaw = formData.get('autoExportDelay');
+    const autoExportDelay = autoExportDelayRaw ? sanitizeNumber(autoExportDelayRaw, 1, 10) : 3;
+
+    const settings = new FreelancerSettings({
+      freelancerName,
+      hourlyRate,
+      defaultExportMethod,
+      autoExportEnabled,
+      autoExportDelay
+    });
+
+    const validation = settings.validate();
+    if (!validation.valid) {
+      this.showValidationErrors(validation.errors);
+      return null;
+    }
+
+    return settings;
   }
 
   /**

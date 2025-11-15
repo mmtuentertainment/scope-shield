@@ -13,7 +13,8 @@
 
 import { acknowledgeEvent, clearAllEvents } from '../../utils/storage.js';
 import { showNotification } from './NotificationManager.js';
-import { logError } from '../../lib/utils/Logger.js';
+import { logError, logWarning } from '../../lib/utils/Logger.js';
+import { ChangeOrderBuilder } from '../../lib/change-order/ChangeOrderBuilder.js';
 
 /**
  * Detection Event Handlers Class
@@ -35,6 +36,11 @@ export class DetectionEventHandlers {
    * @param {string} eventId - Event ID to acknowledge
    */
   async handleAcknowledge(eventId) {
+    if (typeof eventId !== 'string' || eventId.trim() === '') {
+      logError('DetectionEventHandlers.handleAcknowledge: Invalid eventId', new TypeError('eventId must be a non-empty string'));
+      return;
+    }
+
     try {
       await acknowledgeEvent(eventId);
       this.updateLocalState(eventId);
@@ -74,8 +80,25 @@ export class DetectionEventHandlers {
    * @param {string} url - Gmail URL to open
    */
   handleView(url) {
-    if (url) {
+    if (!url || typeof url !== 'string') {
+      logError('DetectionEventHandlers.handleView: Invalid URL', new TypeError('URL must be a non-empty string'));
+      showNotification('toast-notification', 'Unable to open email (invalid URL)', 'error', 3000);
+      return;
+    }
+
+    // Validate URL format
+    try {
+      const urlObj = new URL(url);
+      // Only allow http and https protocols for security
+      if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+        logError('DetectionEventHandlers.handleView: Invalid protocol', new Error(`Only http/https allowed, got ${urlObj.protocol}`));
+        showNotification('toast-notification', 'Unable to open email (invalid link)', 'error', 3000);
+        return;
+      }
       chrome.tabs.create({ url });
+    } catch (error) {
+      logError('DetectionEventHandlers.handleView: Malformed URL', error);
+      showNotification('toast-notification', 'Unable to open email (malformed URL)', 'error', 3000);
     }
   }
 
@@ -84,11 +107,17 @@ export class DetectionEventHandlers {
    * @param {Object} event - Detection event to copy
    */
   async handleCopy(event) {
+    if (!event || typeof event !== 'object') {
+      logError('DetectionEventHandlers.handleCopy: Invalid event', new TypeError('Event must be an object'));
+      showNotification('toast-notification', 'Failed to copy', 'error', 3000);
+      return;
+    }
+
     const text = `Scope Creep Detected:
-From: ${event.senderName || event.sender}
-Text: ${event.detectedText}
-Trigger: ${event.triggerWord} (Confidence: ${event.triggerWeight}/10)
-Time: ${new Date(event.timestamp).toLocaleString()}`;
+From: ${event.senderName || event.sender || 'Unknown'}
+Text: ${event.detectedText || ''}
+Trigger: ${event.triggerWord || 'Unknown'} (Confidence: ${event.triggerWeight || 0}/10)
+Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'}`;
 
     try {
       await navigator.clipboard.writeText(text);
@@ -118,7 +147,7 @@ Time: ${new Date(event.timestamp).toLocaleString()}`;
   }
 
   /**
-   * Generate change order report
+   * Generate change order report using ChangeOrderBuilder
    */
   async generateReport() {
     const unacknowledged = this.getEvents().filter(e => !e.acknowledged);
@@ -128,10 +157,20 @@ Time: ${new Date(event.timestamp).toLocaleString()}`;
       return;
     }
 
-    // Build report and copy to clipboard
-    const report = this.buildChangeOrderReport(unacknowledged);
-
     try {
+      // Transform events to detection format
+      const detections = unacknowledged.map(event => ({
+        sender: event.senderName || event.sender,
+        text: event.detectedText,
+        trigger: event.triggerWord,
+        date: event.timestamp
+      }));
+
+      // Build professional change order
+      const builder = new ChangeOrderBuilder();
+      const report = await builder.build(detections);
+
+      // Copy to clipboard
       await navigator.clipboard.writeText(report);
       showNotification('toast-notification', 'Change order copied to clipboard!', 'success', 3000);
 
@@ -146,41 +185,6 @@ Time: ${new Date(event.timestamp).toLocaleString()}`;
   }
 
   /**
-   * Build change order report text
-   * @param {Array} unacknowledged - Unacknowledged events
-   * @returns {string} Report text
-   */
-  buildChangeOrderReport(unacknowledged) {
-    // Group by sender
-    const bySender = {};
-    unacknowledged.forEach(event => {
-      const sender = event.senderName || event.sender || 'Unknown';
-      if (!bySender[sender]) {
-        bySender[sender] = [];
-      }
-      bySender[sender].push(event);
-    });
-
-    // Generate report text
-    let report = 'SCOPE CREEP CHANGE ORDER\n';
-    report += '========================\n\n';
-    report += `Generated: ${new Date().toLocaleString()}\n`;
-    report += `Total Items: ${unacknowledged.length}\n\n`;
-
-    Object.entries(bySender).forEach(([sender, events]) => {
-      report += `From: ${sender}\n`;
-      report += `${'-'.repeat(40)}\n`;
-      events.forEach((event, index) => {
-        report += `${index + 1}. "${event.detectedText}"\n`;
-        report += `   Trigger: ${event.triggerWord} (Confidence: ${event.triggerWeight}/10)\n`;
-        report += `   Date: ${new Date(event.timestamp).toLocaleDateString()}\n\n`;
-      });
-    });
-
-    return report;
-  }
-
-  /**
    * Acknowledge multiple events in batch
    * @param {Array} events - Events to acknowledge
    * @returns {Promise<void>}
@@ -192,7 +196,7 @@ Time: ${new Date(event.timestamp).toLocaleString()}`;
     // Log and notify user of failures
     const failures = results.filter(r => r.status === 'rejected');
     if (failures.length > 0) {
-      console.warn(`[ScopeShield] ${failures.length} events failed to acknowledge:`, failures);
+      logWarning(`${failures.length} events failed to acknowledge`, failures);
       showNotification('toast-notification',
         `${failures.length} items failed to acknowledge`,
         'warning',

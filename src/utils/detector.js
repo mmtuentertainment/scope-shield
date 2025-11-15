@@ -5,6 +5,7 @@
 
 import { TRIGGER_WORDS, shouldExclude, findBestMatch } from './trigger-words.js';
 import { extractContext } from './helpers.js';
+import { logError } from '../lib/utils/Logger.js';
 
 /**
  * Detection result type
@@ -44,7 +45,7 @@ function getHighConfidenceTriggerPattern() {
 
     // Validate total pattern length to prevent ReDoS
     if (patternString.length > 10000) {
-      console.error('[ScopeShield] Trigger pattern too long, using safe default');
+      logError('Trigger pattern too long, using safe default', new Error(`Pattern length: ${patternString.length}`));
       cachedTriggerPattern = /\b(also|additionally|one more thing)\b/gi;
     } else {
       cachedTriggerPattern = new RegExp(patternString, 'gi');

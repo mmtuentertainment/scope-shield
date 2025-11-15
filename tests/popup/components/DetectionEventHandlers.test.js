@@ -13,6 +13,19 @@ vi.mock('../../../src/popup/components/NotificationManager.js', () => ({
   showNotification: vi.fn()
 }));
 
+// Mock FreelancerSettings for ChangeOrderBuilder
+vi.mock('../../../src/lib/storage/FreelancerSettings.js', () => ({
+  FreelancerSettings: {
+    async load() {
+      return {
+        freelancerName: 'Test Freelancer',
+        hourlyRate: 100,
+        currency: 'USD'
+      };
+    }
+  }
+}));
+
 describe('DetectionEventHandlers', () => {
   let handlers;
   let mockEvents;
@@ -287,25 +300,6 @@ describe('DetectionEventHandlers', () => {
         'error',
         3000
       );
-    });
-  });
-
-  describe('buildChangeOrderReport', () => {
-    it('should build formatted report', () => {
-      const report = handlers.buildChangeOrderReport(mockEvents);
-
-      expect(report).toContain('SCOPE CREEP CHANGE ORDER');
-      expect(report).toContain('Total Items: 2');
-      expect(report).toContain('From: John Doe');
-      expect(report).toContain('Can you also add this?');
-      expect(report).toContain('Trigger: also (Confidence: 8/10)');
-    });
-
-    it('should group by sender', () => {
-      const report = handlers.buildChangeOrderReport(mockEvents);
-
-      expect(report).toContain('From: John Doe');
-      expect(report).toContain('From: Jane Smith');
     });
   });
 
