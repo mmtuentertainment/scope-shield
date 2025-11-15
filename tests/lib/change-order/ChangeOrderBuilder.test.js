@@ -87,38 +87,6 @@ describe('ChangeOrderBuilder', () => {
     });
   });
 
-  describe('groupBySender()', () => {
-    it('should group detections by sender', () => {
-      const detections = [
-        { sender: 'alice@example.com', text: 'Request 1' },
-        { sender: 'bob@example.com', text: 'Request 2' },
-        { sender: 'alice@example.com', text: 'Request 3' }
-      ];
-
-      const grouped = builder.groupBySender(detections);
-
-      expect(grouped['alice@example.com']).toHaveLength(2);
-      expect(grouped['bob@example.com']).toHaveLength(1);
-    });
-
-    it('should handle empty array', () => {
-      const grouped = builder.groupBySender([]);
-      expect(grouped).toEqual({});
-    });
-
-    it('should handle single sender', () => {
-      const detections = [
-        { sender: 'alice@example.com', text: 'Request 1' },
-        { sender: 'alice@example.com', text: 'Request 2' }
-      ];
-
-      const grouped = builder.groupBySender(detections);
-
-      expect(Object.keys(grouped)).toHaveLength(1);
-      expect(grouped['alice@example.com']).toHaveLength(2);
-    });
-  });
-
   describe('estimateHours()', () => {
     it('should estimate 2 hours per detection by default', () => {
       const detections = [

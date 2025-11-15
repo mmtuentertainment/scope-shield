@@ -73,6 +73,11 @@ export class SettingsForm {
    */
   async handleSubmit() {
     const submitBtn = this.formElement.querySelector('#save-settings-btn');
+    if (!submitBtn) {
+      logError('SettingsForm.handleSubmit: Submit button not found');
+      return;
+    }
+
     const originalText = submitBtn.textContent;
 
     try {

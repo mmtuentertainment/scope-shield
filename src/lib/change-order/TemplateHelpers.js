@@ -67,6 +67,9 @@ export function isTruthy(value) {
     return value;
   }
   if (typeof value === 'number') {
+    if (Number.isNaN(value)) {
+      return false;
+    }
     return value !== 0;
   }
   if (typeof value === 'string') {

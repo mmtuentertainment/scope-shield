@@ -6,7 +6,6 @@ import { logWarning, logError } from '../utils/Logger.js';
  * Builds professional change order documents from scope creep detections
  *
  * Features:
- * - Groups detections by sender
  * - Estimates hours (2h per detection heuristic)
  * - Calculates costs if hourly rate available
  * - Generates formatted document using TemplateEngine
@@ -97,25 +96,6 @@ export class ChangeOrderBuilder {
       hourlyRate: hasHourlyRate ? settings.hourlyRate : null,
       totalCost: hasHourlyRate ? this.calculateCost(totalHours, settings.hourlyRate) : null
     };
-  }
-
-  /**
-   * Group detections by sender email
-   * @param {Array} detections - Array of detections
-   * @returns {Object} Object with sender as key, array of detections as value
-   */
-  groupBySender(detections) {
-    const grouped = {};
-
-    for (const detection of detections) {
-      const sender = detection.sender || 'Unknown';
-      if (!grouped[sender]) {
-        grouped[sender] = [];
-      }
-      grouped[sender].push(detection);
-    }
-
-    return grouped;
   }
 
   /**

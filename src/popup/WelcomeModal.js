@@ -17,10 +17,6 @@ export class WelcomeModal {
    * T062: Show welcome modal
    * @returns {Promise<void>}
    */
-  /**
-   * T062: Show welcome modal
-   * @returns {Promise<void>}
-   */
   show() {
     if (this.modal) {
       return Promise.resolve();
@@ -94,6 +90,11 @@ export class WelcomeModal {
    */
   setupEventListeners(resolve) {
     const form = this.modal.querySelector('#welcome-form');
+    if (!form) {
+      console.error('[WelcomeModal] Form element #welcome-form not found in modal template');
+      return;
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       await this.handleSubmit(resolve);
