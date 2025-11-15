@@ -15,7 +15,7 @@ import { DetectionEventHandlers } from './components/DetectionEventHandlers.js';
 import { BadgeManager } from './components/BadgeManager.js';
 import { showNotification } from './components/NotificationManager.js';
 import { debounce } from './utils/debounce.js';
-import { logError } from '../lib/utils/Logger.js';
+import { logError, logWarning } from '../lib/utils/Logger.js';
 import { URGENT_THRESHOLD, LOAD_TIME_TARGET_MS } from './constants.js';
 
 // DOM Elements (cached to avoid redundant queries)
@@ -73,7 +73,7 @@ async function loadDetections() {
     console.log(`[ScopeShield] Loaded ${detectionEvents.length} detection events`);
 
     if (loadTime > LOAD_TIME_TARGET_MS) {
-      console.warn(`[ScopeShield] Popup load took ${loadTime.toFixed(1)}ms (target: <${LOAD_TIME_TARGET_MS}ms)`);
+      logWarning(`Popup load took ${loadTime.toFixed(1)}ms (target: <${LOAD_TIME_TARGET_MS}ms)`);
     }
 
     updateSummaryStats();

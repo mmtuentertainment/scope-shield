@@ -1,6 +1,7 @@
 // T061: First Run Detector
 
 import { SettingsStorage } from '../storage/SettingsStorage.js';
+import { logError } from './Logger.js';
 
 /**
  * First Run Detector
@@ -20,7 +21,7 @@ export class FirstRunDetector {
 
       return isFirst;
     } catch (error) {
-      console.error('[FirstRunDetector] Error checking first run:', error);
+      logError('FirstRunDetector.isFirstRun: Error checking first run', error);
       // Default to false if there's an error
       return false;
     }
@@ -37,7 +38,7 @@ export class FirstRunDetector {
       settings.freelancerName = freelancerName;
       await SettingsStorage.save(settings);
     } catch (error) {
-      console.error('[FirstRunDetector] Error completing first run:', error);
+      logError('FirstRunDetector.completeFirstRun: Error completing first run', error);
       throw error;
     }
   }

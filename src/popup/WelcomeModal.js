@@ -94,6 +94,11 @@ export class WelcomeModal {
   setupEventListeners(resolve, reject) {
     const form = this.modal.querySelector('#welcome-form');
     if (!form) {
+      // Clean up modal before rejecting
+      if (this.modal) {
+        this.modal.remove();
+        this.modal = null;
+      }
       logError('WelcomeModal.setupEventListeners: Form element #welcome-form not found', new Error('Form element not found in template'));
       reject(new Error('Form element #welcome-form not found in modal template'));
       return;

@@ -2,6 +2,8 @@
  * ScopeShield Options Page Script
  */
 
+import { logError } from '../lib/utils/Logger.js';
+
 // DOM Elements
 const enableNotifications = document.getElementById('enable-notifications');
 const enableHighlights = document.getElementById('enable-highlights');
@@ -37,7 +39,7 @@ async function loadSettings() {
     highlightOpacity.value = settings.highlightOpacity;
     opacityValue.textContent = `${Math.round(settings.highlightOpacity * 100)}%`;
   } catch (error) {
-    console.error('[ScopeShield] Error loading settings:', error);
+    logError('Error loading settings', error);
   }
 }
 
@@ -57,7 +59,7 @@ async function saveSettings() {
     await chrome.storage.local.set({ settings });
     showStatus('Settings saved successfully!', 'success');
   } catch (error) {
-    console.error('[ScopeShield] Error saving settings:', error);
+    logError('Error saving settings', error);
     showStatus('Failed to save settings', 'error');
   }
 }
@@ -75,7 +77,7 @@ async function resetSettings() {
     await loadSettings();
     showStatus('Settings reset to defaults', 'success');
   } catch (error) {
-    console.error('[ScopeShield] Error resetting settings:', error);
+    logError('Error resetting settings', error);
     showStatus('Failed to reset settings', 'error');
   }
 }

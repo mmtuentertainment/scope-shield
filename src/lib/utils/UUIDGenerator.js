@@ -1,5 +1,7 @@
 // T020: UUID generation wrapper for crypto.randomUUID()
 
+import { logWarning } from './Logger.js';
+
 /**
  * Generate RFC 4122 compliant UUID v4
  * Uses browser-built-in crypto.randomUUID() (Chrome 92+)
@@ -12,7 +14,7 @@ export function generateUUID() {
   }
 
   // Fallback for older browsers (shouldn't happen with Manifest V3)
-  console.warn('[UUIDGenerator] Using Math.random() fallback - crypto.randomUUID() not available');
+  logWarning('Using Math.random() fallback - crypto.randomUUID() not available');
 
   // Simple UUID v4 implementation
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {

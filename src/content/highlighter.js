@@ -3,6 +3,8 @@
  * Provides visual indicators in Gmail interface
  */
 
+import { logError, logWarning } from '../lib/utils/Logger.js';
+
 // Confidence level thresholds
 const CONFIDENCE_THRESHOLD_HIGH = 8;
 const CONFIDENCE_THRESHOLD_MEDIUM = 5;
@@ -33,10 +35,10 @@ export function highlightText(messageEl, detection) {
       return highlightTextNode(node, matchIndex, matchedText.length, detection);
     }
 
-    console.warn('[ScopeShield] Could not find text to highlight:', matchedText);
+    logWarning('Could not find text to highlight', matchedText);
     return false;
   } catch (error) {
-    console.error('[ScopeShield] Error highlighting text:', error);
+    logError('Error highlighting text', error);
     return false;
   }
 }

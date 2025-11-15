@@ -45,77 +45,115 @@ All 9 pre-existing ESLint warnings from PR #6 and PR #7 have been resolved throu
 
 ---
 
-## Current Status: ESLint Compliant, Logging Consistency Pending
+## Current Status: Code Quality Excellent, Test Coverage Gap
 
 **ESLint**: ✅ 0 errors, 0 warnings - Fully compliant
 **Architecture**: ✅ All files < 250 lines - Fully compliant
-**Logging**: ⚠️ 20 console.* calls remain in files outside PR #8 scope
+**Logging**: ✅ 100% Logger utilities - Fully consistent
+**Test Coverage**: ⚠️ WelcomeModal untested (0% coverage)
 
 ---
 
-## 🟡 New Tech Debt - Logging Consistency (PR #9 Target)
+## 🟡 New Tech Debt - Missing Test Coverage (PR #9 Target)
 
-**Issue**: Inconsistent logging across codebase
-**Priority**: Medium (code quality, not functional issue)
-**Effort**: 2-3 hours
-**Target**: Dedicated PR #9 (Logging Consistency Sprint)
+**Issue**: WelcomeModal has no test coverage
+**Priority**: Medium-High (2 bugs fixed in PR #8 without tests)
+**Effort**: 30-45 minutes
+**Target**: PR #9 (Test Coverage Sprint)
 
-### Files with console.error/warn (20 instances)
+### WelcomeModal.test.js (Missing)
 
-**popup.js** (1):
-- Line 76: console.warn (Performance warning)
+**File**: src/popup/WelcomeModal.js (206 lines)
+**Coverage**: 0% (no tests exist)
 
-**options.js** (3):
-- Line 40: console.error (Loading settings)
-- Line 60: console.error (Saving settings)
-- Line 78: console.error (Resetting settings)
+**Recent Fixes WITHOUT Tests**:
+- PR #8: Fixed MAJOR promise hanging bug (setupEventListeners)
+- PR #8: Fixed memory leak on error (modal cleanup)
 
-**service-worker.js** (5):
-- Line 62: console.warn (Invalid event data)
-- Line 93: console.error (Send notification failed)
-- Line 105: console.error (Update badge failed)
-- Line 127: console.error (Set badge failed)
-- Line 207: console.warn (Detection latency budget)
+**Recommended Tests** (~15-20 tests):
 
-**highlighter.js** (2):
-- Line 36: console.warn (Could not find text)
-- Line 39: console.error (Error highlighting)
-
-**detector.js** (1):
-- Line 47: console.error (Trigger pattern too long)
-
-**FirstRunDetector.js** (2):
-- Line 23: console.error (Error checking first run)
-- Line 40: console.error (Error completing first run)
-
-**UUIDGenerator.js** (1):
-- Line 15: console.warn (Crypto fallback)
-
-**Logger.js** (5):
-- Lines 43, 45, 57, 74, 76: console.* (intentional - Logger implements the abstraction)
-
-**Total**: 15 to fix (5 in Logger.js are intentional)
-
-### Recommended Fix
-
-Replace all console.error/warn with logError/logWarning:
 ```javascript
-import { logError, logWarning } from '../lib/utils/Logger.js';
+describe('WelcomeModal', () => {
+  describe('show()', () => {
+    - should create modal on first call
+    - should return resolved promise on duplicate calls
+    - should reject if form element missing (memory leak test)
+    - should clean up modal on form missing error
+  });
 
-// Before:
-console.error('[ScopeShield] Failed to X:', error);
+  describe('handleSubmit()', () => {
+    - should save freelancer name and resolve promise
+    - should validate name is not empty
+    - should show error for empty name
+    - should handle save errors gracefully
+  });
 
-// After:
-logError('Failed to X', error);
+  describe('close()', () => {
+    - should remove modal from DOM
+    - should clear timeouts
+    - should clear modal reference
+  });
+
+  describe('showError()', () => {
+    - should display error message
+    - should auto-hide after 3 seconds
+  });
+
+  describe('shake()', () => {
+    - should add shake animation
+    - should remove shake class after 500ms
+  });
+});
 ```
 
-**Benefits**:
-- Consistent logging format
-- Centralized control (can toggle by environment)
-- Easier to filter/search logs
-- Better structure for debugging
+**Impact if not fixed**:
+- Promise hanging bug could regress unnoticed
+- Memory leak could return without detection
+- First-run UX is critical but untested
 
-**Note**: console.log calls can remain (informational only, filtered in production)
+**Recommendation**: High priority for PR #9
+
+---
+
+## ✅ Logging Consistency - COMPLETE (PR #8)
+
+**Status**: ALL 28 console.error/warn calls fixed
+**Fixed in**: PR #8 (expanded scope to complete codebase-wide consistency)
+**Date**: 2025-11-15
+
+### Summary
+
+All console.error/warn calls across the ENTIRE codebase have been replaced
+with centralized Logger utilities (logError/logWarning).
+
+**Files Fixed** (28 instances total):
+
+**PR #8 Original Scope** (13):
+- content.js (5)
+- storage.js (6)
+- TemplateEngine.js (1)
+- TemplateProcessor.js (2)
+
+**PR #8 Extended Scope** (15):
+- popup.js (1)
+- options.js (3)
+- service-worker.js (5)
+- highlighter.js (2)
+- detector.js (1)
+- FirstRunDetector.js (2)
+- UUIDGenerator.js (1)
+
+**Intentional** (5 in Logger.js):
+- Logger.js implements the console.* abstraction itself
+
+### Benefits Achieved
+
+✅ **Consistent format** - All errors/warnings use same pattern
+✅ **Centralized control** - Can filter by environment (dev vs prod)
+✅ **Better debugging** - Structured logging throughout
+✅ **Easier searching** - Single import pattern to find
+
+**Note**: console.log calls remain (informational only, acceptable in dev)
 
 ---
 
