@@ -2,6 +2,7 @@
 // Handles downloading change orders as .txt files
 
 import { logInfo, logError } from '../../utils/Logger.js';
+import { generateChangeOrderFilename } from './FilenameUtils.js';
 
 /**
  * Download text as a .txt file
@@ -24,7 +25,7 @@ export function downloadAsText(text, metadata = {}) {
     }
 
     // Generate filename
-    const filename = generateFilename(metadata);
+    const filename = generateChangeOrderFilename(metadata, 'txt');
 
     // Create blob
     const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
@@ -58,34 +59,10 @@ export function downloadAsText(text, metadata = {}) {
 }
 
 /**
- * Generate safe filename for text download
- * @param {Object} metadata - File metadata
- * @returns {string} Sanitized filename
- * @private
- */
-function generateFilename(metadata) {
-  const { clientName = 'Client', date } = metadata;
-
-  // Sanitize client name (remove unsafe characters)
-  // First limit length, then remove unsafe chars
-  const truncated = clientName.slice(0, 50);
-  const safeClientName = truncated
-    .replace(/[^a-zA-Z0-9-_\s]/g, '_') // Replace unsafe chars with underscore
-    .replace(/\s+/g, '_')               // Replace spaces with underscore
-    .replace(/_{2,}/g, '_')             // Collapse multiple underscores
-    .replace(/^_|_$/g, '');              // Trim underscores
-
-  // Format date
-  const safeDate = date || new Date().toISOString().split('T')[0];
-
-  return `ChangeOrder_${safeClientName}_${safeDate}.txt`;
-}
-
-/**
  * Get expected filename for testing/preview
  * @param {Object} metadata - File metadata
  * @returns {string}
  */
 export function getFilename(metadata) {
-  return generateFilename(metadata);
+  return generateChangeOrderFilename(metadata, 'txt');
 }

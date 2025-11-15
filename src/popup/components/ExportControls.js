@@ -112,14 +112,14 @@ export class ExportControls {
       const result = await ExportService.copyToClipboard(this.changeOrderText);
 
       if (result.success) {
-        showNotification('📋 Copied to clipboard! Ready to paste into email or message.', 'success');
+        showNotification('toast-notification', '📋 Copied to clipboard! Ready to paste into email or message.', 'success', 3000);
         logInfo('ExportControls: Clipboard export successful');
       } else {
-        showNotification(`❌ ${result.error}`, 'error');
+        showNotification('toast-notification', `❌ ${result.error}`, 'error', 5000);
 
         if (result.fallbackSuggestion) {
           setTimeout(() => {
-            showNotification(`💡 ${result.fallbackSuggestion}`, 'info');
+            showNotification('toast-notification', `💡 ${result.fallbackSuggestion}`, 'info', 5000);
           }, 2000);
         }
 
@@ -127,7 +127,7 @@ export class ExportControls {
       }
 
     } catch (error) {
-      showNotification('❌ Clipboard export failed. Try downloading as text instead.', 'error');
+      showNotification('toast-notification', '❌ Clipboard export failed. Try downloading as text instead.', 'error', 5000);
       logError('ExportControls: Clipboard export error', error);
     } finally {
       this.setLoading(false, 'clipboard');
@@ -150,14 +150,14 @@ export class ExportControls {
       );
 
       if (result.success) {
-        showNotification('📄 PDF downloaded successfully!', 'success');
+        showNotification('toast-notification', '📄 PDF downloaded successfully!', 'success', 3000);
         logInfo('ExportControls: PDF export successful');
       } else {
-        showNotification(`❌ ${result.error}`, 'error');
+        showNotification('toast-notification', `❌ ${result.error}`, 'error', 5000);
 
         if (result.fallbackSuggestion) {
           setTimeout(() => {
-            showNotification(`💡 ${result.fallbackSuggestion}`, 'info');
+            showNotification('toast-notification', `💡 ${result.fallbackSuggestion}`, 'info', 5000);
             this.highlightFallback('text');
           }, 2000);
         }
@@ -166,7 +166,7 @@ export class ExportControls {
       }
 
     } catch (error) {
-      showNotification('❌ PDF export failed. Use "Download as Text" instead.', 'error');
+      showNotification('toast-notification', '❌ PDF export failed. Use "Download as Text" instead.', 'error', 5000);
       setTimeout(() => this.highlightFallback('text'), 2000);
       logError('ExportControls: PDF export error', error);
     } finally {
@@ -190,15 +190,15 @@ export class ExportControls {
       );
 
       if (result.success) {
-        showNotification('📝 Text file downloaded successfully!', 'success');
+        showNotification('toast-notification', '📝 Text file downloaded successfully!', 'success', 3000);
         logInfo('ExportControls: Text export successful');
       } else {
-        showNotification(`❌ ${result.error}`, 'error');
+        showNotification('toast-notification', `❌ ${result.error}`, 'error', 5000);
         logError('ExportControls: Text export failed', new Error(result.error));
       }
 
     } catch (error) {
-      showNotification('❌ Text export failed. Please try again.', 'error');
+      showNotification('toast-notification', '❌ Text export failed. Please try again.', 'error', 5000);
       logError('ExportControls: Text export error', error);
     } finally {
       this.setLoading(false, 'text');

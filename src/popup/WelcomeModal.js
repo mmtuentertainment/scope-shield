@@ -151,10 +151,12 @@ export class WelcomeModal {
       logError('WelcomeModal.handleSubmit: Error saving name', error);
       this.showError('Failed to save. Please try again.');
 
-      // Reset button
+      // Reset button (check exists first)
       const submitBtn = this.modal.querySelector('button[type="submit"]');
-      submitBtn.textContent = 'Get Started';
-      submitBtn.disabled = false;
+      if (submitBtn) {
+        submitBtn.textContent = 'Get Started';
+        submitBtn.disabled = false;
+      }
     }
   }
 

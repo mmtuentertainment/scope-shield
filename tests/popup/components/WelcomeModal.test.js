@@ -341,9 +341,9 @@ describe('WelcomeModal', () => {
       const submitBtn = document.querySelector('button[type="submit"]');
       submitBtn.remove();
 
-      // Should throw when trying to reset button in error handler
-      // NOTE: This documents a bug - error handler should check if button exists
-      await expect(modal.handleSubmit(vi.fn())).rejects.toThrow();
+      // Should NOT throw when trying to reset button in error handler
+      // Bug was FIXED - error handler now checks if button exists
+      await expect(modal.handleSubmit(vi.fn())).resolves.toBeUndefined();
     });
 
     it('timeout cleanup prevents memory leaks', () => {

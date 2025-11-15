@@ -86,9 +86,3 @@ reviews:
 
 chat:
   auto_reply: true
-
-# File limits - try to increase for large PRs
-limits:
-  # Attempt to review larger files
-  max_files: 50
-  max_lines_per_file: 500

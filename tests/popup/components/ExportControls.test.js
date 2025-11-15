@@ -97,8 +97,10 @@ describe('ExportControls', () => {
 
       expect(ExportService.copyToClipboard).toHaveBeenCalledWith(mockChangeOrderText);
       expect(NotificationManager.showNotification).toHaveBeenCalledWith(
+        'toast-notification',
         expect.stringContaining('Copied to clipboard'),
-        'success'
+        'success',
+        3000
       );
     });
 
@@ -115,8 +117,10 @@ describe('ExportControls', () => {
       await vi.runAllTimersAsync();
 
       expect(NotificationManager.showNotification).toHaveBeenCalledWith(
+        'toast-notification',
         expect.stringContaining('Permission denied'),
-        'error'
+        'error',
+        5000
       );
     });
 
@@ -137,8 +141,10 @@ describe('ExportControls', () => {
       await vi.runAllTimersAsync();
 
       expect(NotificationManager.showNotification).toHaveBeenCalledWith(
+        'toast-notification',
         expect.stringContaining('Use Download as Text'),
-        'info'
+        'info',
+        5000
       );
     });
 
@@ -170,8 +176,10 @@ describe('ExportControls', () => {
         mockMetadata
       );
       expect(NotificationManager.showNotification).toHaveBeenCalledWith(
+        'toast-notification',
         expect.stringContaining('PDF downloaded'),
-        'success'
+        'success',
+        3000
       );
     });
 
@@ -192,8 +200,10 @@ describe('ExportControls', () => {
       await vi.runAllTimersAsync();
 
       expect(NotificationManager.showNotification).toHaveBeenCalledWith(
+        'toast-notification',
         expect.stringContaining('Try Download as Text'),
-        'info'
+        'info',
+        5000
       );
     });
 
@@ -235,8 +245,10 @@ describe('ExportControls', () => {
         mockMetadata
       );
       expect(NotificationManager.showNotification).toHaveBeenCalledWith(
+        'toast-notification',
         expect.stringContaining('Text file downloaded'),
-        'success'
+        'success',
+        3000
       );
     });
 
@@ -253,8 +265,10 @@ describe('ExportControls', () => {
       await vi.runAllTimersAsync();
 
       expect(NotificationManager.showNotification).toHaveBeenCalledWith(
+        'toast-notification',
         expect.stringContaining('Download blocked'),
-        'error'
+        'error',
+        5000
       );
     });
   });

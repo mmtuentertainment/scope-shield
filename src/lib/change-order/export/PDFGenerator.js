@@ -2,6 +2,7 @@
 // Lazy-loads jsPDF and generates professional PDFs from change orders
 
 import { logInfo, logError, logWarn } from '../../utils/Logger.js';
+import { generateChangeOrderFilename } from './FilenameUtils.js';
 
 // Cached jsPDF instance (lazy-loaded)
 let jsPDFInstance = null;
@@ -231,7 +232,7 @@ export async function downloadPDF(text, metadata = {}) {
     const blob = await generatePDF(text, metadata);
 
     // Generate filename
-    const filename = generateFilename(metadata);
+    const filename = generateChangeOrderFilename(metadata, 'pdf');
 
     // Create download link
     const url = URL.createObjectURL(blob);
@@ -257,36 +258,12 @@ export async function downloadPDF(text, metadata = {}) {
 }
 
 /**
- * Generate safe filename for PDF
- * @param {Object} metadata - File metadata
- * @returns {string} Sanitized filename
- * @private
- */
-function generateFilename(metadata) {
-  const { clientName = 'Client', date } = metadata;
-
-  // Sanitize client name (remove unsafe characters)
-  // First limit length, then remove unsafe chars
-  const truncated = clientName.slice(0, 50);
-  const safeClientName = truncated
-    .replace(/[^a-zA-Z0-9-_\s]/g, '_') // Replace unsafe chars with underscore
-    .replace(/\s+/g, '_')               // Replace spaces with underscore
-    .replace(/_{2,}/g, '_')             // Collapse multiple underscores
-    .replace(/^_|_$/g, '');              // Trim underscores
-
-  // Format date
-  const safeDate = date || new Date().toISOString().split('T')[0];
-
-  return `ChangeOrder_${safeClientName}_${safeDate}.pdf`;
-}
-
-/**
  * Get expected filename for testing/preview
  * @param {Object} metadata - File metadata
  * @returns {string}
  */
 export function getFilename(metadata) {
-  return generateFilename(metadata);
+  return generateChangeOrderFilename(metadata, 'pdf');
 }
 
 /**
