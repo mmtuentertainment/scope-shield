@@ -34,7 +34,6 @@ export class DetectionEventHandlers {
   /**
    * Handle acknowledge button click
    * @param {string} eventId - Event ID to acknowledge
-   * @throws {TypeError} If eventId is not a string
    */
   async handleAcknowledge(eventId) {
     if (!eventId || typeof eventId !== 'string') {

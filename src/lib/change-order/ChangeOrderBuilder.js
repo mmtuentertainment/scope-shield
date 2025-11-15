@@ -77,7 +77,13 @@ export class ChangeOrderBuilder {
    */
   prepareTemplateData(detections, settings) {
     const totalHours = this.estimateHours(detections);
-    const hasHourlyRate = settings.hourlyRate && settings.hourlyRate > 0;
+
+    // Normalize hourly rate to number
+    const hourlyRate = Number(settings.hourlyRate) || 0;
+    const hasHourlyRate = hourlyRate > 0;
+
+    // Calculate and format cost to 2 decimal places
+    const totalCost = hasHourlyRate ? this.calculateCost(totalHours, hourlyRate).toFixed(2) : null;
 
     return {
       generatedDate: this.getCurrentDate().toISOString().split('T')[0],
@@ -93,8 +99,8 @@ export class ChangeOrderBuilder {
       totalDetections: detections.length,
       totalHours,
       hasHourlyRate,
-      hourlyRate: hasHourlyRate ? settings.hourlyRate : null,
-      totalCost: hasHourlyRate ? this.calculateCost(totalHours, settings.hourlyRate) : null
+      hourlyRate,
+      totalCost
     };
   }
 

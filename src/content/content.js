@@ -251,6 +251,8 @@ async function scanMessages() {
 /**
  * Process all messages and collect detection events
  * @private
+ * @param {Element[]} messages - Array of message elements to process
+ * @returns {Object[]} Array of detection events
  */
 function processAllMessages(messages) {
   const detectionEvents = [];
@@ -269,6 +271,8 @@ function processAllMessages(messages) {
 /**
  * Save all detection events to storage
  * @private
+ * @param {Object[]} detectionEvents - Array of detection events to save
+ * @returns {Promise<void>}
  */
 async function saveAllDetections(detectionEvents) {
   if (detectionEvents.length === 0) {

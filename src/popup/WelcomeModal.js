@@ -22,9 +22,9 @@ export class WelcomeModal {
       return Promise.resolve();
     }
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       this.createModalElement();
-      this.setupEventListeners(resolve);
+      this.setupEventListeners(resolve, reject);
     });
   }
 
@@ -87,11 +87,14 @@ export class WelcomeModal {
   /**
    * Setup event listeners for modal
    * @private
+   * @param {Function} resolve - Promise resolve callback
+   * @param {Function} reject - Promise reject callback
    */
-  setupEventListeners(resolve) {
+  setupEventListeners(resolve, reject) {
     const form = this.modal.querySelector('#welcome-form');
     if (!form) {
       console.error('[WelcomeModal] Form element #welcome-form not found in modal template');
+      reject(new Error('Form element #welcome-form not found in modal template'));
       return;
     }
 

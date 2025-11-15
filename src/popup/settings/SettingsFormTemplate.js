@@ -141,6 +141,6 @@ function getFormActions() {
 function getValidationErrors() {
   return `
       <!-- Validation Errors Container -->
-      <div id="validation-errors" class="validation-errors" role="alert" aria-live="assertive" style="display: none;"></div>
+      <div id="validation-errors" class="validation-errors hidden" role="alert" aria-live="assertive"></div>
   `;
 }
