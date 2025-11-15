@@ -83,6 +83,7 @@ export class DetectionEventHandlers {
   handleView(url) {
     if (!url || typeof url !== 'string') {
       logError('DetectionEventHandlers.handleView: Invalid URL', new TypeError('URL must be a non-empty string'));
+      showNotification('toast-notification', 'Unable to open email (invalid URL)', 'error', 3000);
       return;
     }
 
@@ -92,11 +93,13 @@ export class DetectionEventHandlers {
       // Only allow http and https protocols for security
       if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
         logError('DetectionEventHandlers.handleView: Invalid protocol', new Error(`Only http/https allowed, got ${urlObj.protocol}`));
+        showNotification('toast-notification', 'Unable to open email (invalid link)', 'error', 3000);
         return;
       }
       chrome.tabs.create({ url });
     } catch (error) {
       logError('DetectionEventHandlers.handleView: Malformed URL', error);
+      showNotification('toast-notification', 'Unable to open email (malformed URL)', 'error', 3000);
     }
   }
 

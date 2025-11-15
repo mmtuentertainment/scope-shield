@@ -1,5 +1,6 @@
 import { TemplateEngine } from './TemplateEngine.js';
 import { FreelancerSettings } from '../storage/FreelancerSettings.js';
+import { logWarning, logError } from '../utils/Logger.js';
 
 /**
  * Builds professional change order documents from scope creep detections
@@ -82,6 +83,7 @@ export class ChangeOrderBuilder {
     return {
       generatedDate: this.getCurrentDate().toISOString().split('T')[0],
       freelancerName: settings.freelancerName || 'Freelancer',
+      hoursPerDetection: ChangeOrderBuilder.HOURS_PER_DETECTION,
       detections: detections.map((detection, index) => ({
         index: index + 1,
         sender: detection.sender || 'Unknown',
@@ -151,12 +153,12 @@ export class ChangeOrderBuilder {
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) {
-        console.warn('[ScopeShield] Invalid date format:', dateString);
+        logWarning('Invalid date format:', dateString);
         return dateString; // Return as-is if invalid
       }
       return date.toISOString().split('T')[0];
     } catch (error) {
-      console.error('[ScopeShield] Error formatting date:', dateString, error);
+      logError('Error formatting date:', `${dateString} - ${error.message}`);
       return dateString;
     }
   }
@@ -199,7 +201,7 @@ SCOPE CREEP DETECTIONS ({{totalDetections}} items):
 
 SUMMARY:
 - Total Additional Work Detected: {{totalDetections}} items
-- Estimated Additional Hours: {{totalHours}} hours (at 2 hours per item)
+- Estimated Additional Hours: {{totalHours}} hours (at {{hoursPerDetection}} hours per item)
 {{@if hasHourlyRate}}- Your Hourly Rate: \${{hourlyRate}}
 - Estimated Additional Cost: \${{totalCost}}
 {{/@if}}

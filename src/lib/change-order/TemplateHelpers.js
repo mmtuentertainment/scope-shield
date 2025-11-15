@@ -4,6 +4,9 @@
  * @module TemplateHelpers
  */
 
+// Match {{variableName}} and {{@index}} but NOT {{@each...}} or {{@if...}}
+const VAR_PATTERN = /\{\{(?!@(?:each|if|else)\b)([^}]+)\}\}/g;
+
 /**
  * Replace simple variables {{variableName}} and {{@index}}
  * @param {string} text - Text to process
@@ -11,10 +14,7 @@
  * @returns {string} Text with variables replaced
  */
 export function replaceVariables(text, data) {
-  // Match {{variableName}} and {{@index}} but NOT {{@each...}} or {{@if...}}
-  const varPattern = /\{\{(?!@(?:each|if|else)\b)([^}]+)\}\}/g;
-
-  return text.replace(varPattern, (match, varName) => {
+  return text.replace(VAR_PATTERN, (match, varName) => {
     const value = getValue(varName.trim(), data);
     return value !== undefined ? String(value) : match;
   });
@@ -27,6 +27,10 @@ export function replaceVariables(text, data) {
  * @returns {*} Value at path, or undefined if not found
  */
 export function getValue(path, data) {
+  if (typeof path !== 'string' || !path) {
+    return undefined;
+  }
+
   if (!data || typeof data !== 'object') {
     return undefined;
   }
