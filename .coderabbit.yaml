@@ -1,0 +1,94 @@
+# CodeRabbit Configuration for ScopeShield
+# Optimizes reviews for large PRs with many test files
+
+language: "en-US"
+early_access: false
+reviews:
+  # Request changes workflow
+  request_changes_workflow: true
+  
+  # High-level summary
+  high_level_summary: true
+  
+  # Review settings
+  poem: false
+  review_status: true
+  
+  # Collapse large diffs in comments
+  collapse_walkthrough: true
+  
+  # Auto-review configuration
+  auto_review:
+    enabled: true
+    
+    # Don't auto-approve - we want full reviews
+    auto_incremental_review: true
+    
+    # Review settings
+    drafts: false
+    
+    # File-level settings
+    ignore_title_keywords:
+      - "WIP"
+      - "DO NOT REVIEW"
+    
+  # Path-based instructions
+  path_instructions:
+    - path: "tests/**/*.test.js"
+      instructions: |
+        For test files, focus on:
+        - Test coverage completeness (all critical paths tested)
+        - Test quality (no flaky tests, proper assertions)
+        - Mock usage (appropriate, not over-mocked)
+        - Performance test validity
+        
+        Skip detailed review of:
+        - Test setup boilerplate
+        - Standard vitest patterns
+        - Mock implementations (unless security concern)
+    
+    - path: "src/lib/change-order/export/*.js"
+      instructions: |
+        Export services - focus on:
+        - Error handling (graceful degradation)
+        - Performance (clipboard <500ms, PDF <3s)
+        - Security (no XSS, safe file handling)
+        - Resource cleanup (URL.revokeObjectURL, etc)
+    
+    - path: "src/lib/change-order/PricingCalculatorWidget.js"
+      instructions: |
+        Calculator widget - focus on:
+        - Input validation (prevent negative/invalid values)
+        - Debounce implementation (prevent spam)
+        - Memory leaks (event listener cleanup)
+        - Calculation accuracy
+    
+    - path: "src/popup/components/ExportControls.js"
+      instructions: |
+        Export UI component - focus on:
+        - User feedback (notifications, loading states)
+        - Concurrent export prevention
+        - Error handling with fallback suggestions
+        - Accessibility (button states, ARIA if needed)
+
+  # Tone
+  tone_instructions: |
+    Be concise and actionable. Focus on:
+    - Security vulnerabilities (HIGH priority)
+    - Logic errors that could cause bugs (HIGH priority)
+    - Performance issues (MEDIUM priority)
+    - Code quality improvements (LOW priority)
+    
+    Skip nitpicks about:
+    - Minor style preferences
+    - Alternative implementations that don't improve quality
+    - Overly verbose comments
+
+chat:
+  auto_reply: true
+
+# File limits - try to increase for large PRs
+limits:
+  # Attempt to review larger files
+  max_files: 50
+  max_lines_per_file: 500
