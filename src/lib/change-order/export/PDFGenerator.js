@@ -145,7 +145,19 @@ function checkPageBreak(doc, yPosition, config) {
  * @private
  */
 function isHeaderLine(line) {
-  return line.startsWith('##') || (line.length < 50 && line === line.toUpperCase());
+  // Check for markdown header
+  if (line.startsWith('##')) {
+    return true;
+  }
+
+  // Check for all-caps text (must contain letters)
+  if (line.length < 50) {
+    const hasUppercase = /[A-Z]/.test(line);
+    const hasLowercase = /[a-z]/.test(line);
+    return hasUppercase && !hasLowercase;
+  }
+
+  return false;
 }
 
 /**

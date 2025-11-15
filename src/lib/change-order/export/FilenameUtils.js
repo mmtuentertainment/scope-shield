@@ -8,12 +8,20 @@
  * @returns {string} Sanitized client name
  */
 export function sanitizeClientName(clientName = 'Client', maxLength = 50) {
+  // Null safety - handle null/undefined/non-string
+  if (!clientName || typeof clientName !== 'string') {
+    return 'Client';
+  }
+
   const truncated = clientName.slice(0, maxLength);
-  return truncated
+  const sanitized = truncated
     .replace(/[^a-zA-Z0-9-_\s]/g, '_') // Replace unsafe chars with underscore
     .replace(/\s+/g, '_')               // Replace spaces with underscore
     .replace(/_{2,}/g, '_')             // Collapse multiple underscores
     .replace(/^_|_$/g, '');              // Trim underscores
+
+  // Fallback if sanitization results in empty string
+  return sanitized || 'Client';
 }
 
 /**
@@ -34,8 +42,13 @@ export function formatFilenameDate(date) {
  * @returns {string} Complete filename
  */
 export function generateChangeOrderFilename(metadata, extension) {
-  const { clientName = 'Client', date } = metadata;
+  // Null safety - handle null/undefined metadata
+  const { clientName = 'Client', date } = metadata || {};
   const safeClient = sanitizeClientName(clientName);
   const safeDate = formatFilenameDate(date);
-  return `ChangeOrder_${safeClient}_${safeDate}.${extension}`;
+
+  // Sanitize extension (prevent path traversal)
+  const safeExtension = extension.replace(/[^a-zA-Z0-9]/g, '');
+
+  return `ChangeOrder_${safeClient}_${safeDate}.${safeExtension}`;
 }

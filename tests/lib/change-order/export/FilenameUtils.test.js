@@ -38,6 +38,26 @@ describe('FilenameUtils', () => {
       const result = sanitizeClientName('Acme_Corp-123');
       expect(result).toBe('Acme_Corp-123');
     });
+
+    it('should handle null input', () => {
+      const result = sanitizeClientName(null);
+      expect(result).toBe('Client');
+    });
+
+    it('should handle undefined input explicitly', () => {
+      const result = sanitizeClientName(undefined);
+      expect(result).toBe('Client');
+    });
+
+    it('should handle non-string input', () => {
+      const result = sanitizeClientName(12345);
+      expect(result).toBe('Client');
+    });
+
+    it('should handle input that sanitizes to empty string', () => {
+      const result = sanitizeClientName('!!!@@@###');
+      expect(result).toBe('Client');
+    });
   });
 
   describe('formatFilenameDate', () => {
@@ -111,6 +131,35 @@ describe('FilenameUtils', () => {
       const today = new Date().toISOString().split('T')[0];
 
       expect(filename).toContain(today);
+    });
+
+    it('should handle null metadata', () => {
+      const filename = generateChangeOrderFilename(null, 'txt');
+      const today = new Date().toISOString().split('T')[0];
+
+      expect(filename).toContain('Client');
+      expect(filename).toContain(today);
+      expect(filename).toContain('.txt');
+    });
+
+    it('should sanitize extension to prevent path traversal', () => {
+      const filename = generateChangeOrderFilename({
+        clientName: 'Test',
+        date: '2025-11-15'
+      }, '../malicious');
+
+      // Extension should be sanitized
+      expect(filename).toBe('ChangeOrder_Test_2025-11-15.malicious');
+      expect(filename).not.toContain('../');
+    });
+
+    it('should handle special characters in extension', () => {
+      const filename = generateChangeOrderFilename({
+        clientName: 'Test',
+        date: '2025-11-15'
+      }, 'p@d#f!');
+
+      expect(filename).toBe('ChangeOrder_Test_2025-11-15.pdf');
     });
   });
 });
