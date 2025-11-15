@@ -13,7 +13,7 @@
 
 import { acknowledgeEvent, clearAllEvents } from '../../utils/storage.js';
 import { showNotification } from './NotificationManager.js';
-import { logError } from '../../lib/utils/Logger.js';
+import { logError, logWarning } from '../../lib/utils/Logger.js';
 import { ChangeOrderBuilder } from '../../lib/change-order/ChangeOrderBuilder.js';
 
 /**
@@ -36,7 +36,7 @@ export class DetectionEventHandlers {
    * @param {string} eventId - Event ID to acknowledge
    */
   async handleAcknowledge(eventId) {
-    if (!eventId || typeof eventId !== 'string') {
+    if (typeof eventId !== 'string' || eventId.trim() === '') {
       logError('DetectionEventHandlers.handleAcknowledge: Invalid eventId', new TypeError('eventId must be a non-empty string'));
       return;
     }
@@ -196,7 +196,7 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
     // Log and notify user of failures
     const failures = results.filter(r => r.status === 'rejected');
     if (failures.length > 0) {
-      console.warn(`[ScopeShield] ${failures.length} events failed to acknowledge:`, failures);
+      logWarning(`${failures.length} events failed to acknowledge`, failures);
       showNotification('toast-notification',
         `${failures.length} items failed to acknowledge`,
         'warning',

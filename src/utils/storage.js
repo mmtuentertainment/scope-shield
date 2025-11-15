@@ -8,30 +8,42 @@
  * @param {Object} event - The DetectionEvent to save
  */
 export async function saveDetectionEvent(event) {
+  return saveDetectionEvents([event]);
+}
+
+/**
+ * Save multiple detection events atomically (prevents race conditions)
+ * @param {Object[]} events - Array of DetectionEvents to save
+ */
+export async function saveDetectionEvents(events) {
+  if (!events || events.length === 0) {
+    return;
+  }
+
   try {
-    // Validate event structure
-    if (!event || !event.id || !event.timestamp) {
-      console.error('[ScopeShield] Invalid event: missing required fields (id, timestamp)', event);
-      throw new Error('Invalid event: missing required fields (id, timestamp)');
+    // Validate all events
+    for (const event of events) {
+      if (!event || !event.id || !event.timestamp) {
+        console.error('[ScopeShield] Invalid event: missing required fields (id, timestamp)', event);
+        throw new Error('Invalid event: missing required fields (id, timestamp)');
+      }
     }
 
-    // Get existing events
+    // Atomic read-modify-write (prevents race condition)
     const { detectionEvents = [] } = await chrome.storage.local.get('detectionEvents');
 
-    // Add new event
-    detectionEvents.push(event);
+    // Add all new events
+    detectionEvents.push(...events);
 
-    // Quota management (every 10th event)
-    if (detectionEvents.length % 10 === 0) {
-      await manageQuota(detectionEvents);
-    }
+    // Quota management
+    await manageQuota(detectionEvents);
 
     // Save updated array
     await chrome.storage.local.set({ detectionEvents });
 
-    console.log(`[ScopeShield] Saved detection event: ${event.id}`);
+    console.log(`[ScopeShield] Saved ${events.length} detection event(s)`);
   } catch (error) {
-    console.error('[ScopeShield] Failed to save detection event:', error);
+    console.error('[ScopeShield] Failed to save detection events:', error);
     throw error;
   }
 }

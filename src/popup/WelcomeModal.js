@@ -2,6 +2,7 @@
 
 import { FirstRunDetector } from '../lib/utils/FirstRunDetector.js';
 import { sanitizeText } from '../lib/utils/Sanitizer.js';
+import { logError } from '../lib/utils/Logger.js';
 
 /**
  * Welcome Modal
@@ -93,7 +94,7 @@ export class WelcomeModal {
   setupEventListeners(resolve, reject) {
     const form = this.modal.querySelector('#welcome-form');
     if (!form) {
-      console.error('[WelcomeModal] Form element #welcome-form not found in modal template');
+      logError('WelcomeModal.setupEventListeners: Form element #welcome-form not found', new Error('Form element not found in template'));
       reject(new Error('Form element #welcome-form not found in modal template'));
       return;
     }
@@ -142,7 +143,7 @@ export class WelcomeModal {
       resolve();
 
     } catch (error) {
-      console.error('[WelcomeModal] Error saving name:', error);
+      logError('WelcomeModal.handleSubmit: Error saving name', error);
       this.showError('Failed to save. Please try again.');
 
       // Reset button

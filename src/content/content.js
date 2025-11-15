@@ -4,7 +4,6 @@
  */
 
 import { detectScopeCreep } from '../utils/detector.js';
-import { saveDetectionEvent } from '../utils/storage.js';
 import { generateUUID } from '../utils/uuid.js';
 import { debounce } from '../utils/helpers.js';
 import {
@@ -269,7 +268,7 @@ function processAllMessages(messages) {
 }
 
 /**
- * Save all detection events to storage
+ * Save all detection events to storage atomically
  * @private
  * @param {Object[]} detectionEvents - Array of detection events to save
  * @returns {Promise<void>}
@@ -279,12 +278,14 @@ async function saveAllDetections(detectionEvents) {
     return;
   }
 
-  const savePromises = detectionEvents.map(e => saveDetectionEvent(e));
-  const results = await Promise.allSettled(savePromises);
-
-  const failures = results.filter(r => r.status === 'rejected');
-  if (failures.length > 0) {
-    console.warn(`[ScopeShield] ${failures.length} events failed to save:`, failures);
+  try {
+    // Use bulk save to prevent race condition
+    const { saveDetectionEvents } = await import('../utils/storage.js');
+    await saveDetectionEvents(detectionEvents);
+  } catch (error) {
+    // Import logError dynamically to avoid circular dependency
+    const { logError } = await import('../lib/utils/Logger.js');
+    logError('Failed to save detection events', error);
   }
 }
 
