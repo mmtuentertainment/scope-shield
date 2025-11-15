@@ -20,6 +20,7 @@
 
 import { processConditionals, processLoops } from './TemplateProcessor.js';
 import { replaceVariables } from './TemplateHelpers.js';
+import { logError } from '../utils/Logger.js';
 
 export class TemplateEngine {
   /**
@@ -52,7 +53,7 @@ export class TemplateEngine {
       return result;
     } catch (error) {
       // If rendering fails, return original template to avoid data loss
-      console.error('[ScopeShield] Template rendering failed:', error);
+      logError('Template rendering failed', error);
       return template;
     }
   }

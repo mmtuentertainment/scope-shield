@@ -10,6 +10,7 @@
  */
 
 import { getValue, isTruthy, replaceVariables } from './TemplateHelpers.js';
+import { logWarning } from '../utils/Logger.js';
 
 /**
  * Maximum iterations for nested processing to prevent infinite loops
@@ -38,7 +39,7 @@ export function processConditionals(text, data) {
   }
 
   if (iterations >= MAX_ITERATIONS) {
-    console.warn('[ScopeShield] Max iterations reached in processConditionals - possible malformed template');
+    logWarning('Max iterations reached in processConditionals - possible malformed template');
   }
 
   return result;
@@ -143,7 +144,7 @@ export function processLoops(text, data) {
   }
 
   if (iterations >= MAX_ITERATIONS) {
-    console.warn('[ScopeShield] Max iterations reached in processLoops - possible malformed template');
+    logWarning('Max iterations reached in processLoops - possible malformed template');
   }
 
   return result;

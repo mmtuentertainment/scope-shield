@@ -45,9 +45,85 @@ All 9 pre-existing ESLint warnings from PR #6 and PR #7 have been resolved throu
 
 ---
 
+## Current Status: ESLint Compliant, Logging Consistency Pending
+
+**ESLint**: ✅ 0 errors, 0 warnings - Fully compliant
+**Architecture**: ✅ All files < 250 lines - Fully compliant
+**Logging**: ⚠️ 20 console.* calls remain in files outside PR #8 scope
+
+---
+
+## 🟡 New Tech Debt - Logging Consistency (PR #9 Target)
+
+**Issue**: Inconsistent logging across codebase
+**Priority**: Medium (code quality, not functional issue)
+**Effort**: 2-3 hours
+**Target**: Dedicated PR #9 (Logging Consistency Sprint)
+
+### Files with console.error/warn (20 instances)
+
+**popup.js** (1):
+- Line 76: console.warn (Performance warning)
+
+**options.js** (3):
+- Line 40: console.error (Loading settings)
+- Line 60: console.error (Saving settings)
+- Line 78: console.error (Resetting settings)
+
+**service-worker.js** (5):
+- Line 62: console.warn (Invalid event data)
+- Line 93: console.error (Send notification failed)
+- Line 105: console.error (Update badge failed)
+- Line 127: console.error (Set badge failed)
+- Line 207: console.warn (Detection latency budget)
+
+**highlighter.js** (2):
+- Line 36: console.warn (Could not find text)
+- Line 39: console.error (Error highlighting)
+
+**detector.js** (1):
+- Line 47: console.error (Trigger pattern too long)
+
+**FirstRunDetector.js** (2):
+- Line 23: console.error (Error checking first run)
+- Line 40: console.error (Error completing first run)
+
+**UUIDGenerator.js** (1):
+- Line 15: console.warn (Crypto fallback)
+
+**Logger.js** (5):
+- Lines 43, 45, 57, 74, 76: console.* (intentional - Logger implements the abstraction)
+
+**Total**: 15 to fix (5 in Logger.js are intentional)
+
+### Recommended Fix
+
+Replace all console.error/warn with logError/logWarning:
+```javascript
+import { logError, logWarning } from '../lib/utils/Logger.js';
+
+// Before:
+console.error('[ScopeShield] Failed to X:', error);
+
+// After:
+logError('Failed to X', error);
+```
+
+**Benefits**:
+- Consistent logging format
+- Centralized control (can toggle by environment)
+- Easier to filter/search logs
+- Better structure for debugging
+
+**Note**: console.log calls can remain (informational only, filtered in production)
+
+---
+
 ## Current Status: No Technical Debt
 
 The codebase is now fully compliant with all ESLint rules and architectural standards defined in `.claude/code-standards.md`.
+
+**PR #8 Scope**: All console.* in modified files fixed (13 instances)
 
 ---
 

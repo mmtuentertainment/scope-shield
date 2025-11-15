@@ -6,6 +6,7 @@
 import { detectScopeCreep } from '../utils/detector.js';
 import { generateUUID } from '../utils/uuid.js';
 import { debounce } from '../utils/helpers.js';
+import { logError, logWarning } from '../lib/utils/Logger.js';
 import {
   SELECTORS as GMAIL_SELECTORS,
   findMessages,
@@ -65,7 +66,7 @@ function waitForGmail() {
     // Timeout after 30 seconds
     setTimeout(() => {
       clearInterval(checkInterval);
-      console.warn('[ScopeShield] Gmail interface not detected after 30s');
+      logWarning('Gmail interface not detected after 30s');
       resolve();
     }, 30000);
   });
@@ -180,7 +181,7 @@ function notifyBackgroundOfDetection(event) {
       event
     });
   } catch (error) {
-    console.error('[ScopeShield] Failed to send message to background:', error);
+    logError('Failed to send message to background', error);
   }
 }
 
@@ -201,7 +202,7 @@ function sendPerformanceMetric(elapsed, messageCount) {
       messageCount
     });
   } catch (error) {
-    console.error('[ScopeShield] Failed to send performance metric:', error);
+    logError('Failed to send performance metric', error);
   }
 }
 
@@ -241,7 +242,7 @@ async function scanMessages() {
     reportScanResults(startTime, detectionEvents.length, messages.length);
 
   } catch (error) {
-    console.error('[ScopeShield] Error during scan:', error);
+    logError('Error during scan', error);
   } finally {
     isScanning = false;
   }
@@ -328,7 +329,7 @@ function extractMessageText(messageEl) {
     data.text = text;
 
   } catch (error) {
-    console.error('[ScopeShield] Error extracting message text:', error);
+    logError('Error extracting message text', error);
   }
 
   return data;
