@@ -34,8 +34,14 @@ export class DetectionEventHandlers {
   /**
    * Handle acknowledge button click
    * @param {string} eventId - Event ID to acknowledge
+   * @throws {TypeError} If eventId is not a string
    */
   async handleAcknowledge(eventId) {
+    if (!eventId || typeof eventId !== 'string') {
+      logError('DetectionEventHandlers.handleAcknowledge: Invalid eventId', new TypeError('eventId must be a non-empty string'));
+      return;
+    }
+
     try {
       await acknowledgeEvent(eventId);
       this.updateLocalState(eventId);
@@ -75,8 +81,22 @@ export class DetectionEventHandlers {
    * @param {string} url - Gmail URL to open
    */
   handleView(url) {
-    if (url) {
+    if (!url || typeof url !== 'string') {
+      logError('DetectionEventHandlers.handleView: Invalid URL', new TypeError('URL must be a non-empty string'));
+      return;
+    }
+
+    // Validate URL format
+    try {
+      const urlObj = new URL(url);
+      // Only allow http and https protocols for security
+      if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+        logError('DetectionEventHandlers.handleView: Invalid protocol', new Error(`Only http/https allowed, got ${urlObj.protocol}`));
+        return;
+      }
       chrome.tabs.create({ url });
+    } catch (error) {
+      logError('DetectionEventHandlers.handleView: Malformed URL', error);
     }
   }
 
@@ -85,11 +105,17 @@ export class DetectionEventHandlers {
    * @param {Object} event - Detection event to copy
    */
   async handleCopy(event) {
+    if (!event || typeof event !== 'object') {
+      logError('DetectionEventHandlers.handleCopy: Invalid event', new TypeError('Event must be an object'));
+      showNotification('toast-notification', 'Failed to copy', 'error', 3000);
+      return;
+    }
+
     const text = `Scope Creep Detected:
-From: ${event.senderName || event.sender}
-Text: ${event.detectedText}
-Trigger: ${event.triggerWord} (Confidence: ${event.triggerWeight}/10)
-Time: ${new Date(event.timestamp).toLocaleString()}`;
+From: ${event.senderName || event.sender || 'Unknown'}
+Text: ${event.detectedText || ''}
+Trigger: ${event.triggerWord || 'Unknown'} (Confidence: ${event.triggerWeight || 0}/10)
+Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'}`;
 
     try {
       await navigator.clipboard.writeText(text);

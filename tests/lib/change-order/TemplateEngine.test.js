@@ -161,6 +161,22 @@ describe('TemplateEngine', () => {
       expect(result).toBe('');
     });
 
+    it('should handle null template', () => {
+      const result = engine.render(null, { name: 'Test' });
+      expect(result).toBe('');
+    });
+
+    it('should handle undefined template', () => {
+      const result = engine.render(undefined, { name: 'Test' });
+      expect(result).toBe('');
+    });
+
+    it('should throw TypeError for non-string template', () => {
+      expect(() => engine.render(123, { name: 'Test' })).toThrow(TypeError);
+      expect(() => engine.render({}, { name: 'Test' })).toThrow(TypeError);
+      expect(() => engine.render([], { name: 'Test' })).toThrow(TypeError);
+    });
+
     it('should handle template with no variables', () => {
       const template = 'This is plain text';
       const result = engine.render(template, { name: 'Test' });
@@ -188,6 +204,38 @@ describe('TemplateEngine', () => {
       const data = { pattern: '$100 (.*?) [test]' };
       const result = engine.render(template, data);
       expect(result).toBe('Pattern: $100 (.*?) [test]');
+    });
+
+    it('should handle malformed template with unclosed conditional', () => {
+      const template = '{{@if condition}}This is not closed';
+      const data = { condition: true };
+      const result = engine.render(template, data);
+      // Should return original template since it cannot be processed
+      expect(result).toContain('{{@if condition}}');
+    });
+
+    it('should handle malformed template with unclosed loop', () => {
+      const template = '{{@each items}}Item: {{name}}';
+      const data = { items: [{ name: 'Test' }] };
+      const result = engine.render(template, data);
+      // Should return original template since it cannot be processed
+      expect(result).toContain('{{@each items}}');
+    });
+
+    it('should handle template with mismatched tags', () => {
+      const template = '{{@if condition}}Content{{/@each}}';
+      const data = { condition: true };
+      const result = engine.render(template, data);
+      // Should handle gracefully without crashing
+      expect(result).toBeDefined();
+    });
+
+    it('should handle deeply nested structures without infinite loops', () => {
+      // Test MAX_ITERATIONS limit
+      const template = '{{@if a}}{{@if b}}{{@if c}}{{@if d}}Content{{/@if}}{{/@if}}{{/@if}}{{/@if}}';
+      const data = { a: true, b: true, c: true, d: true };
+      const result = engine.render(template, data);
+      expect(result).toBe('Content');
     });
   });
 

@@ -14,8 +14,23 @@ import { FreelancerSettings } from '../storage/FreelancerSettings.js';
  * - <5s for 50 detections (Constitution Principle III)
  */
 export class ChangeOrderBuilder {
+  /**
+   * Default hours estimated per detection
+   * @constant {number}
+   */
+  static HOURS_PER_DETECTION = 2;
+
   constructor() {
     this.engine = new TemplateEngine();
+  }
+
+  /**
+   * Get current date (can be overridden for testing)
+   * @returns {Date} Current date
+   * @protected
+   */
+  getCurrentDate() {
+    return new Date();
   }
 
   /**
@@ -23,6 +38,7 @@ export class ChangeOrderBuilder {
    * @param {Array} detections - Array of scope creep detections
    * @param {Object} settings - Optional freelancer settings (will load defaults if not provided)
    * @returns {Promise<string>} Formatted change order document
+   * @throws {Error} If detections is invalid or settings is not an object
    */
   async build(detections, settings = null) {
     // Validate input
@@ -31,6 +47,9 @@ export class ChangeOrderBuilder {
     }
     if (!Array.isArray(detections)) {
       throw new Error('Detections must be an array');
+    }
+    if (settings !== null && (typeof settings !== 'object' || Array.isArray(settings))) {
+      throw new Error('Settings must be an object or null');
     }
 
     // Load settings if not provided
@@ -52,13 +71,16 @@ export class ChangeOrderBuilder {
   /**
    * Prepare data object for template rendering
    * @private
+   * @param {Array} detections - Array of detections
+   * @param {Object} settings - Freelancer settings
+   * @returns {Object} Template data
    */
   prepareTemplateData(detections, settings) {
     const totalHours = this.estimateHours(detections);
     const hasHourlyRate = settings.hourlyRate && settings.hourlyRate > 0;
 
     return {
-      generatedDate: new Date().toISOString().split('T')[0],
+      generatedDate: this.getCurrentDate().toISOString().split('T')[0],
       freelancerName: settings.freelancerName || 'Freelancer',
       detections: detections.map((detection, index) => ({
         index: index + 1,
@@ -97,10 +119,10 @@ export class ChangeOrderBuilder {
   /**
    * Estimate hours for detections using simple heuristic
    * @param {Array} detections - Array of detections
-   * @returns {number} Estimated hours (2 hours per detection)
+   * @returns {number} Estimated hours (HOURS_PER_DETECTION per detection)
    */
   estimateHours(detections) {
-    return detections.length * 2;
+    return detections.length * ChangeOrderBuilder.HOURS_PER_DETECTION;
   }
 
   /**
@@ -129,10 +151,12 @@ export class ChangeOrderBuilder {
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) {
+        console.warn('[ScopeShield] Invalid date format:', dateString);
         return dateString; // Return as-is if invalid
       }
       return date.toISOString().split('T')[0];
-    } catch {
+    } catch (error) {
+      console.error('[ScopeShield] Error formatting date:', dateString, error);
       return dateString;
     }
   }
@@ -140,11 +164,13 @@ export class ChangeOrderBuilder {
   /**
    * Build empty change order when no detections
    * @private
+   * @param {Object} settings - Freelancer settings
+   * @returns {string} Empty change order message
    */
   buildEmptyChangeOrder(settings) {
     return `CHANGE ORDER REQUEST
 
-Generated: ${new Date().toISOString().split('T')[0]}
+Generated: ${this.getCurrentDate().toISOString().split('T')[0]}
 Freelancer: ${settings.freelancerName || 'Freelancer'}
 
 No scope creep detected.

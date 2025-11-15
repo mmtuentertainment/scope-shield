@@ -266,8 +266,19 @@ describe('ChangeOrderBuilder', () => {
       await expect(builder.build(null)).rejects.toThrow('Detections array is required');
     });
 
+    it('should throw error for undefined detections', async () => {
+      await expect(builder.build(undefined)).rejects.toThrow('Detections array is required');
+    });
+
     it('should throw error for non-array detections', async () => {
       await expect(builder.build('not an array')).rejects.toThrow('Detections must be an array');
+    });
+
+    it('should throw error for non-object settings', async () => {
+      const detections = [{ sender: 'test', text: 'test', trigger: 'test', date: '2025-01-01' }];
+      await expect(builder.build(detections, 'invalid')).rejects.toThrow('Settings must be an object or null');
+      await expect(builder.build(detections, 123)).rejects.toThrow('Settings must be an object or null');
+      await expect(builder.build(detections, [])).rejects.toThrow('Settings must be an object or null');
     });
 
     it('should handle detections with missing fields gracefully', async () => {
@@ -280,6 +291,17 @@ describe('ChangeOrderBuilder', () => {
 
       expect(result).toContain('CHANGE ORDER REQUEST');
       // Should not crash, should handle missing fields
+    });
+
+    it('should handle invalid dates in detections', async () => {
+      const detections = [
+        { sender: 'client@example.com', text: 'Test', trigger: 'test', date: 'invalid-date' }
+      ];
+
+      const result = await builder.build(detections);
+
+      expect(result).toContain('CHANGE ORDER REQUEST');
+      // Should handle invalid date gracefully
     });
   });
 

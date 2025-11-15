@@ -19,12 +19,24 @@
  */
 export class TemplateEngine {
   /**
+   * Maximum iterations for nested processing to prevent infinite loops
+   * @private
+   * @constant {number}
+   */
+  static MAX_ITERATIONS = 100;
+  /**
    * Render a template with provided data
    * @param {string} template - Template string with {{variables}}
    * @param {object} data - Data object for variable replacement
    * @returns {string} Rendered template
+   * @throws {TypeError} If template is not a string
    */
   render(template, data) {
+    // Validate input types
+    if (template !== undefined && template !== null && typeof template !== 'string') {
+      throw new TypeError('Template must be a string');
+    }
+
     if (!template) {
       return '';
     }
@@ -32,29 +44,44 @@ export class TemplateEngine {
     // Normalize data
     const safeData = data || {};
 
-    // Process in order: conditionals -> loops -> variables
-    let result = template;
-    result = this.processConditionals(result, safeData);
-    result = this.processLoops(result, safeData);
-    result = this.replaceVariables(result, safeData);
+    try {
+      // Process in order: conditionals -> loops -> variables
+      let result = template;
+      result = this.processConditionals(result, safeData);
+      result = this.processLoops(result, safeData);
+      result = this.replaceVariables(result, safeData);
 
-    return result;
+      return result;
+    } catch (error) {
+      // If rendering fails, return original template to avoid data loss
+      console.error('[ScopeShield] Template rendering failed:', error);
+      return template;
+    }
   }
 
   /**
    * Process conditional blocks {{@if condition}}...{{@else}}...{{/@if}}
    * Handles nested conditionals by finding matching pairs
    * @private
+   * @param {string} text - Text to process
+   * @param {object} data - Data for conditional evaluation
+   * @returns {string} Processed text
    */
   processConditionals(text, data) {
     let result = text;
     let changed = true;
+    let iterations = 0;
 
     // Process innermost conditionals first by repeating until no more changes
-    while (changed) {
+    while (changed && iterations < TemplateEngine.MAX_ITERATIONS) {
       const before = result;
       result = this.processSingleConditionalPass(result, data);
       changed = before !== result;
+      iterations++;
+    }
+
+    if (iterations >= TemplateEngine.MAX_ITERATIONS) {
+      console.warn('[ScopeShield] Max iterations reached in processConditionals - possible malformed template');
     }
 
     return result;
@@ -63,6 +90,9 @@ export class TemplateEngine {
   /**
    * Process one level of conditionals
    * @private
+   * @param {string} text - Text to process
+   * @param {object} data - Data for conditional evaluation
+   * @returns {string} Processed text
    */
   processSingleConditionalPass(text, data) {
     const openMatch = text.match(/\{\{@if\s+([^}]+)\}\}/);
@@ -92,6 +122,8 @@ export class TemplateEngine {
   /**
    * Split conditional content into if and else parts
    * @private
+   * @param {string} content - Content between {{@if}} and {{/@if}}
+   * @returns {{ifContent: string, elseContent: string}} Split content
    */
   splitConditionalContent(content) {
     const elseIndex = this.findElseAtLevel(content);
@@ -112,6 +144,11 @@ export class TemplateEngine {
   /**
    * Replace a block in the text
    * @private
+   * @param {string} text - Original text
+   * @param {number} startPos - Start position of block
+   * @param {{pos: number, closeTag: string}} endInfo - End position info
+   * @param {string} replacement - Replacement text
+   * @returns {string} Text with block replaced
    */
   replaceBlock(text, startPos, endInfo, replacement) {
     return text.substring(0, startPos) + replacement + text.substring(endInfo.pos + endInfo.closeTag.length);
@@ -120,6 +157,8 @@ export class TemplateEngine {
   /**
    * Find {{@else}} at the current nesting level (not inside nested conditionals)
    * @private
+   * @param {string} content - Content to search
+   * @returns {number} Index of {{@else}} or -1 if not found
    */
   findElseAtLevel(content) {
     let depth = 0;
@@ -146,16 +185,25 @@ export class TemplateEngine {
    * Process loop blocks {{@each items}}...{{/@each}}
    * Handles nested loops by finding matching pairs
    * @private
+   * @param {string} text - Text to process
+   * @param {object} data - Data containing arrays to iterate
+   * @returns {string} Processed text
    */
   processLoops(text, data) {
     let result = text;
     let changed = true;
+    let iterations = 0;
 
     // Process innermost loops first by repeating until no more changes
-    while (changed) {
+    while (changed && iterations < TemplateEngine.MAX_ITERATIONS) {
       const before = result;
       result = this.processSingleLoopPass(result, data);
       changed = before !== result;
+      iterations++;
+    }
+
+    if (iterations >= TemplateEngine.MAX_ITERATIONS) {
+      console.warn('[ScopeShield] Max iterations reached in processLoops - possible malformed template');
     }
 
     return result;
@@ -164,6 +212,9 @@ export class TemplateEngine {
   /**
    * Process one level of loops
    * @private
+   * @param {string} text - Text to process
+   * @param {object} data - Data containing arrays to iterate
+   * @returns {string} Processed text
    */
   processSingleLoopPass(text, data) {
     let result = text;
@@ -218,6 +269,11 @@ export class TemplateEngine {
   /**
    * Find matching closing tag by counting nesting depth
    * @private
+   * @param {string} text - Text to search
+   * @param {number} startPos - Position to start searching from
+   * @param {string} openTag - Opening tag to match
+   * @param {string} closeTag - Closing tag to find
+   * @returns {{pos: number, closeTag: string}|null} Position and tag info, or null if not found
    */
   findMatchingClose(text, startPos, openTag, closeTag) {
     let depth = 1;
@@ -244,6 +300,9 @@ export class TemplateEngine {
   /**
    * Replace simple variables {{variableName}} and {{@index}}
    * @private
+   * @param {string} text - Text to process
+   * @param {object} data - Data containing variables
+   * @returns {string} Text with variables replaced
    */
   replaceVariables(text, data) {
     // Match {{variableName}} and {{@index}} but NOT {{@each...}} or {{@if...}}
@@ -258,6 +317,9 @@ export class TemplateEngine {
   /**
    * Get value from data object, supporting nested properties
    * @private
+   * @param {string} path - Property path (e.g., 'user.name')
+   * @param {object} data - Data object
+   * @returns {*} Value at path, or undefined if not found
    */
   getValue(path, data) {
     if (!data || typeof data !== 'object') {
@@ -286,6 +348,8 @@ export class TemplateEngine {
   /**
    * Determine if value is truthy for conditionals
    * @private
+   * @param {*} value - Value to check
+   * @returns {boolean} True if value is truthy
    */
   isTruthy(value) {
     if (value === undefined || value === null) {
