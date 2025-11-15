@@ -6,6 +6,18 @@
  * @returns {string} Form HTML template
  */
 export function getFormHTML() {
+  return getFreelancerFields() +
+         getExportFields() +
+         getFormActions() +
+         getValidationErrors();
+}
+
+/**
+ * Generate freelancer information fields
+ * @private
+ * @returns {string} Freelancer fields HTML
+ */
+function getFreelancerFields() {
   return `
       <!-- T048: Freelancer Name Field -->
       <div class="form-group">
@@ -43,7 +55,16 @@ export function getFormHTML() {
         />
         <span class="form-hint" id="hourly-rate-hint">Optional. Used for pricing calculator suggestions.</span>
       </div>
+  `;
+}
 
+/**
+ * Generate export settings fields
+ * @private
+ * @returns {string} Export fields HTML
+ */
+function getExportFields() {
+  return `
       <!-- T050: Default Export Method Dropdown -->
       <div class="form-group">
         <label for="export-method" class="form-label">
@@ -90,7 +111,16 @@ export function getFormHTML() {
         />
         <span class="form-hint" id="auto-export-delay-hint">Wait time before auto-exporting (1-10 seconds)</span>
       </div>
+  `;
+}
 
+/**
+ * Generate form action buttons
+ * @private
+ * @returns {string} Form actions HTML
+ */
+function getFormActions() {
+  return `
       <!-- Form Actions -->
       <div class="form-actions">
         <button type="submit" class="btn btn-primary" id="save-settings-btn">
@@ -100,7 +130,16 @@ export function getFormHTML() {
           Cancel
         </button>
       </div>
+  `;
+}
 
+/**
+ * Generate validation errors container
+ * @private
+ * @returns {string} Validation errors HTML
+ */
+function getValidationErrors() {
+  return `
       <!-- Validation Errors Container -->
       <div id="validation-errors" class="validation-errors" role="alert" aria-live="assertive" style="display: none;"></div>
   `;

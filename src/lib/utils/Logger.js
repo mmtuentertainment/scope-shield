@@ -11,7 +11,7 @@ export function isDevelopment() {
       const manifest = chrome.runtime.getManifest();
       return !manifest.update_url;
     }
-  } catch (error) {
+  } catch {
     // Fallback: assume development if error
     return true;
   }

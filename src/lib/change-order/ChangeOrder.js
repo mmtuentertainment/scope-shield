@@ -43,37 +43,44 @@ export class ChangeOrder {
   validate() {
     const errors = [];
 
-    // Required fields
-    if (!this.id) {
-      errors.push('ID is required');
-    }
+    this.validateRequiredFields(errors);
+    this.validateStatus(errors);
+    this.validateExportFields(errors);
 
-    if (!this.changeOrderNumber) {
-      errors.push('Change order number is required');
-    }
+    return {
+      valid: errors.length === 0,
+      errors
+    };
+  }
 
-    if (!this.clientName || this.clientName.trim() === '') {
-      errors.push('Client name is required');
-    }
+  /**
+   * Validate required fields
+   * @private
+   */
+  validateRequiredFields(errors) {
+    if (!this.id) errors.push('ID is required');
+    if (!this.changeOrderNumber) errors.push('Change order number is required');
+    if (!this.clientName || this.clientName.trim() === '') errors.push('Client name is required');
+    if (!this.clientEmail || this.clientEmail.trim() === '') errors.push('Client email is required');
+    if (!this.freelancerName || this.freelancerName.trim() === '') errors.push('Freelancer name is required');
+    if (!this.dateCreated) errors.push('Date created is required');
+  }
 
-    if (!this.clientEmail || this.clientEmail.trim() === '') {
-      errors.push('Client email is required');
-    }
-
-    if (!this.freelancerName || this.freelancerName.trim() === '') {
-      errors.push('Freelancer name is required');
-    }
-
-    if (!this.dateCreated) {
-      errors.push('Date created is required');
-    }
-
-    // Validate status
+  /**
+   * Validate status field
+   * @private
+   */
+  validateStatus(errors) {
     if (!VALID_STATUSES.includes(this.status)) {
       errors.push(`Status must be one of: ${VALID_STATUSES.join(', ')}`);
     }
+  }
 
-    // Validate export format if exported
+  /**
+   * Validate export-related fields
+   * @private
+   */
+  validateExportFields(errors) {
     if (this.status === 'exported') {
       if (!this.exportFormat || !VALID_EXPORT_FORMATS.includes(this.exportFormat)) {
         errors.push('Export format required when status is "exported"');
@@ -82,11 +89,6 @@ export class ChangeOrder {
         errors.push('Export timestamp required when status is "exported"');
       }
     }
-
-    return {
-      valid: errors.length === 0,
-      errors
-    };
   }
 
   /**

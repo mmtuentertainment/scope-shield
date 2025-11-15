@@ -237,34 +237,50 @@ async function scanMessages() {
     const messages = findMessages();
     console.log(`[ScopeShield] Found ${messages.length} messages to scan`);
 
-    // Process all messages and collect detection events
-    const detectionEvents = [];
-    for (const messageEl of messages) {
-      const event = processMessage(messageEl);
-      if (event) {
-        detectionEvents.push(event);
-        notifyBackgroundOfDetection(event);
-      }
-    }
-
-    // Save all events after loop (fixes await-in-loop)
-    if (detectionEvents.length > 0) {
-      const savePromises = detectionEvents.map(e => saveDetectionEvent(e));
-      const results = await Promise.allSettled(savePromises);
-
-      // Log failures for debugging
-      const failures = results.filter(r => r.status === 'rejected');
-      if (failures.length > 0) {
-        console.warn(`[ScopeShield] ${failures.length} events failed to save:`, failures);
-      }
-    }
-
+    const detectionEvents = processAllMessages(messages);
+    await saveAllDetections(detectionEvents);
     reportScanResults(startTime, detectionEvents.length, messages.length);
 
   } catch (error) {
     console.error('[ScopeShield] Error during scan:', error);
   } finally {
     isScanning = false;
+  }
+}
+
+/**
+ * Process all messages and collect detection events
+ * @private
+ */
+function processAllMessages(messages) {
+  const detectionEvents = [];
+
+  for (const messageEl of messages) {
+    const event = processMessage(messageEl);
+    if (event) {
+      detectionEvents.push(event);
+      notifyBackgroundOfDetection(event);
+    }
+  }
+
+  return detectionEvents;
+}
+
+/**
+ * Save all detection events to storage
+ * @private
+ */
+async function saveAllDetections(detectionEvents) {
+  if (detectionEvents.length === 0) {
+    return;
+  }
+
+  const savePromises = detectionEvents.map(e => saveDetectionEvent(e));
+  const results = await Promise.allSettled(savePromises);
+
+  const failures = results.filter(r => r.status === 'rejected');
+  if (failures.length > 0) {
+    console.warn(`[ScopeShield] ${failures.length} events failed to save:`, failures);
   }
 }
 

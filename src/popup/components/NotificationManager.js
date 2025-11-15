@@ -16,20 +16,19 @@ import { logInfo } from '../../lib/utils/Logger.js';
  * @param {string} message - Notification message
  * @param {string} type - Notification type ('success', 'error', 'warning', 'info')
  * @param {number} [duration=5000] - Auto-hide duration in milliseconds
- * @param {string} [classPrefix='export-notification'] - CSS class prefix for styling
  * @returns {number|null} Timeout ID for cleanup, or null if element not found
  */
 export function showNotification(
   elementId,
   message,
   type = 'info',
-  duration = 5000,
-  classPrefix = 'export-notification'
+  duration = 5000
 ) {
   const notification = document.getElementById(elementId);
   if (!notification) return null;
 
   // Set notification content and style
+  const classPrefix = 'export-notification';
   notification.textContent = message;
   notification.className = `${classPrefix} ${classPrefix}-${type}`;
   notification.style.display = 'block';

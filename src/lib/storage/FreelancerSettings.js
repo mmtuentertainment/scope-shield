@@ -27,12 +27,31 @@ export class FreelancerSettings {
   validate() {
     const errors = [];
 
-    // Freelancer name is required (can be empty for first-run)
+    this.validateFreelancerName(errors);
+    this.validateHourlyRate(errors);
+    this.validateExportSettings(errors);
+
+    return {
+      valid: errors.length === 0,
+      errors
+    };
+  }
+
+  /**
+   * Validate freelancer name
+   * @private
+   */
+  validateFreelancerName(errors) {
     if (typeof this.freelancerName !== 'string') {
       errors.push('Freelancer name must be a string');
     }
+  }
 
-    // Hourly rate must be valid number if provided
+  /**
+   * Validate hourly rate
+   * @private
+   */
+  validateHourlyRate(errors) {
     if (this.hourlyRate !== null && this.hourlyRate !== undefined) {
       const rate = parseFloat(this.hourlyRate);
       if (isNaN(rate)) {
@@ -43,19 +62,22 @@ export class FreelancerSettings {
         errors.push('Hourly rate must be less than or equal to $10,000');
       }
     }
+  }
 
-    // Validate export method
+  /**
+   * Validate export settings
+   * @private
+   */
+  validateExportSettings(errors) {
     const validExportMethods = ['clipboard', 'pdf', 'text'];
     if (!validExportMethods.includes(this.defaultExportMethod)) {
       errors.push(`Default export method must be one of: ${validExportMethods.join(', ')}`);
     }
 
-    // Validate auto-export enabled is boolean
     if (typeof this.autoExportEnabled !== 'boolean') {
       errors.push('Auto-export enabled must be a boolean');
     }
 
-    // Validate auto-export delay
     if (this.autoExportDelay !== null && this.autoExportDelay !== undefined) {
       const delay = parseFloat(this.autoExportDelay);
       if (isNaN(delay)) {
@@ -66,11 +88,6 @@ export class FreelancerSettings {
         errors.push('Auto-export delay must be at most 10 seconds');
       }
     }
-
-    return {
-      valid: errors.length === 0,
-      errors
-    };
   }
 
   /**
