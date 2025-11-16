@@ -16,13 +16,11 @@ vi.mock('../../../src/popup/components/NotificationManager.js', () => ({
 // Mock FreelancerSettings for ChangeOrderBuilder
 vi.mock('../../../src/lib/storage/FreelancerSettings.js', () => ({
   FreelancerSettings: {
-    async load() {
-      return {
-        freelancerName: 'Test Freelancer',
-        hourlyRate: 100,
-        currency: 'USD'
-      };
-    }
+    load: vi.fn().mockResolvedValue({
+      freelancerName: 'Test Freelancer',
+      hourlyRate: 100,
+      currency: 'USD'
+    })
   }
 }));
 
@@ -52,6 +50,14 @@ describe('DetectionEventHandlers', () => {
     mockShow.mockClear();
     mockClose.mockClear();
     mockUpdateDocument.mockClear();
+
+    // Reset FreelancerSettings mock to default behavior
+    const { FreelancerSettings } = await import('../../../src/lib/storage/FreelancerSettings.js');
+    FreelancerSettings.load.mockResolvedValue({
+      freelancerName: 'Test Freelancer',
+      hourlyRate: 100,
+      currency: 'USD'
+    });
 
     mockEvents = [
       {
@@ -328,8 +334,8 @@ describe('DetectionEventHandlers', () => {
       const { showNotification } = await import('../../../src/popup/components/NotificationManager.js');
       const { FreelancerSettings } = await import('../../../src/lib/storage/FreelancerSettings.js');
 
-      // Mock settings.load to throw error
-      FreelancerSettings.load = vi.fn().mockRejectedValueOnce(new Error('Settings error'));
+      // Mock settings.load to throw error for this test only
+      FreelancerSettings.load.mockRejectedValueOnce(new Error('Settings error'));
 
       await handlers.generateReport();
 

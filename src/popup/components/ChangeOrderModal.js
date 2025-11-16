@@ -28,7 +28,7 @@ export class ChangeOrderModal {
    * @param {number} calculatorOptions.estimatedHours - Initial estimated hours
    * @param {Function} calculatorOptions.onRecalculate - Async callback (rate, hours) => newDocument
    */
-  constructor(changeOrderText, metadata, calculatorOptions = {}) {
+  constructor(changeOrderText, metadata = {}, calculatorOptions = {}) {
     this.changeOrderText = changeOrderText;
     this.metadata = metadata;
     this.calculatorOptions = calculatorOptions;
