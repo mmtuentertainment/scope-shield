@@ -43,13 +43,11 @@ export function debounce(func, wait) {
     });
   };
 
-  // Add cancel method to clear pending timeout and reject pending promise
+  // Add cancel method to clear pending timeout (silent, no rejection)
   debounced.cancel = function() {
     clearTimeout(timeoutId);
-    if (pendingReject) {
-      pendingReject(new Error('Debounced call cancelled'));
-      pendingReject = null;
-    }
+    // Clear callback reference without rejecting (silent cancel for cleanup)
+    pendingReject = null;
     timeoutId = null;
   };
 

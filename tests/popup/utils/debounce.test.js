@@ -54,9 +54,9 @@ describe('debounce', () => {
     const func = vi.fn().mockResolvedValue('result');
     const debounced = debounce(func, 100);
 
-    // Call multiple times
-    debounced('call1');
-    debounced('call2');
+    // Call multiple times - catch rejections to prevent unhandled errors
+    debounced('call1').catch(() => {});
+    debounced('call2').catch(() => {});
     const promise = debounced('call3');
 
     // Fast-forward
@@ -107,14 +107,11 @@ describe('debounce', () => {
     const func = vi.fn().mockResolvedValue('result');
     const debounced = debounce(func, 100);
 
-    // Start debounced call
-    const promise = debounced('arg1');
+    // Start debounced call (don't await - will never resolve/reject after cancel)
+    debounced('arg1');
 
-    // Cancel before timer completes
+    // Cancel before timer completes (silent cancel - no rejection)
     debounced.cancel();
-
-    // Promise should be rejected
-    await expect(promise).rejects.toThrow('Debounced call cancelled');
 
     // Fast-forward past wait time
     vi.advanceTimersByTime(150);
@@ -146,14 +143,18 @@ describe('debounce', () => {
     const func = vi.fn().mockResolvedValue('final');
     const debounced = debounce(func, 100);
 
-    // Make rapid calls
-    const promise1 = debounced('call1');
-    const promise2 = debounced('call2');
+    // Make rapid calls - catch rejections immediately to prevent unhandled errors
+    const promise1 = debounced('call1').catch(e => e);
+    const promise2 = debounced('call2').catch(e => e);
     const promise3 = debounced('call3');
 
-    // First two promises should be rejected
-    await expect(promise1).rejects.toThrow('Debounced call cancelled');
-    await expect(promise2).rejects.toThrow('Debounced call cancelled');
+    // First two promises should have been rejected
+    const result1 = await promise1;
+    const result2 = await promise2;
+    expect(result1).toBeInstanceOf(Error);
+    expect(result1.message).toBe('Debounced call cancelled');
+    expect(result2).toBeInstanceOf(Error);
+    expect(result2.message).toBe('Debounced call cancelled');
 
     // Last promise should resolve
     vi.advanceTimersByTime(100);
