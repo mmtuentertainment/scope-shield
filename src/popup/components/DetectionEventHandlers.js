@@ -15,6 +15,8 @@ import { acknowledgeEvent, clearAllEvents } from '../../utils/storage.js';
 import { showNotification } from './NotificationManager.js';
 import { logError, logWarning } from '../../lib/utils/Logger.js';
 import { ChangeOrderBuilder } from '../../lib/change-order/ChangeOrderBuilder.js';
+import { ChangeOrderModal } from './ChangeOrderModal.js';
+import { FreelancerSettings } from '../../lib/storage/FreelancerSettings.js';
 
 /**
  * Detection Event Handlers Class
@@ -147,7 +149,7 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
   }
 
   /**
-   * Generate change order report using ChangeOrderBuilder
+   * Generate change order report and show modal with calculator and export options
    */
   async generateReport() {
     const unacknowledged = this.getEvents().filter(e => !e.acknowledged);
@@ -166,17 +168,37 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
         date: event.timestamp
       }));
 
+      // Load freelancer settings
+      const settings = await FreelancerSettings.load();
+
       // Build professional change order
       const builder = new ChangeOrderBuilder();
-      const report = await builder.build(detections);
+      const document = await builder.build(detections, settings);
 
-      // Copy to clipboard
-      await navigator.clipboard.writeText(report);
-      showNotification('toast-notification', 'Change order copied to clipboard!', 'success', 3000);
+      // Extract metadata for export
+      const metadata = {
+        clientName: detections[0]?.sender || 'Client',
+        freelancerName: settings.freelancerName || '',
+        date: new Date().toISOString().split('T')[0]
+      };
 
-      // Mark all as acknowledged
+      // Calculator options
+      const calculatorOptions = {
+        hourlyRate: settings.hourlyRate || 0,
+        estimatedHours: builder.estimateHours(detections),
+        onRecalculate: async (newRate, _newHours) => {
+          // Rebuild document with new pricing
+          const updatedSettings = { ...settings, hourlyRate: newRate };
+          return await builder.build(detections, updatedSettings);
+        }
+      };
+
+      // Show modal with calculator and export controls
+      const modal = new ChangeOrderModal(document, metadata, calculatorOptions);
+      modal.show();
+
+      // Mark all as acknowledged after modal is shown
       await this.acknowledgeMultipleEvents(unacknowledged);
-
       this.onEventsChanged();
     } catch (error) {
       logError('DetectionEventHandlers.generateReport failed', error);

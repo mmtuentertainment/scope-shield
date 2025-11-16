@@ -1,7 +1,7 @@
 // PDF Generator Service
 // Lazy-loads jsPDF and generates professional PDFs from change orders
 
-import { logInfo, logError, logWarn } from '../../utils/Logger.js';
+import { logInfo, logError, logWarning } from '../../utils/Logger.js';
 import { generateChangeOrderFilename } from './FilenameUtils.js';
 
 // Cached jsPDF instance (lazy-loaded)
@@ -88,7 +88,7 @@ export async function generatePDF(text, metadata = {}) {
 
     // Warn if exceeds performance target (3000ms)
     if (duration > 3000) {
-      logWarn(`PDFGenerator: Performance warning - generation took ${duration.toFixed(2)}ms (target <3000ms)`);
+      logWarning(`PDFGenerator: Performance warning - generation took ${duration.toFixed(2)}ms (target <3000ms)`);
     }
 
     return blob;

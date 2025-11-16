@@ -26,13 +26,33 @@ vi.mock('../../../src/lib/storage/FreelancerSettings.js', () => ({
   }
 }));
 
+// Mock ChangeOrderModal
+const mockShow = vi.fn();
+const mockClose = vi.fn();
+const mockUpdateDocument = vi.fn();
+
+vi.mock('../../../src/popup/components/ChangeOrderModal.js', () => ({
+  ChangeOrderModal: vi.fn(() => ({
+    show: mockShow,
+    close: mockClose,
+    updateDocument: mockUpdateDocument
+  }))
+}));
+
 describe('DetectionEventHandlers', () => {
   let handlers;
   let mockEvents;
   let getEvents;
   let onEventsChanged;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    // Clear modal mocks
+    const { ChangeOrderModal } = await import('../../../src/popup/components/ChangeOrderModal.js');
+    ChangeOrderModal.mockClear();
+    mockShow.mockClear();
+    mockClose.mockClear();
+    mockUpdateDocument.mockClear();
+
     mockEvents = [
       {
         id: '1',
@@ -264,12 +284,28 @@ describe('DetectionEventHandlers', () => {
       );
     });
 
-    it('should group detections by sender', async () => {
+    it('should show modal with change order', async () => {
+      const { ChangeOrderModal } = await import('../../../src/popup/components/ChangeOrderModal.js');
+
       await handlers.generateReport();
 
-      const report = navigator.clipboard.writeText.mock.calls[0][0];
-      expect(report).toContain('From: John Doe');
-      expect(report).toContain('From: Jane Smith');
+      // Should create modal with document, metadata, and calculator options
+      expect(ChangeOrderModal).toHaveBeenCalledWith(
+        expect.any(String), // document text
+        expect.objectContaining({
+          clientName: expect.any(String),
+          freelancerName: expect.any(String),
+          date: expect.any(String)
+        }),
+        expect.objectContaining({
+          hourlyRate: expect.any(Number),
+          estimatedHours: expect.any(Number),
+          onRecalculate: expect.any(Function)
+        })
+      );
+
+      // Should call show on the modal instance
+      expect(mockShow).toHaveBeenCalled();
     });
 
     it('should acknowledge all events after copy', async () => {
@@ -288,9 +324,12 @@ describe('DetectionEventHandlers', () => {
       expect(onEventsChanged).toHaveBeenCalled();
     });
 
-    it('should handle errors gracefully', async () => {
+    it('should handle builder errors gracefully', async () => {
       const { showNotification } = await import('../../../src/popup/components/NotificationManager.js');
-      navigator.clipboard.writeText.mockRejectedValueOnce(new Error('Clipboard error'));
+      const { FreelancerSettings } = await import('../../../src/lib/storage/FreelancerSettings.js');
+
+      // Mock settings.load to throw error
+      FreelancerSettings.load = vi.fn().mockRejectedValueOnce(new Error('Settings error'));
 
       await handlers.generateReport();
 
