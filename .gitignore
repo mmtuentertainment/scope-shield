@@ -27,6 +27,23 @@ build/
 coverage/
 .nyc_output/
 *.log
+debug-*.js
+
+# Temporary files and reports
+*-REPORT.md
+AUDIT*.md
+PHASE*.md
+PACKAGE_CONTENTS.txt
+coderabbit-review-*.txt
+pre-commit-checklist.md
+
+# Windows zone identifiers
+*.Zone.Identifier
+
+# Manual testing assistant (separate tool)
+manual-testing-assistant/
+manual-testing-assistant-*.md
+manual-testing-assistant*.zip
 
 # OS
 Thumbs.db
