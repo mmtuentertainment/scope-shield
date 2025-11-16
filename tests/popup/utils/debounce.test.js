@@ -108,10 +108,13 @@ describe('debounce', () => {
     const debounced = debounce(func, 100);
 
     // Start debounced call
-    debounced('arg1');
+    const promise = debounced('arg1');
 
     // Cancel before timer completes
     debounced.cancel();
+
+    // Promise should be rejected
+    await expect(promise).rejects.toThrow('Debounced call cancelled');
 
     // Fast-forward past wait time
     vi.advanceTimersByTime(150);
@@ -137,5 +140,27 @@ describe('debounce', () => {
     // Only the new call should execute
     expect(func).toHaveBeenCalledTimes(1);
     expect(func).toHaveBeenCalledWith('call2');
+  });
+
+  it('should reject intermediate promises when called rapidly', async () => {
+    const func = vi.fn().mockResolvedValue('final');
+    const debounced = debounce(func, 100);
+
+    // Make rapid calls
+    const promise1 = debounced('call1');
+    const promise2 = debounced('call2');
+    const promise3 = debounced('call3');
+
+    // First two promises should be rejected
+    await expect(promise1).rejects.toThrow('Debounced call cancelled');
+    await expect(promise2).rejects.toThrow('Debounced call cancelled');
+
+    // Last promise should resolve
+    vi.advanceTimersByTime(100);
+    await expect(promise3).resolves.toBe('final');
+
+    // Only last call should execute
+    expect(func).toHaveBeenCalledTimes(1);
+    expect(func).toHaveBeenCalledWith('call3');
   });
 });

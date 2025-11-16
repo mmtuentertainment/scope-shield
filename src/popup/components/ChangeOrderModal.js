@@ -40,6 +40,7 @@ export class ChangeOrderModal {
     this.calculator = null;
     this.exportControls = null;
     this.documentPreview = null;
+    this.triggerElement = null;
 
     // Event handlers (bound for cleanup)
     this.handleKeydown = this.handleKeydown.bind(this);
@@ -57,6 +58,9 @@ export class ChangeOrderModal {
    */
   show() {
     logInfo('ChangeOrderModal: Showing modal');
+
+    // Store trigger element for focus restoration
+    this.triggerElement = document.activeElement;
 
     // Create modal structure
     this.createModal();
@@ -113,6 +117,12 @@ export class ChangeOrderModal {
     this.overlay = null;
     this.modal = null;
     this.documentPreview = null;
+
+    // Return focus to trigger element
+    if (this.triggerElement && typeof this.triggerElement.focus === 'function') {
+      this.triggerElement.focus();
+    }
+    this.triggerElement = null;
   }
 
   /**
