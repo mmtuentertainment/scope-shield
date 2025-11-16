@@ -9,6 +9,7 @@
 
 import { PricingCalculatorWidget } from '../../lib/change-order/PricingCalculatorWidget.js';
 import { ExportControls } from './ExportControls.js';
+import { showNotification } from './NotificationManager.js';
 import { logInfo, logError } from '../../lib/utils/Logger.js';
 import { debounce } from '../utils/debounce.js';
 
@@ -133,6 +134,13 @@ export class ChangeOrderModal {
     // Overlay
     this.overlay = document.createElement('div');
     this.overlay.className = 'change-order-modal-overlay';
+
+    // Close modal when clicking overlay (not modal content)
+    this.overlay.addEventListener('click', (event) => {
+      if (event.target === this.overlay) {
+        this.close();
+      }
+    });
 
     // Modal container
     this.modal = document.createElement('div');
@@ -284,6 +292,14 @@ export class ChangeOrderModal {
       this.updateDocument(newDocument);
     } catch (error) {
       logError('ChangeOrderModal: Recalculation failed', error);
+
+      // Notify user of failure
+      showNotification(
+        'recalc-error',
+        'Failed to update document. Please try again.',
+        'error',
+        5000
+      );
     }
   }
 

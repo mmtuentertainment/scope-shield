@@ -446,6 +446,71 @@ body {
   .btn-icon:hover {
     background: #3D3D3D;
   }
+
+  /* Change Order Modal - Dark Mode */
+  .change-order-modal-overlay {
+    background: rgba(0, 0, 0, 0.7);
+  }
+
+  .change-order-modal {
+    background: #2D2D2D;
+    color: #E0E0E0;
+  }
+
+  .modal-header {
+    background: linear-gradient(135deg, #D84315 0%, #BF360C 100%);
+  }
+
+  .document-preview {
+    background: #1E1E1E;
+    border-color: #444;
+    color: #E0E0E0;
+  }
+
+  .calculator-widget,
+  .export-controls {
+    background: #2D2D2D;
+  }
+
+  .calculator-header,
+  .export-controls-header {
+    color: #E0E0E0;
+  }
+
+  .input-group label {
+    color: #B0B0B0;
+  }
+
+  .input-wrapper input {
+    background: #1E1E1E;
+    border-color: #444;
+    color: #E0E0E0;
+  }
+
+  .input-wrapper input:focus {
+    border-color: #FF9800;
+    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.2);
+  }
+
+  .calculator-result {
+    background: linear-gradient(135deg, #D84315 0%, #BF360C 100%);
+  }
+
+  .export-btn {
+    background: #2D2D2D;
+    border-color: #FF9800;
+    color: #FF9800;
+  }
+
+  .export-btn:hover:not(:disabled) {
+    background: #FF9800;
+    color: #1E1E1E;
+  }
+
+  .export-btn.fallback-suggestion {
+    background-color: #3D3000;
+    border-color: #FFC107;
+  }
 }
 
 /* Toast Notifications */
