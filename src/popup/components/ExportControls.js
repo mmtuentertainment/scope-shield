@@ -279,6 +279,7 @@ export class ExportControls {
 
   /**
    * Cleanup component
+   * Note: Event listeners are cleaned up automatically when buttons are removed from DOM
    */
   destroy() {
     if (this.container && this.container.parentNode) {
