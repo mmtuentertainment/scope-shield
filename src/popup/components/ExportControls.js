@@ -93,7 +93,7 @@ export class ExportControls {
     iconSpan.textContent = icon;
     
     button.appendChild(iconSpan);
-    button.appendChild(document.createTextNode(` ${  label}`));
+    button.appendChild(document.createTextNode(` ${label}`));
     
     button.addEventListener('click', handler);
     return button;
@@ -213,7 +213,7 @@ export class ExportControls {
   restoreButtonContent(button) {
     if (!button.dataset.originalText) return;
 
-    const icon = button.querySelector('.export-icon')?.textContent || '';
+    const icon = button.dataset.icon || '';
     const label = button.dataset.originalText.replace(icon, '').trim();
 
     button.textContent = '';
@@ -224,6 +224,7 @@ export class ExportControls {
     button.appendChild(document.createTextNode(` ${label}`));
 
     delete button.dataset.originalText;
+    delete button.dataset.icon;
   }
 
   /**
@@ -241,6 +242,11 @@ export class ExportControls {
     if (loading) {
       button.disabled = true;
       button.classList.add('loading');
+      // Store icon before nuking DOM
+      const iconEl = button.querySelector('.export-icon');
+      if (iconEl) {
+        button.dataset.icon = iconEl.textContent || '';
+      }
       button.dataset.originalText = button.textContent;
       button.textContent = 'Exporting...';
     } else {

@@ -105,14 +105,18 @@ describe('ExportService', () => {
     });
 
     it('should measure export duration', async () => {
-      const nowSpy = vi.spyOn(performance, 'now')
+      const logInfoSpy = vi.spyOn(console, 'log');
+
+      vi.spyOn(performance, 'now')
         .mockReturnValueOnce(0)    // Start
         .mockReturnValueOnce(250);  // End = 250ms
 
       await ExportService.export('Test', ExportMethod.CLIPBOARD);
 
-      // Verify performance.now() was called to measure duration
-      expect(nowSpy).toHaveBeenCalledTimes(2);
+      // Verify duration was logged in success message
+      expect(logInfoSpy).toHaveBeenCalledWith(
+        expect.stringContaining('clipboard export succeeded in 250.00ms')
+      );
     });
   });
 
