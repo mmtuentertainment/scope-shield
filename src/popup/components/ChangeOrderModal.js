@@ -41,7 +41,7 @@ export class ChangeOrderModal {
     this.documentPreview = null;
 
     // Event handlers (bound for cleanup)
-    this.handleEscapeKey = this.handleEscapeKey.bind(this);
+    this.handleKeydown = this.handleKeydown.bind(this);
     this.handleCloseClick = this.handleCloseClick.bind(this);
 
     // Debounced recalculation (300ms to prevent spam)
@@ -64,7 +64,10 @@ export class ChangeOrderModal {
     document.body.appendChild(this.overlay);
 
     // Add event listeners
-    document.addEventListener('keydown', this.handleEscapeKey);
+    document.addEventListener('keydown', this.handleKeydown);
+
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
 
     // Focus close button for accessibility
     const closeBtn = this.modal.querySelector('.close-btn');
@@ -80,7 +83,10 @@ export class ChangeOrderModal {
     logInfo('ChangeOrderModal: Closing modal');
 
     // Cleanup event listeners
-    document.removeEventListener('keydown', this.handleEscapeKey);
+    document.removeEventListener('keydown', this.handleKeydown);
+
+    // Restore body scroll
+    document.body.style.overflow = '';
 
     // Cleanup component instances
     if (this.calculator) {
@@ -282,13 +288,51 @@ export class ChangeOrderModal {
   }
 
   /**
-   * Handle escape key press
+   * Handle keyboard events (Escape to close, Tab for focus trap)
    * @private
    * @param {KeyboardEvent} event - Keyboard event
    */
-  handleEscapeKey(event) {
+  handleKeydown(event) {
     if (event.key === 'Escape') {
       this.close();
+    } else if (event.key === 'Tab') {
+      this.trapFocus(event);
+    }
+  }
+
+  /**
+   * Trap focus within modal for accessibility
+   * @private
+   * @param {KeyboardEvent} event - Tab keyboard event
+   */
+  trapFocus(event) {
+    if (!this.modal) {
+      return;
+    }
+
+    const focusableElements = this.modal.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+
+    if (focusableElements.length === 0) {
+      return;
+    }
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (event.shiftKey) {
+      // Shift+Tab: going backwards
+      if (document.activeElement === firstElement) {
+        lastElement.focus();
+        event.preventDefault();
+      }
+    } else {
+      // Tab: going forwards
+      if (document.activeElement === lastElement) {
+        firstElement.focus();
+        event.preventDefault();
+      }
     }
   }
 
