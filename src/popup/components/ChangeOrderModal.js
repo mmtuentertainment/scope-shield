@@ -83,6 +83,11 @@ export class ChangeOrderModal {
   close() {
     logInfo('ChangeOrderModal: Closing modal');
 
+    // Cancel any pending debounced recalculations
+    if (this.debouncedRecalculate && this.debouncedRecalculate.cancel) {
+      this.debouncedRecalculate.cancel();
+    }
+
     // Cleanup event listeners
     document.removeEventListener('keydown', this.handleKeydown);
 
@@ -145,6 +150,10 @@ export class ChangeOrderModal {
     // Modal container
     this.modal = document.createElement('div');
     this.modal.className = 'change-order-modal';
+    this.modal.setAttribute('role', 'dialog');
+    this.modal.setAttribute('aria-modal', 'true');
+    this.modal.setAttribute('aria-labelledby', 'change-order-modal-title');
+    this.modal.setAttribute('aria-describedby', 'change-order-modal-desc');
 
     // Header
     const header = this.createHeader();
@@ -167,6 +176,7 @@ export class ChangeOrderModal {
     header.className = 'modal-header';
 
     const title = document.createElement('h2');
+    title.id = 'change-order-modal-title';
     title.textContent = 'Change Order Request';
     header.appendChild(title);
 
@@ -188,6 +198,13 @@ export class ChangeOrderModal {
   createBody() {
     const body = document.createElement('div');
     body.className = 'modal-body';
+
+    // Add accessible description (visually hidden)
+    const description = document.createElement('div');
+    description.id = 'change-order-modal-desc';
+    description.className = 'sr-only';
+    description.textContent = 'Modal dialog for reviewing and exporting change order with pricing calculator';
+    body.appendChild(description);
 
     // Document preview
     this.documentPreview = document.createElement('pre');
@@ -287,6 +304,12 @@ export class ChangeOrderModal {
 
       // Call the recalculate callback (async)
       const newDocument = await this.calculatorOptions.onRecalculate(newRate, newHours);
+
+      // Guard: Check if modal still exists before updating
+      if (!this.modal || !this.documentPreview) {
+        logInfo('ChangeOrderModal: Modal closed during recalculation, skipping update');
+        return;
+      }
 
       // Update document
       this.updateDocument(newDocument);

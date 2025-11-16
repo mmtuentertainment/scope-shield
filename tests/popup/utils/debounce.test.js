@@ -94,4 +94,48 @@ describe('debounce', () => {
 
     expect(result).toBe(42);
   });
+
+  it('should have cancel method', () => {
+    const func = vi.fn();
+    const debounced = debounce(func, 100);
+
+    expect(debounced.cancel).toBeDefined();
+    expect(typeof debounced.cancel).toBe('function');
+  });
+
+  it('should cancel pending execution', async () => {
+    const func = vi.fn().mockResolvedValue('result');
+    const debounced = debounce(func, 100);
+
+    // Start debounced call
+    debounced('arg1');
+
+    // Cancel before timer completes
+    debounced.cancel();
+
+    // Fast-forward past wait time
+    vi.advanceTimersByTime(150);
+
+    // Function should not have been called
+    expect(func).not.toHaveBeenCalled();
+  });
+
+  it('should allow new calls after cancel', async () => {
+    const func = vi.fn().mockResolvedValue('result');
+    const debounced = debounce(func, 100);
+
+    // Start and cancel
+    debounced('call1');
+    debounced.cancel();
+
+    // New call after cancel
+    const promise = debounced('call2');
+
+    vi.advanceTimersByTime(100);
+    await promise;
+
+    // Only the new call should execute
+    expect(func).toHaveBeenCalledTimes(1);
+    expect(func).toHaveBeenCalledWith('call2');
+  });
 });

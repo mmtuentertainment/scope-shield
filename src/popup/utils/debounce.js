@@ -18,7 +18,7 @@ export function debounce(func, wait) {
 
   let timeoutId;
 
-  return function debounced(...args) {
+  const debounced = function(...args) {
     clearTimeout(timeoutId);
 
     return new Promise((resolve, reject) => {
@@ -32,4 +32,12 @@ export function debounce(func, wait) {
       }, wait);
     });
   };
+
+  // Add cancel method to clear pending timeout
+  debounced.cancel = function() {
+    clearTimeout(timeoutId);
+    timeoutId = null;
+  };
+
+  return debounced;
 }
