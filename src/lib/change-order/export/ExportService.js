@@ -64,12 +64,6 @@ export class ExportService {
         case ExportMethod.TEXT:
           result = this.downloadAsText(text, metadata);
           break;
-
-        default:
-          result = {
-            success: false,
-            error: `Unknown export method: ${method}`
-          };
       }
 
       const duration = performance.now() - startTime;

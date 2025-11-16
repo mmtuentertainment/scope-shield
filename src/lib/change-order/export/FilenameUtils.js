@@ -47,8 +47,14 @@ export function generateChangeOrderFilename(metadata, extension) {
   const safeClient = sanitizeClientName(clientName);
   const safeDate = formatFilenameDate(date);
 
+  // Null safety - handle null/undefined extension
+  const ext = extension || 'txt';
+
   // Sanitize extension (prevent path traversal)
-  const safeExtension = extension.replace(/[^a-zA-Z0-9]/g, '');
+  const sanitizedExt = ext.replace(/[^a-zA-Z0-9]/g, '');
+
+  // Fallback if sanitization produces empty string
+  const safeExtension = sanitizedExt || 'txt';
 
   return `ChangeOrder_${safeClient}_${safeDate}.${safeExtension}`;
 }

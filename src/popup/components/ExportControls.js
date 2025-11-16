@@ -178,7 +178,7 @@ export class ExportControls {
    * Handle text export
    * @private
    */
-  async handleText() {
+  handleText() {
     if (this.isExporting) return;
 
     try {

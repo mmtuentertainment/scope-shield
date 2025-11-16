@@ -161,5 +161,32 @@ describe('FilenameUtils', () => {
 
       expect(filename).toBe('ChangeOrder_Test_2025-11-15.pdf');
     });
+
+    it('should handle null extension', () => {
+      const filename = generateChangeOrderFilename({
+        clientName: 'Test',
+        date: '2025-11-15'
+      }, null);
+
+      expect(filename).toBe('ChangeOrder_Test_2025-11-15.txt');
+    });
+
+    it('should handle undefined extension', () => {
+      const filename = generateChangeOrderFilename({
+        clientName: 'Test',
+        date: '2025-11-15'
+      }, undefined);
+
+      expect(filename).toBe('ChangeOrder_Test_2025-11-15.txt');
+    });
+
+    it('should handle extension that sanitizes to empty', () => {
+      const filename = generateChangeOrderFilename({
+        clientName: 'Test',
+        date: '2025-11-15'
+      }, '!!!@@@');
+
+      expect(filename).toBe('ChangeOrder_Test_2025-11-15.txt');
+    });
   });
 });

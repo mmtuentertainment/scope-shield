@@ -1,7 +1,7 @@
 // Clipboard Export Service
 // Handles copying text to system clipboard with permission handling
 
-import { logInfo, logError } from '../../utils/Logger.js';
+import { logInfo, logError, logWarn } from '../../utils/Logger.js';
 
 /**
  * Copy text to system clipboard
@@ -36,7 +36,7 @@ export async function copyToClipboard(text) {
 
     // Warn if exceeds performance target (500ms)
     if (duration > 500) {
-      logError(`ClipboardExport: Performance warning - copy took ${duration.toFixed(2)}ms (target <500ms)`, new Error('Performance threshold exceeded'));
+      logWarn(`ClipboardExport: Performance warning - copy took ${duration.toFixed(2)}ms (target <500ms)`);
     }
 
     return { success: true };

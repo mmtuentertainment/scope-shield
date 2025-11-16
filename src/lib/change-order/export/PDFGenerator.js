@@ -140,6 +140,7 @@ function checkPageBreak(doc, yPosition, config) {
 
 /**
  * Check if line is a header
+ * Note: Uses simple heuristics - may misclassify all-caps acronyms or long headers
  * @param {string} line - Text line
  * @returns {boolean}
  * @private
