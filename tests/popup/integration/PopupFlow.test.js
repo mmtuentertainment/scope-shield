@@ -21,16 +21,14 @@ vi.mock('../../../src/lib/utils/Logger.js', () => ({
   logError: vi.fn()
 }));
 
-// Mock FreelancerSettings for ChangeOrderBuilder
-vi.mock('../../../src/lib/storage/FreelancerSettings.js', () => ({
-  FreelancerSettings: {
-    async load() {
-      return {
-        freelancerName: 'Test Freelancer',
-        hourlyRate: 100,
-        currency: 'USD'
-      };
-    }
+// Mock SettingsStorage for loading freelancer settings
+vi.mock('../../../src/lib/storage/SettingsStorage.js', () => ({
+  SettingsStorage: {
+    get: vi.fn().mockResolvedValue({
+      freelancerName: 'Test Freelancer',
+      hourlyRate: 100,
+      currency: 'USD'
+    })
   }
 }));
 
@@ -62,6 +60,14 @@ describe('Popup Integration', () => {
     mockShow.mockClear();
     mockClose.mockClear();
     mockUpdateDocument.mockClear();
+
+    // Reset SettingsStorage mock
+    const { SettingsStorage } = await import('../../../src/lib/storage/SettingsStorage.js');
+    SettingsStorage.get.mockResolvedValue({
+      freelancerName: 'Test Freelancer',
+      hourlyRate: 100,
+      currency: 'USD'
+    });
 
     // Setup DOM
     container = document.createElement('div');

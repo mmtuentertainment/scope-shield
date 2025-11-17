@@ -16,7 +16,7 @@ import { showNotification } from './NotificationManager.js';
 import { logError, logWarning } from '../../lib/utils/Logger.js';
 import { ChangeOrderBuilder } from '../../lib/change-order/ChangeOrderBuilder.js';
 import { ChangeOrderModal } from './ChangeOrderModal.js';
-import { FreelancerSettings } from '../../lib/storage/FreelancerSettings.js';
+import { SettingsStorage } from '../../lib/storage/SettingsStorage.js';
 
 /**
  * Detection Event Handlers Class
@@ -169,7 +169,7 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
       }));
 
       // Load freelancer settings
-      const settings = await FreelancerSettings.load();
+      const settings = await SettingsStorage.get();
 
       // Build professional change order
       const builder = new ChangeOrderBuilder();

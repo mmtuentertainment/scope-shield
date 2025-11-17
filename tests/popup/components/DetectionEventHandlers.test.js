@@ -13,10 +13,10 @@ vi.mock('../../../src/popup/components/NotificationManager.js', () => ({
   showNotification: vi.fn()
 }));
 
-// Mock FreelancerSettings for ChangeOrderBuilder
-vi.mock('../../../src/lib/storage/FreelancerSettings.js', () => ({
-  FreelancerSettings: {
-    load: vi.fn().mockResolvedValue({
+// Mock SettingsStorage for loading freelancer settings
+vi.mock('../../../src/lib/storage/SettingsStorage.js', () => ({
+  SettingsStorage: {
+    get: vi.fn().mockResolvedValue({
       freelancerName: 'Test Freelancer',
       hourlyRate: 100,
       currency: 'USD'
@@ -51,9 +51,9 @@ describe('DetectionEventHandlers', () => {
     mockClose.mockClear();
     mockUpdateDocument.mockClear();
 
-    // Reset FreelancerSettings mock to default behavior
-    const { FreelancerSettings } = await import('../../../src/lib/storage/FreelancerSettings.js');
-    FreelancerSettings.load.mockResolvedValue({
+    // Reset SettingsStorage mock to default behavior
+    const { SettingsStorage } = await import('../../../src/lib/storage/SettingsStorage.js');
+    SettingsStorage.get.mockResolvedValue({
       freelancerName: 'Test Freelancer',
       hourlyRate: 100,
       currency: 'USD'
@@ -332,10 +332,10 @@ describe('DetectionEventHandlers', () => {
 
     it('should handle builder errors gracefully', async () => {
       const { showNotification } = await import('../../../src/popup/components/NotificationManager.js');
-      const { FreelancerSettings } = await import('../../../src/lib/storage/FreelancerSettings.js');
+      const { SettingsStorage } = await import('../../../src/lib/storage/SettingsStorage.js');
 
-      // Mock settings.load to throw error for this test only
-      FreelancerSettings.load.mockRejectedValueOnce(new Error('Settings error'));
+      // Mock settings.get to throw error for this test only
+      SettingsStorage.get.mockRejectedValueOnce(new Error('Settings error'));
 
       await handlers.generateReport();
 
