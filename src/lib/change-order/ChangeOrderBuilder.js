@@ -40,7 +40,7 @@ export class ChangeOrderBuilder {
    * @returns {Promise<string>} Formatted change order document
    * @throws {Error} If detections is invalid or settings is not an object
    */
-  async build(detections, settings = null) {
+  async build(detections, settings = null, customHours = null) {
     // Validate input
     if (detections === null || detections === undefined) {
       throw new Error('Detections array is required');
@@ -61,7 +61,7 @@ export class ChangeOrderBuilder {
     }
 
     // Prepare data for template
-    const templateData = this.prepareTemplateData(detections, freelancerSettings);
+    const templateData = this.prepareTemplateData(detections, freelancerSettings, customHours);
 
     // Render using template engine
     const template = this.getTemplate();
@@ -75,8 +75,9 @@ export class ChangeOrderBuilder {
    * @param {Object} settings - Freelancer settings
    * @returns {Object} Template data
    */
-  prepareTemplateData(detections, settings) {
-    const totalHours = this.estimateHours(detections);
+  prepareTemplateData(detections, settings, customHours = null) {
+    // Use custom hours if provided, otherwise estimate from detection count
+    const totalHours = customHours !== null ? customHours : this.estimateHours(detections);
 
     // Normalize hourly rate to number
     const hourlyRate = Number(settings.hourlyRate) || 0;

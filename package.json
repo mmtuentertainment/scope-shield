@@ -23,6 +23,7 @@
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@samrum/vite-plugin-web-extension": "^5.1.1",
     "@types/chrome": "^0.0.268",
     "eslint": "^9.17.0",
     "eslint-config-prettier": "^10.1.8",
@@ -32,7 +33,6 @@
     "prettier": "^3.6.2",
     "terser": "^5.44.1",
     "vite": "^6.0.3",
-    "vite-plugin-static-copy": "^2.3.2",
     "vitest": "^2.1.8"
   },
   "dependencies": {

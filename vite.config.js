@@ -1,55 +1,68 @@
 import { defineConfig } from 'vite';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
-import { resolve } from 'path';
+import webExtension from '@samrum/vite-plugin-web-extension';
 import { readFileSync } from 'fs';
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
 export default defineConfig({
+  base: '', // CRITICAL: Use relative paths for Chrome extensions
   plugins: [
-    viteStaticCopy({
-      targets: [
-        {
-          src: 'src/manifest.json',
-          dest: '.'
+    webExtension({
+      manifest: {
+        manifest_version: 3,
+        name: "ScopeShield",
+        version: pkg.version,
+        description: "Automatically detect scope creep in freelance projects and generate billable change orders",
+        permissions: [
+          "activeTab",
+          "storage",
+          "notifications"
+        ],
+        host_permissions: [
+          "*://mail.google.com/*"
+        ],
+        background: {
+          service_worker: "src/background/service-worker.js",
+          type: "module"
         },
-        {
-          src: 'src/content/content.css',
-          dest: 'content'
+        content_scripts: [
+          {
+            matches: ["*://mail.google.com/*"],
+            js: ["src/content/content.js"],
+            css: ["src/content/content-styles.css"],
+            run_at: "document_idle",
+            all_frames: false
+          }
+        ],
+        action: {
+          default_popup: "src/popup/popup.html",
+          default_icon: {
+            "16": "assets/icons/icon16.png",
+            "48": "assets/icons/icon48.png",
+            "128": "assets/icons/icon128.png"
+          }
         },
-        {
-          src: 'assets/**/*',
-          dest: 'assets'
+        icons: {
+          "16": "assets/icons/icon16.png",
+          "48": "assets/icons/icon48.png",
+          "128": "assets/icons/icon128.png"
         },
-        {
-          src: 'src/assets/templates/**/*',
-          dest: 'assets/templates'
-        }
-      ]
+        options_page: "src/options/options.html"
+      },
+      additionalInputs: {
+        html: ["src/options/options.html"],
+        scripts: []
+      }
     })
   ],
   build: {
     target: 'esnext', // T003: Chrome 92+ supports modern JS (crypto.randomUUID, etc.)
     outDir: 'dist',
     sourcemap: true, // Enable source maps for debugging
-    minify: 'terser', // Better compression than esbuild
+    minify: false, // TEMP: Disable minification to preserve initialization code
     chunkSizeWarningLimit: 600, // T006: Warn if chunks exceed 600KB
     rollupOptions: {
-      input: {
-        'popup': resolve(__dirname, 'src/popup/popup.html'),
-        'options': resolve(__dirname, 'src/options/options.html'),
-        'background/service-worker': resolve(__dirname, 'src/background/service-worker.js'),
-        'content/content': resolve(__dirname, 'src/content/content.js')
-      },
-      output: {
-        entryFileNames: '[name].js',
-        chunkFileNames: 'chunks/[name].js',
-        assetFileNames: 'assets/[name].[ext]',
-        // Prevent code splitting by returning undefined for all modules
-        manualChunks: undefined
-      },
-      // CRITICAL: Preserve entry signatures to prevent merging
-      preserveEntrySignatures: 'strict'
+      treeshake: false // CRITICAL: Preserve initialization code in popup.js
     },
     // T005: Terser options for maximum compression
     terserOptions: {

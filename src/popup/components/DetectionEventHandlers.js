@@ -186,10 +186,10 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
       const calculatorOptions = {
         hourlyRate: settings.hourlyRate || 0,
         estimatedHours: builder.estimateHours(detections),
-        onRecalculate: async (newRate, _newHours) => {
-          // Rebuild document with new pricing
+        onRecalculate: async (newRate, newHours) => {
+          // Rebuild document with new pricing AND custom hours
           const updatedSettings = { ...settings, hourlyRate: newRate };
-          return await builder.build(detections, updatedSettings);
+          return await builder.build(detections, updatedSettings, newHours);
         }
       };
 
