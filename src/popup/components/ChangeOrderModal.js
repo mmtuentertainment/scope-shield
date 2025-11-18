@@ -7,14 +7,10 @@
  * @module ChangeOrderModal
  */
 
-import { PricingCalculatorWidget } from '../../lib/change-order/PricingCalculatorWidget.js';
-import { ExportControls } from './ExportControls.js';
+import { ChangeOrderModalIntegrations } from './ChangeOrderModalIntegrations.js';
 import { showNotification } from './NotificationManager.js';
 import { logInfo, logError } from '../../lib/utils/Logger.js';
 import { debounce } from '../utils/debounce.js';
-import { AutoExportTimer } from '../../lib/change-order/AutoExportTimer.js';
-import { ExportService } from '../../lib/change-order/export/ExportService.js';
-import { SettingsStorage } from '../../lib/storage/SettingsStorage.js';
 
 /**
  * Change Order Modal
@@ -47,13 +43,16 @@ export class ChangeOrderModal {
     this.autoExportTimer = null;
     this.countdownNotification = null;
 
+    // Integration helper (handles calculator, export, auto-export)
+    this.integrations = new ChangeOrderModalIntegrations(this);
+
     // Event handlers (bound for cleanup)
     this.handleKeydown = this.handleKeydown.bind(this);
     this.handleCloseClick = this.handleCloseClick.bind(this);
 
     // Debounced recalculation (300ms to prevent spam)
     this.debouncedRecalculate = debounce(
-      this.recalculateDocument.bind(this),
+      (rate, hours) => this.integrations.recalculateDocument(rate, hours),
       300
     );
   }
@@ -86,7 +85,7 @@ export class ChangeOrderModal {
     }
 
     // Initialize auto-export timer
-    await this.initializeAutoExport();
+    await this.integrations.initializeAutoExport();
   }
 
   /**
@@ -152,7 +151,7 @@ export class ChangeOrderModal {
     }
 
     // Recreate export controls with new text
-    this.updateExportControls();
+    this.integrations.updateExportControls();
   }
 
   /**
@@ -259,126 +258,16 @@ export class ChangeOrderModal {
     // Calculator container
     const calculatorContainer = document.createElement('div');
     calculatorContainer.className = 'calculator-container';
-    this.mountCalculator(calculatorContainer);
+    this.integrations.mountCalculator(calculatorContainer);
     body.appendChild(calculatorContainer);
 
     // Export controls container
     const exportContainer = document.createElement('div');
     exportContainer.className = 'export-container';
-    this.mountExportControls(exportContainer);
+    this.integrations.mountExportControls(exportContainer);
     body.appendChild(exportContainer);
 
     return body;
-  }
-
-  /**
-   * Mount calculator widget
-   * @private
-   * @param {HTMLElement} container - Container element
-   */
-  mountCalculator(container) {
-    this.calculator = new PricingCalculatorWidget({
-      initialRate: this.calculatorOptions.hourlyRate || 0,
-      initialHours: this.calculatorOptions.estimatedHours || 0,
-      onCalculate: (values) => {
-        // Debounced recalculation when rate or hours change
-        this.debouncedRecalculate(values.rate, values.hours);
-      }
-    });
-
-    const calculatorElement = this.calculator.render();
-    container.appendChild(calculatorElement);
-  }
-
-  /**
-   * Mount export controls
-   * @private
-   * @param {HTMLElement} container - Container element
-   */
-  mountExportControls(container) {
-    this.exportControls = new ExportControls(this.changeOrderText, {
-      clientName: this.metadata.clientName,
-      freelancerName: this.metadata.freelancerName,
-      date: this.metadata.date
-    });
-
-    const exportElement = this.exportControls.render();
-    container.appendChild(exportElement);
-  }
-
-  /**
-   * Update export controls with new document text
-   * @private
-   */
-  updateExportControls() {
-    if (!this.exportControls) {
-      return;
-    }
-
-    // Get container
-    const container = this.modal.querySelector('.export-container');
-    if (!container) {
-      return;
-    }
-
-    // Cleanup old instance
-    this.exportControls.destroy();
-
-    // Clear container
-    container.textContent = '';
-
-    // Create new instance with updated text
-    this.mountExportControls(container);
-  }
-
-  /**
-   * Recalculate document with new pricing
-   * @private
-   * @param {number} newRate - New hourly rate
-   * @param {number} newHours - New estimated hours
-   */
-  async recalculateDocument(newRate, newHours) {
-    if (!this.calculatorOptions.onRecalculate) {
-      logError('ChangeOrderModal: onRecalculate callback not provided', new Error('Missing callback'));
-      return;
-    }
-
-    try {
-      logInfo(`ChangeOrderModal: Recalculating with rate=${newRate}, hours=${newHours}`);
-
-      // Call the recalculate callback (async)
-      const newDocument = await this.calculatorOptions.onRecalculate(newRate, newHours);
-
-      // Guard: Check if modal still exists before updating
-      if (!this.modal || !this.documentPreview) {
-        logInfo('ChangeOrderModal: Modal closed during recalculation, skipping update');
-        return;
-      }
-
-      // Update document
-      this.updateDocument(newDocument);
-
-      // Restart auto-export timer after document rebuild
-      // (starts even if previously cancelled/completed - enables continuous auto-export)
-      if (this.autoExportTimer) {
-        if (this.autoExportTimer.isActive()) {
-          this.autoExportTimer.reset();
-        } else {
-          // Timer was cancelled or already fired - restart it
-          this.autoExportTimer.start();
-        }
-      }
-    } catch (error) {
-      logError('ChangeOrderModal: Recalculation failed', error);
-
-      // Notify user of failure
-      showNotification(
-        'recalc-error',
-        'Failed to update document. Please try again.',
-        'error',
-        5000
-      );
-    }
   }
 
   /**
@@ -436,136 +325,5 @@ export class ChangeOrderModal {
    */
   handleCloseClick() {
     this.close();
-  }
-
-  /**
-   * Initialize auto-export timer
-   * Loads settings and starts countdown if enabled
-   * @private
-   */
-  async initializeAutoExport() {
-    try {
-      // Load settings
-      const settings = await SettingsStorage.get();
-
-      // Check if auto-export enabled
-      if (!settings.autoExportEnabled) {
-        logInfo('ChangeOrderModal: Auto-export disabled in settings');
-        return;
-      }
-
-      const delay = settings.autoExportDelay || 3;
-      const method = settings.defaultExportMethod || 'pdf';
-
-      logInfo(`ChangeOrderModal: Initializing auto-export (delay=${delay}s, method=${method})`);
-
-      // Create timer
-      this.autoExportTimer = new AutoExportTimer({
-        delay,
-        onExport: async () => {
-          await this.executeAutoExport(method);
-        },
-        onCountdown: (secondsLeft) => {
-          this.updateCountdownUI(secondsLeft);
-        },
-        onCancel: () => {
-          this.hideCountdownUI();
-        }
-      });
-
-      // Start timer
-      this.autoExportTimer.start();
-    } catch (error) {
-      logError('ChangeOrderModal: Failed to initialize auto-export', error);
-
-      // Show user-facing error notification
-      showNotification(
-        'auto-export-init-error',
-        'Auto-export could not be initialized. Please export manually.',
-        'warning',
-        5000
-      );
-    }
-  }
-
-  /**
-   * Execute auto-export
-   * Calls ExportService with settings-based export method
-   * @private
-   * @param {string} method - Export method ('clipboard'|'pdf'|'text')
-   */
-  async executeAutoExport(method) {
-    try {
-      logInfo(`ChangeOrderModal: Executing auto-export (method=${method})`);
-
-      // Hide countdown UI
-      this.hideCountdownUI();
-
-      // Call ExportService
-      const result = await ExportService.export(this.changeOrderText, method, this.metadata);
-
-      if (result.success) {
-        // Show success notification
-        const methodLabels = {
-          clipboard: 'Clipboard',
-          pdf: 'PDF',
-          text: 'Text File'
-        };
-
-        showNotification(
-          'auto-export-success',
-          `Auto-exported as ${methodLabels[method] || method}`,
-          'success',
-          3000
-        );
-
-        logInfo('ChangeOrderModal: Auto-export succeeded');
-      } else {
-        // Show error notification with manual fallback
-        throw new Error(result.error || 'Export failed');
-      }
-    } catch (error) {
-      logError('ChangeOrderModal: Auto-export failed', error);
-
-      showNotification(
-        'auto-export-error',
-        'Auto-export failed. Please use manual export buttons.',
-        'error',
-        5000
-      );
-    }
-  }
-
-  /**
-   * Update countdown notification UI
-   * @private
-   * @param {number} secondsLeft - Seconds remaining
-   */
-  updateCountdownUI(secondsLeft) {
-    if (!this.countdownNotification) {
-      return;
-    }
-
-    // Show notification
-    this.countdownNotification.style.display = 'block';
-
-    // Update text (special message when export is imminent)
-    if (secondsLeft === 0) {
-      this.countdownNotification.textContent = 'Auto-exporting now...';
-    } else {
-      this.countdownNotification.textContent = `Auto-exporting in ${secondsLeft}s... (click anywhere to cancel)`;
-    }
-  }
-
-  /**
-   * Hide countdown notification UI
-   * @private
-   */
-  hideCountdownUI() {
-    if (!this.countdownNotification) {
-      return;
-    }
-
-    this.countdownNotification.style.display = 'none';
   }
 }
