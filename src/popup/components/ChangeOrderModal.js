@@ -12,6 +12,9 @@ import { ExportControls } from './ExportControls.js';
 import { showNotification } from './NotificationManager.js';
 import { logInfo, logError } from '../../lib/utils/Logger.js';
 import { debounce } from '../utils/debounce.js';
+import { AutoExportTimer } from '../../lib/change-order/AutoExportTimer.js';
+import { ExportService } from '../../lib/change-order/export/ExportService.js';
+import { SettingsStorage } from '../../lib/storage/SettingsStorage.js';
 
 /**
  * Change Order Modal
@@ -41,6 +44,8 @@ export class ChangeOrderModal {
     this.exportControls = null;
     this.documentPreview = null;
     this.triggerElement = null;
+    this.autoExportTimer = null;
+    this.countdownNotification = null;
 
     // Event handlers (bound for cleanup)
     this.handleKeydown = this.handleKeydown.bind(this);
@@ -56,7 +61,7 @@ export class ChangeOrderModal {
   /**
    * Show the modal
    */
-  show() {
+  async show() {
     logInfo('ChangeOrderModal: Showing modal');
 
     // Store trigger element for focus restoration
@@ -79,6 +84,9 @@ export class ChangeOrderModal {
     if (closeBtn) {
       closeBtn.focus();
     }
+
+    // Initialize auto-export timer
+    await this.initializeAutoExport();
   }
 
   /**
@@ -90,6 +98,12 @@ export class ChangeOrderModal {
     // Cancel any pending debounced recalculations
     if (this.debouncedRecalculate && this.debouncedRecalculate.cancel) {
       this.debouncedRecalculate.cancel();
+    }
+
+    // Cancel and destroy auto-export timer
+    if (this.autoExportTimer) {
+      this.autoExportTimer.destroy();
+      this.autoExportTimer = null;
     }
 
     // Cleanup event listeners
@@ -152,6 +166,17 @@ export class ChangeOrderModal {
 
     // Close modal when clicking overlay (not modal content)
     this.overlay.addEventListener('click', (event) => {
+      // Cancel auto-export if timer is active
+      if (this.autoExportTimer && this.autoExportTimer.isActive()) {
+        this.autoExportTimer.cancel();
+        showNotification(
+          'auto-export-cancelled',
+          'Auto-export cancelled',
+          'info',
+          2000
+        );
+      }
+
       if (event.target === this.overlay) {
         this.close();
       }
@@ -215,6 +240,14 @@ export class ChangeOrderModal {
     description.className = 'sr-only';
     description.textContent = 'Modal dialog for reviewing and exporting change order with pricing calculator';
     body.appendChild(description);
+
+    // Countdown notification (initially hidden)
+    this.countdownNotification = document.createElement('div');
+    this.countdownNotification.className = 'countdown-notification';
+    this.countdownNotification.style.display = 'none';
+    this.countdownNotification.setAttribute('role', 'status');
+    this.countdownNotification.setAttribute('aria-live', 'polite');
+    body.appendChild(this.countdownNotification);
 
     // Document preview
     this.documentPreview = document.createElement('pre');
@@ -323,6 +356,11 @@ export class ChangeOrderModal {
 
       // Update document
       this.updateDocument(newDocument);
+
+      // Reset auto-export timer after document rebuild
+      if (this.autoExportTimer && this.autoExportTimer.isActive()) {
+        this.autoExportTimer.reset();
+      }
     } catch (error) {
       logError('ChangeOrderModal: Recalculation failed', error);
 
@@ -391,5 +429,124 @@ export class ChangeOrderModal {
    */
   handleCloseClick() {
     this.close();
+  }
+
+  /**
+   * Initialize auto-export timer
+   * Loads settings and starts countdown if enabled
+   * @private
+   */
+  async initializeAutoExport() {
+    try {
+      // Load settings
+      const settings = await SettingsStorage.get();
+
+      // Check if auto-export enabled
+      if (!settings.autoExportEnabled) {
+        logInfo('ChangeOrderModal: Auto-export disabled in settings');
+        return;
+      }
+
+      const delay = settings.autoExportDelay || 3;
+      const method = settings.defaultExportMethod || 'pdf';
+
+      logInfo(`ChangeOrderModal: Initializing auto-export (delay=${delay}s, method=${method})`);
+
+      // Create timer
+      this.autoExportTimer = new AutoExportTimer({
+        delay,
+        onExport: async () => {
+          await this.executeAutoExport(method);
+        },
+        onCountdown: (secondsLeft) => {
+          this.updateCountdownUI(secondsLeft);
+        },
+        onCancel: () => {
+          this.hideCountdownUI();
+        }
+      });
+
+      // Start timer
+      this.autoExportTimer.start();
+    } catch (error) {
+      logError('ChangeOrderModal: Failed to initialize auto-export', error);
+    }
+  }
+
+  /**
+   * Execute auto-export
+   * Calls ExportService with settings-based export method
+   * @private
+   * @param {string} method - Export method ('clipboard'|'pdf'|'text')
+   */
+  async executeAutoExport(method) {
+    try {
+      logInfo(`ChangeOrderModal: Executing auto-export (method=${method})`);
+
+      // Hide countdown UI
+      this.hideCountdownUI();
+
+      // Call ExportService
+      const result = await ExportService.export(this.changeOrderText, method, this.metadata);
+
+      if (result.success) {
+        // Show success notification
+        const methodLabels = {
+          clipboard: 'Clipboard',
+          pdf: 'PDF',
+          text: 'Text File'
+        };
+
+        showNotification(
+          'auto-export-success',
+          `Auto-exported as ${methodLabels[method] || method}`,
+          'success',
+          3000
+        );
+
+        logInfo('ChangeOrderModal: Auto-export succeeded');
+      } else {
+        // Show error notification with manual fallback
+        throw new Error(result.error || 'Export failed');
+      }
+    } catch (error) {
+      logError('ChangeOrderModal: Auto-export failed', error);
+
+      showNotification(
+        'auto-export-error',
+        'Auto-export failed. Please use manual export buttons.',
+        'error',
+        5000
+      );
+    }
+  }
+
+  /**
+   * Update countdown notification UI
+   * @private
+   * @param {number} secondsLeft - Seconds remaining
+   */
+  updateCountdownUI(secondsLeft) {
+    if (!this.countdownNotification) {
+      return;
+    }
+
+    // Show notification
+    this.countdownNotification.style.display = 'block';
+
+    // Update text
+    this.countdownNotification.textContent = `Auto-exporting in ${secondsLeft}s... (click anywhere to cancel)`;
+  }
+
+  /**
+   * Hide countdown notification UI
+   * @private
+   */
+  hideCountdownUI() {
+    if (!this.countdownNotification) {
+      return;
+    }
+
+    this.countdownNotification.style.display = 'none';
   }
 }
