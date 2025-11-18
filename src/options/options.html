@@ -55,6 +55,35 @@
       </div>
     </section>
 
+    <section>
+      <h2>Export Settings</h2>
+      <div class="setting" role="group" aria-labelledby="export-method-label">
+        <label id="export-method-label">
+          Default export method:
+          <select id="default-export-method">
+            <option value="clipboard">Clipboard</option>
+            <option value="pdf" selected>Export as PDF</option>
+            <option value="text">Export as Text</option>
+          </select>
+        </label>
+      </div>
+      <div class="setting" role="group" aria-labelledby="auto-export-label">
+        <label id="auto-export-label">
+          <input type="checkbox" id="auto-export-enabled" checked>
+          Enable auto-export after editing
+        </label>
+        <small>Automatically export change orders after you finish editing</small>
+      </div>
+      <div class="setting" role="group" aria-labelledby="delay-label">
+        <label id="delay-label">
+          Auto-export delay:
+          <input type="number" id="auto-export-delay" min="1" max="10" value="3">
+          seconds
+        </label>
+        <small>Wait time before auto-exporting (1-10 seconds)</small>
+      </div>
+    </section>
+
     <div class="actions">
       <button id="save">Save Settings</button>
       <button id="reset">Reset to Defaults</button>

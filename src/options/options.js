@@ -11,6 +11,9 @@ const confidenceThreshold = document.getElementById('confidence-threshold');
 const highlightColor = document.getElementById('highlight-color');
 const highlightOpacity = document.getElementById('highlight-opacity');
 const opacityValue = document.getElementById('opacity-value');
+const defaultExportMethod = document.getElementById('default-export-method');
+const autoExportEnabled = document.getElementById('auto-export-enabled');
+const autoExportDelay = document.getElementById('auto-export-delay');
 const saveBtn = document.getElementById('save');
 const resetBtn = document.getElementById('reset');
 const statusEl = document.getElementById('status');
@@ -21,7 +24,10 @@ const DEFAULT_SETTINGS = {
   enableHighlights: true,
   confidenceThreshold: 5,
   highlightColor: '#FFEB3B',
-  highlightOpacity: 0.8
+  highlightOpacity: 0.8,
+  defaultExportMethod: 'pdf',
+  autoExportEnabled: true,
+  autoExportDelay: 3
 };
 
 /**
@@ -38,6 +44,9 @@ async function loadSettings() {
     highlightColor.value = settings.highlightColor;
     highlightOpacity.value = settings.highlightOpacity;
     opacityValue.textContent = `${Math.round(settings.highlightOpacity * 100)}%`;
+    defaultExportMethod.value = settings.defaultExportMethod || 'pdf';
+    autoExportEnabled.checked = settings.autoExportEnabled !== false;
+    autoExportDelay.value = settings.autoExportDelay || 3;
   } catch (error) {
     logError('Error loading settings', error);
   }
@@ -52,7 +61,10 @@ async function saveSettings() {
     enableHighlights: enableHighlights.checked,
     confidenceThreshold: parseInt(confidenceThreshold.value),
     highlightColor: highlightColor.value,
-    highlightOpacity: parseFloat(highlightOpacity.value)
+    highlightOpacity: parseFloat(highlightOpacity.value),
+    defaultExportMethod: defaultExportMethod.value,
+    autoExportEnabled: autoExportEnabled.checked,
+    autoExportDelay: parseInt(autoExportDelay.value)
   };
 
   try {
