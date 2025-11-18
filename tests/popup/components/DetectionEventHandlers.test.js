@@ -295,6 +295,13 @@ describe('DetectionEventHandlers', () => {
 
       await handlers.generateReport();
 
+      // Verify document contains event data
+      const documentArg = ChangeOrderModal.mock.calls[0][0];
+      expect(documentArg).toContain('John Doe');
+      expect(documentArg).toContain('Jane Smith');
+      expect(documentArg).toContain('Can you also add this?');
+      expect(documentArg).toContain('One more thing');
+
       // Should create modal with document, metadata, and calculator options
       expect(ChangeOrderModal).toHaveBeenCalledWith(
         expect.any(String), // document text
@@ -310,11 +317,17 @@ describe('DetectionEventHandlers', () => {
         })
       );
 
+      // Verify onRecalculate callback returns rebuilt document
+      const calculatorOptions = ChangeOrderModal.mock.calls[0][2];
+      const rebuiltDoc = await calculatorOptions.onRecalculate(200, 10);
+      expect(rebuiltDoc).toContain('$200'); // New rate reflected
+      expect(rebuiltDoc).toContain('10 hours'); // Custom hours reflected
+
       // Should call show on the modal instance
       expect(mockShow).toHaveBeenCalled();
     });
 
-    it('should acknowledge all events after copy', async () => {
+    it('should acknowledge all events after generating report', async () => {
       const { acknowledgeEvent } = await import('../../../src/utils/storage.js');
 
       await handlers.generateReport();
