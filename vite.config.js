@@ -29,17 +29,7 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     minify: 'terser',
-    chunkSizeWarningLimit: 600,
-    terserOptions: {
-      compress: {
-        pure_funcs: ['console.log', 'console.debug', 'console.trace'],
-        drop_debugger: true,
-        passes: 2
-      },
-      format: {
-        comments: false
-      }
-    }
+    chunkSizeWarningLimit: 600
   },
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
