@@ -53,6 +53,8 @@ Thumbs.db
 .cache/
 
 # ESLint cache
-.eslintcache# Temporary backups
+.eslintcache
+
+# Temporary backups and Windows metadata
 *.backup
 *:Zone.Identifier
