@@ -12,7 +12,7 @@
     "*://mail.google.com/*"
   ],
   "background": {
-    "service_worker": "background/service-worker.js",
+    "service_worker": "src/background/service-worker.js",
     "type": "module"
   },
   "content_scripts": [
@@ -20,8 +20,8 @@
       "matches": [
         "*://mail.google.com/*"
       ],
-      "js": ["content/content.js"],
-      "css": ["content/content.css"],
+      "js": ["src/content/content.js"],
+      "css": ["src/content/content-styles.css"],
       "run_at": "document_idle",
       "all_frames": false
     }
