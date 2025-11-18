@@ -135,7 +135,7 @@ async function updateBadgeCount(count) {
 chrome.notifications.onClicked.addListener((notificationId) => {
   // Open popup in new tab (chrome.action.openPopup() not allowed from notifications in MV3)
   chrome.tabs.create({
-    url: chrome.runtime.getURL('popup/popup.html')
+    url: chrome.runtime.getURL('src/popup/popup.html')
   });
 
   // Clear notification
@@ -149,7 +149,7 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
   if (buttonIndex === 0) {
     // "View Details" button - open in new tab (MV3 restriction)
     chrome.tabs.create({
-      url: chrome.runtime.getURL('popup/popup.html')
+      url: chrome.runtime.getURL('src/popup/popup.html')
     });
   }
 
