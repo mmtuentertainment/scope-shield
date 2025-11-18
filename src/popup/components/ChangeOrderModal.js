@@ -130,6 +130,7 @@ export class ChangeOrderModal {
     this.overlay = null;
     this.modal = null;
     this.documentPreview = null;
+    this.countdownNotification = null;
 
     // Return focus to trigger element
     if (this.triggerElement && typeof this.triggerElement.focus === 'function') {

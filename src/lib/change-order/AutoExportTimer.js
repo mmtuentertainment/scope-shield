@@ -171,12 +171,12 @@ export class AutoExportTimer {
    * @private
    */
   _clearTimers() {
-    if (this.timeoutId) {
+    if (this.timeoutId !== null) {
       clearTimeout(this.timeoutId);
       this.timeoutId = null;
     }
 
-    if (this.countdownIntervalId) {
+    if (this.countdownIntervalId !== null) {
       clearInterval(this.countdownIntervalId);
       this.countdownIntervalId = null;
     }
