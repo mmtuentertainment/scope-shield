@@ -139,11 +139,12 @@ describe('AutoExportTimer', () => {
       await vi.advanceTimersByTimeAsync(1000);
       expect(mockOnCountdown).toHaveBeenCalledWith(1);
 
-      // Final second - no countdown call (export triggers)
+      // Final second - countdown calls with 0 (for "Auto-exporting now..." UI)
       await vi.advanceTimersByTimeAsync(1000);
+      expect(mockOnCountdown).toHaveBeenCalledWith(0);
 
-      // Should have been called 3 times total (3, 2, 1)
-      expect(mockOnCountdown).toHaveBeenCalledTimes(3);
+      // Should have been called 4 times total (3, 2, 1, 0)
+      expect(mockOnCountdown).toHaveBeenCalledTimes(4);
     });
 
     it('should throw error if timer already running', () => {
@@ -186,7 +187,7 @@ describe('AutoExportTimer', () => {
       await vi.advanceTimersByTimeAsync(1000);
 
       expect(mockOnExport).toHaveBeenCalledTimes(1);
-      expect(mockOnCountdown).toHaveBeenCalledTimes(1); // Only initial call
+      expect(mockOnCountdown).toHaveBeenCalledTimes(2); // Initial (1) + final (0)
     });
 
     it('should work with 10-second delay', async () => {
@@ -204,8 +205,8 @@ describe('AutoExportTimer', () => {
       await vi.advanceTimersByTimeAsync(10000);
 
       expect(mockOnExport).toHaveBeenCalledTimes(1);
-      // Should have 10 countdown calls (10, 9, 8, ..., 1)
-      expect(mockOnCountdown).toHaveBeenCalledTimes(10);
+      // Should have 11 countdown calls (10, 9, 8, ..., 1, 0)
+      expect(mockOnCountdown).toHaveBeenCalledTimes(11);
     });
   });
 

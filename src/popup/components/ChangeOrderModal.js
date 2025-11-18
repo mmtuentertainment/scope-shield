@@ -247,6 +247,7 @@ export class ChangeOrderModal {
     this.countdownNotification.style.display = 'none';
     this.countdownNotification.setAttribute('role', 'status');
     this.countdownNotification.setAttribute('aria-live', 'polite');
+    this.countdownNotification.setAttribute('aria-atomic', 'true');
     body.appendChild(this.countdownNotification);
 
     // Document preview
@@ -357,9 +358,15 @@ export class ChangeOrderModal {
       // Update document
       this.updateDocument(newDocument);
 
-      // Reset auto-export timer after document rebuild
-      if (this.autoExportTimer && this.autoExportTimer.isActive()) {
-        this.autoExportTimer.reset();
+      // Restart auto-export timer after document rebuild
+      // (starts even if previously cancelled/completed - enables continuous auto-export)
+      if (this.autoExportTimer) {
+        if (this.autoExportTimer.isActive()) {
+          this.autoExportTimer.reset();
+        } else {
+          // Timer was cancelled or already fired - restart it
+          this.autoExportTimer.start();
+        }
       }
     } catch (error) {
       logError('ChangeOrderModal: Recalculation failed', error);
@@ -470,6 +477,14 @@ export class ChangeOrderModal {
       this.autoExportTimer.start();
     } catch (error) {
       logError('ChangeOrderModal: Failed to initialize auto-export', error);
+
+      // Show user-facing error notification
+      showNotification(
+        'auto-export-init-error',
+        'Auto-export could not be initialized. Please export manually.',
+        'warning',
+        5000
+      );
     }
   }
 
@@ -534,8 +549,12 @@ export class ChangeOrderModal {
     // Show notification
     this.countdownNotification.style.display = 'block';
 
-    // Update text
-    this.countdownNotification.textContent = `Auto-exporting in ${secondsLeft}s... (click anywhere to cancel)`;
+    // Update text (special message when export is imminent)
+    if (secondsLeft === 0) {
+      this.countdownNotification.textContent = 'Auto-exporting now...';
+    } else {
+      this.countdownNotification.textContent = `Auto-exporting in ${secondsLeft}s... (click anywhere to cancel)`;
+    }
   }
 
   /**

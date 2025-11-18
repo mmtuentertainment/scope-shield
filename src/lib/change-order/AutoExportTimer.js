@@ -93,13 +93,7 @@ export class AutoExportTimer {
     // Start countdown interval (update every second)
     this.countdownIntervalId = setInterval(() => {
       this.secondsRemaining--;
-
-      if (this.secondsRemaining > 0) {
-        this.onCountdown(this.secondsRemaining);
-      } else {
-        // Countdown complete - trigger export
-        this._triggerExport();
-      }
+      this.onCountdown(this.secondsRemaining);
     }, 1000);
 
     // Schedule export after delay
