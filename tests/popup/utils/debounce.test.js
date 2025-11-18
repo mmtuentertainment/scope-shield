@@ -54,9 +54,9 @@ describe('debounce', () => {
     const func = vi.fn().mockResolvedValue('result');
     const debounced = debounce(func, 100);
 
-    // Call multiple times
-    debounced('call1');
-    debounced('call2');
+    // Call multiple times - catch rejections to prevent unhandled errors
+    debounced('call1').catch(() => {});
+    debounced('call2').catch(() => {});
     const promise = debounced('call3');
 
     // Fast-forward
@@ -93,5 +93,75 @@ describe('debounce', () => {
     const result = await promise;
 
     expect(result).toBe(42);
+  });
+
+  it('should have cancel method', () => {
+    const func = vi.fn();
+    const debounced = debounce(func, 100);
+
+    expect(debounced.cancel).toBeDefined();
+    expect(typeof debounced.cancel).toBe('function');
+  });
+
+  it('should cancel pending execution', async () => {
+    const func = vi.fn().mockResolvedValue('result');
+    const debounced = debounce(func, 100);
+
+    // Start debounced call (don't await - will never resolve/reject after cancel)
+    debounced('arg1');
+
+    // Cancel before timer completes (silent cancel - no rejection)
+    debounced.cancel();
+
+    // Fast-forward past wait time
+    vi.advanceTimersByTime(150);
+
+    // Function should not have been called
+    expect(func).not.toHaveBeenCalled();
+  });
+
+  it('should allow new calls after cancel', async () => {
+    const func = vi.fn().mockResolvedValue('result');
+    const debounced = debounce(func, 100);
+
+    // Start and cancel
+    debounced('call1');
+    debounced.cancel();
+
+    // New call after cancel
+    const promise = debounced('call2');
+
+    vi.advanceTimersByTime(100);
+    await promise;
+
+    // Only the new call should execute
+    expect(func).toHaveBeenCalledTimes(1);
+    expect(func).toHaveBeenCalledWith('call2');
+  });
+
+  it('should reject intermediate promises when called rapidly', async () => {
+    const func = vi.fn().mockResolvedValue('final');
+    const debounced = debounce(func, 100);
+
+    // Make rapid calls - catch rejections immediately to prevent unhandled errors
+    const promise1 = debounced('call1').catch(e => e);
+    const promise2 = debounced('call2').catch(e => e);
+    const promise3 = debounced('call3');
+
+    // First two promises should have been rejected
+    const result1 = await promise1;
+    const result2 = await promise2;
+    expect(result1).toBeInstanceOf(Error);
+    expect(result1.message).toBe('Debounced call cancelled');
+    expect(result2).toBeInstanceOf(Error);
+    expect(result2.message).toBe('Debounced call cancelled');
+
+    // Last promise should resolve
+    vi.advanceTimersByTime(100);
+    await expect(promise3).resolves.toBe('final');
+
+    // Only last call should execute
+    expect(func).toHaveBeenCalledTimes(1);
+    expect(func).toHaveBeenCalledWith('call3');
   });
 });

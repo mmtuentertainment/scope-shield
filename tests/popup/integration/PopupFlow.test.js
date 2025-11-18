@@ -21,17 +21,28 @@ vi.mock('../../../src/lib/utils/Logger.js', () => ({
   logError: vi.fn()
 }));
 
-// Mock FreelancerSettings for ChangeOrderBuilder
-vi.mock('../../../src/lib/storage/FreelancerSettings.js', () => ({
-  FreelancerSettings: {
-    async load() {
-      return {
-        freelancerName: 'Test Freelancer',
-        hourlyRate: 100,
-        currency: 'USD'
-      };
-    }
+// Mock SettingsStorage for loading freelancer settings
+vi.mock('../../../src/lib/storage/SettingsStorage.js', () => ({
+  SettingsStorage: {
+    get: vi.fn().mockResolvedValue({
+      freelancerName: 'Test Freelancer',
+      hourlyRate: 100,
+      currency: 'USD'
+    })
   }
+}));
+
+// Mock ChangeOrderModal
+const mockShow = vi.fn();
+const mockClose = vi.fn();
+const mockUpdateDocument = vi.fn();
+
+vi.mock('../../../src/popup/components/ChangeOrderModal.js', () => ({
+  ChangeOrderModal: vi.fn(() => ({
+    show: mockShow,
+    close: mockClose,
+    updateDocument: mockUpdateDocument
+  }))
 }));
 
 describe('Popup Integration', () => {
@@ -42,7 +53,22 @@ describe('Popup Integration', () => {
   let getEvents;
   let onEventsChanged;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    // Clear modal mocks
+    const { ChangeOrderModal } = await import('../../../src/popup/components/ChangeOrderModal.js');
+    ChangeOrderModal.mockClear();
+    mockShow.mockClear();
+    mockClose.mockClear();
+    mockUpdateDocument.mockClear();
+
+    // Reset SettingsStorage mock
+    const { SettingsStorage } = await import('../../../src/lib/storage/SettingsStorage.js');
+    SettingsStorage.get.mockResolvedValue({
+      freelancerName: 'Test Freelancer',
+      hourlyRate: 100,
+      currency: 'USD'
+    });
+
     // Setup DOM
     container = document.createElement('div');
     container.id = 'detections-list';
@@ -167,29 +193,19 @@ describe('Popup Integration', () => {
 
     it('should handle generate report → acknowledge all flow', async () => {
       const { acknowledgeEvent } = await import('../../../src/utils/storage.js');
-      const { showNotification } = await import('../../../src/popup/components/NotificationManager.js');
+      const { ChangeOrderModal } = await import('../../../src/popup/components/ChangeOrderModal.js');
 
       // Generate report
       await eventHandlers.generateReport();
 
-      // Should copy report
-      expect(navigator.clipboard.writeText).toHaveBeenCalled();
-      const report = navigator.clipboard.writeText.mock.calls[0][0];
-      expect(report).toContain('CHANGE ORDER REQUEST');
-      expect(report).toContain('2 items'); // New format shows count as "N items"
+      // Should create and show modal
+      expect(ChangeOrderModal).toHaveBeenCalled();
+      expect(mockShow).toHaveBeenCalled();
 
       // Should acknowledge all
       expect(acknowledgeEvent).toHaveBeenCalledTimes(2);
       expect(mockEvents[0].acknowledged).toBe(true);
       expect(mockEvents[1].acknowledged).toBe(true);
-
-      // Should show success
-      expect(showNotification).toHaveBeenCalledWith(
-        'toast-notification',
-        'Change order copied to clipboard!',
-        'success',
-        3000
-      );
 
       // Should trigger UI update
       expect(onEventsChanged).toHaveBeenCalled();
