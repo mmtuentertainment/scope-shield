@@ -185,11 +185,30 @@ export class ChangeOrderModal {
    * @param {Object} draftData.calculatorState - Saved calculator state
    * @param {Function} onRecalculate - Async callback for recalculation
    * @returns {ChangeOrderModal} Restored modal instance
+   * @throws {Error} If draftData is invalid or missing required fields
    */
   static async restoreFromDraft(draftData, onRecalculate) {
+    // Validate draft data structure
+    if (!draftData) {
+      throw new Error('Cannot restore from null or undefined draft data');
+    }
+
+    if (!draftData.changeOrderText) {
+      throw new Error('Draft data missing required field: changeOrderText');
+    }
+
+    if (!draftData.metadata) {
+      throw new Error('Draft data missing required field: metadata');
+    }
+
+    if (!draftData.calculatorState) {
+      throw new Error('Draft data missing required field: calculatorState');
+    }
+
+    // Extract calculator state with safe defaults
     const calculatorOptions = {
-      hourlyRate: draftData.calculatorState.hourlyRate,
-      estimatedHours: draftData.calculatorState.estimatedHours,
+      hourlyRate: draftData.calculatorState.hourlyRate || 0,
+      estimatedHours: draftData.calculatorState.estimatedHours || 0,
       onRecalculate: onRecalculate || (() => {})
     };
 

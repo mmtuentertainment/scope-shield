@@ -77,52 +77,38 @@ export class DraftStorage {
    * @returns {Promise<Object|null>} Draft data or null if no valid draft exists
    */
   static async load() {
-    return new Promise((resolve, reject) => {
-      try {
-        chrome.storage.local.get([STORAGE_KEYS.DRAFT], async (result) => {
-          if (chrome.runtime.lastError) {
-            logError('Failed to load draft', chrome.runtime.lastError);
-            // Fail gracefully - return null instead of rejecting
-            resolve(null);
-            return;
-          }
+    try {
+      const draft = await DraftStorage._getRawDraft();
 
-          const draft = result[STORAGE_KEYS.DRAFT];
-
-          if (!draft) {
-            resolve(null);
-            return;
-          }
-
-          // Validate draft structure
-          if (!draft.changeOrderText || !draft.metadata || !draft.calculatorState) {
-            logWarning('Draft is missing required fields, deleting corrupted draft');
-            await DraftStorage.delete();
-            resolve(null);
-            return;
-          }
-
-          // Check draft age
-          if (draft.savedAt) {
-            const age = Date.now() - new Date(draft.savedAt).getTime();
-
-            if (age > MAX_DRAFT_AGE_MS) {
-              logInfo(`Draft expired (${Math.floor(age / (24 * 60 * 60 * 1000))} days old), deleting`);
-              await DraftStorage.delete();
-              resolve(null);
-              return;
-            }
-          }
-
-          logInfo('Draft loaded successfully');
-          resolve(draft);
-        });
-      } catch (error) {
-        logError('Error in DraftStorage.load()', error);
-        // Fail gracefully - return null instead of rejecting
-        resolve(null);
+      if (!draft) {
+        return null;
       }
-    });
+
+      // Validate draft structure
+      if (!draft.changeOrderText || !draft.metadata || !draft.calculatorState) {
+        logWarning('Draft is missing required fields, deleting corrupted draft');
+        await DraftStorage.delete();
+        return null;
+      }
+
+      // Check draft age
+      if (draft.savedAt) {
+        const age = Date.now() - new Date(draft.savedAt).getTime();
+
+        if (age > MAX_DRAFT_AGE_MS) {
+          logInfo(`Draft expired (${Math.floor(age / (24 * 60 * 60 * 1000))} days old), deleting`);
+          await DraftStorage.delete();
+          return null;
+        }
+      }
+
+      logInfo('Draft loaded successfully');
+      return draft;
+    } catch (error) {
+      logError('Error in DraftStorage.load()', error);
+      // Fail gracefully - return null instead of rejecting
+      return null;
+    }
   }
 
   /**
@@ -171,15 +157,8 @@ export class DraftStorage {
    */
   static async cleanOldDrafts(maxAgeMs = MAX_DRAFT_AGE_MS) {
     try {
-      const draft = await new Promise((resolve, reject) => {
-        chrome.storage.local.get([STORAGE_KEYS.DRAFT], (result) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-            return;
-          }
-          resolve(result[STORAGE_KEYS.DRAFT]);
-        });
-      });
+      // Fetch raw draft without validation/auto-deletion (avoid recursion)
+      const draft = await DraftStorage._getRawDraft();
 
       if (!draft || !draft.savedAt) {
         return false;
@@ -198,5 +177,23 @@ export class DraftStorage {
       logError('Error cleaning old drafts', error);
       return false;
     }
+  }
+
+  /**
+   * Get raw draft from storage without validation or auto-deletion
+   * Private helper to avoid duplication between load() and cleanOldDrafts()
+   * @private
+   * @returns {Promise<Object|null>} Raw draft data or null
+   */
+  static async _getRawDraft() {
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.get([STORAGE_KEYS.DRAFT], (result) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        resolve(result[STORAGE_KEYS.DRAFT] || null);
+      });
+    });
   }
 }

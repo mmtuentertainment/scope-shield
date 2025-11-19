@@ -27,10 +27,12 @@ export class DetectionEventHandlers {
    * @param {Object} options - Configuration options
    * @param {Function} options.getEvents - Function to get current events array
    * @param {Function} options.onEventsChanged - Callback when events change
+   * @param {Function} [options.onModalCreated] - Optional callback when modal is created (for draft saving)
    */
   constructor(options) {
     this.getEvents = options.getEvents;
     this.onEventsChanged = options.onEventsChanged;
+    this.onModalCreated = options.onModalCreated || null;
   }
 
   /**
@@ -196,6 +198,11 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
       // Show modal with calculator and export controls
       const modal = new ChangeOrderModal(document, metadata, calculatorOptions);
       await modal.show();
+
+      // Notify popup.js about modal creation (for draft saving)
+      if (this.onModalCreated) {
+        this.onModalCreated(modal);
+      }
 
       // Mark all as acknowledged after modal is shown
       await this.acknowledgeMultipleEvents(unacknowledged);

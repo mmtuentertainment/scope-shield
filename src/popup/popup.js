@@ -51,7 +51,12 @@ const eventHandlers = new DetectionEventHandlers({
     updateSummaryStats();
     renderList();
     badgeManager.update();
-  }, 100)
+  }, 100),
+  onModalCreated: (modal) => {
+    // Store modal reference for draft saving
+    currentModal = modal;
+    logInfo('Change order modal created and tracked for draft saving');
+  }
 });
 
 /**
