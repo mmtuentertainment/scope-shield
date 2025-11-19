@@ -5,7 +5,7 @@
 
 import { STORAGE_KEYS } from './StorageSchemas.js';
 import { logInfo, logError, logWarning } from '../utils/Logger.js';
-import { generateUUID } from '../utils/uuid.js';
+import { generateUUID } from '../../utils/uuid.js';
 
 /**
  * Maximum number of history entries to retain (FIFO deletion)

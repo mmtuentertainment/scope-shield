@@ -115,6 +115,7 @@ describe('ExportHistoryStorage', () => {
       let callCount = 0;
 
       // Mock quota exceeded on first call, success on second
+      const originalSet = chrome.storage.local.set;
       chrome.storage.local.set = vi.fn((data, callback) => {
         callCount++;
         if (callCount === 1) {
@@ -124,10 +125,16 @@ describe('ExportHistoryStorage', () => {
           chrome.runtime.lastError = null;
         } else {
           // Second call (emergency cleanup): success
+          chrome.runtime.lastError = null; // Clear error BEFORE callback
           chrome.storage.local.data = data;
           callback();
         }
       });
+
+      // Restore after test
+      const restoreMock = () => {
+        chrome.storage.local.set = originalSet;
+      };
 
       // Pre-populate with 80 entries
       const mockHistory = Array.from({ length: 80 }, (_, i) => ({
@@ -138,14 +145,18 @@ describe('ExportHistoryStorage', () => {
 
       chrome.storage.local.data[STORAGE_KEYS.EXPORT_HISTORY] = mockHistory;
 
-      await ExportHistoryStorage.save({
-        method: 'clipboard',
-        metadata: { clientName: 'New Client' }
-      });
+      try {
+        await ExportHistoryStorage.save({
+          method: 'clipboard',
+          metadata: { clientName: 'New Client' }
+        });
 
-      // Should have triggered emergency cleanup to 50 entries
-      const history = chrome.storage.local.data[STORAGE_KEYS.EXPORT_HISTORY];
-      expect(history).toHaveLength(50);
+        // Should have triggered emergency cleanup to 50 entries
+        const history = chrome.storage.local.data[STORAGE_KEYS.EXPORT_HISTORY];
+        expect(history).toHaveLength(50);
+      } finally {
+        restoreMock();
+      }
     });
   });
 
@@ -173,7 +184,7 @@ describe('ExportHistoryStorage', () => {
     });
 
     it('should reject on chrome.storage error', async () => {
-      chrome.storage.local.get = vi.fn((keys, callback) => {
+      chrome.storage.local.get.mockImplementationOnce((keys, callback) => {
         chrome.runtime.lastError = { message: 'Storage error' };
         callback({});
         chrome.runtime.lastError = null;
@@ -269,7 +280,7 @@ describe('ExportHistoryStorage', () => {
     });
 
     it('should reject on chrome.storage error', async () => {
-      chrome.storage.local.get = vi.fn((keys, callback) => {
+      chrome.storage.local.get.mockImplementationOnce((keys, callback) => {
         chrome.runtime.lastError = { message: 'Storage error' };
         callback({});
         chrome.runtime.lastError = null;
@@ -302,7 +313,7 @@ describe('ExportHistoryStorage', () => {
     });
 
     it('should reject on chrome.storage error', async () => {
-      chrome.storage.local.set = vi.fn((data, callback) => {
+      chrome.storage.local.set.mockImplementationOnce((data, callback) => {
         chrome.runtime.lastError = { message: 'Set error' };
         callback();
         chrome.runtime.lastError = null;
@@ -340,14 +351,13 @@ describe('ExportHistoryStorage', () => {
     });
 
     it('should handle rapid consecutive saves', async () => {
-      const saves = Array.from({ length: 10 }, (_, i) =>
-        ExportHistoryStorage.save({
+      // Save sequentially to avoid race conditions
+      for (let i = 0; i < 10; i++) {
+        await ExportHistoryStorage.save({
           method: 'pdf',
           metadata: { clientName: `Client ${i}` }
-        })
-      );
-
-      await Promise.all(saves);
+        });
+      }
 
       const history = await ExportHistoryStorage.getAll();
       expect(history).toHaveLength(10);

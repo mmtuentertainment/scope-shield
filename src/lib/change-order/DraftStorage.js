@@ -82,7 +82,8 @@ export class DraftStorage {
         chrome.storage.local.get([STORAGE_KEYS.DRAFT], async (result) => {
           if (chrome.runtime.lastError) {
             logError('Failed to load draft', chrome.runtime.lastError);
-            reject(new Error(chrome.runtime.lastError.message));
+            // Fail gracefully - return null instead of rejecting
+            resolve(null);
             return;
           }
 

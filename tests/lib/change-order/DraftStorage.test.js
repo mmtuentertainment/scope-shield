@@ -83,18 +83,18 @@ describe('DraftStorage', () => {
     });
 
     it('should handle storage quota exceeded error', async () => {
-      // Mock quota exceeded error
-      chrome.storage.local.set = vi.fn((data, callback) => {
-        chrome.runtime.lastError = { message: 'QUOTA_BYTES quota exceeded' };
-        callback();
-        chrome.runtime.lastError = null;
-      });
-
       const draft = {
         changeOrderText: 'Test',
         metadata: { clientName: 'Test' },
         calculatorState: { hourlyRate: 100, estimatedHours: 5 }
       };
+
+      // Mock quota exceeded error for this call only
+      chrome.storage.local.set.mockImplementationOnce((data, callback) => {
+        chrome.runtime.lastError = { message: 'QUOTA_BYTES quota exceeded' };
+        callback();
+        chrome.runtime.lastError = null;
+      });
 
       await expect(DraftStorage.save(draft)).rejects.toThrow('Storage quota exceeded');
     });
@@ -187,8 +187,8 @@ describe('DraftStorage', () => {
     });
 
     it('should return null on chrome.storage error (fail gracefully)', async () => {
-      // Mock storage error
-      chrome.storage.local.get = vi.fn((keys, callback) => {
+      // Mock storage error for this call only
+      chrome.storage.local.get.mockImplementationOnce((keys, callback) => {
         chrome.runtime.lastError = { message: 'Storage error' };
         callback({});
         chrome.runtime.lastError = null;
@@ -222,7 +222,7 @@ describe('DraftStorage', () => {
     });
 
     it('should reject on chrome.storage error', async () => {
-      chrome.storage.local.remove = vi.fn((keys, callback) => {
+      chrome.storage.local.remove.mockImplementationOnce((keys, callback) => {
         chrome.runtime.lastError = { message: 'Remove error' };
         callback();
         chrome.runtime.lastError = null;
@@ -282,8 +282,8 @@ describe('DraftStorage', () => {
     });
 
     it('should return false on error (fail gracefully)', async () => {
-      // Mock error
-      chrome.storage.local.get = vi.fn((keys, callback) => {
+      // Mock error for this call only
+      chrome.storage.local.get.mockImplementationOnce((keys, callback) => {
         chrome.runtime.lastError = { message: 'Error' };
         callback({});
         chrome.runtime.lastError = null;
@@ -349,7 +349,7 @@ describe('DraftStorage', () => {
     });
 
     it('should return false on error (fail gracefully)', async () => {
-      chrome.storage.local.get = vi.fn((keys, callback) => {
+      chrome.storage.local.get.mockImplementationOnce((keys, callback) => {
         chrome.runtime.lastError = { message: 'Error' };
         callback({});
         chrome.runtime.lastError = null;
