@@ -64,7 +64,7 @@ async function saveSettings() {
     highlightOpacity: parseFloat(highlightOpacity.value),
     defaultExportMethod: defaultExportMethod.value,
     autoExportEnabled: autoExportEnabled.checked,
-    autoExportDelay: parseInt(autoExportDelay.value)
+    autoExportDelay: Math.max(1, Math.min(10, parseInt(autoExportDelay.value)))
   };
 
   try {

@@ -16,10 +16,6 @@ export default defineConfig({
         {
           src: 'assets/icons/*.png',
           dest: 'assets/icons'
-        },
-        {
-          src: 'src/options/options.html',
-          dest: 'src/options'
         }
       ]
     })

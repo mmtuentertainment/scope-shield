@@ -76,7 +76,7 @@ async function sendNotification(event) {
 
     const notificationOptions = {
       type: 'basic',
-      iconUrl: chrome.runtime.getURL('/assets/icons/icon128.png'),
+      iconUrl: chrome.runtime.getURL('assets/icons/icon128.png'),
       title: 'ScopeShield: Scope Creep Detected',
       message: `${senderName}: "${detectedText}..."`,
       contextMessage: `${confidenceText} • ${triggerWord}`,
