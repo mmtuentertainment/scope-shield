@@ -27,7 +27,7 @@ const DEFAULT_SETTINGS = {
   highlightOpacity: 0.8,
   defaultExportMethod: 'pdf',
   autoExportEnabled: true,
-  autoExportDelay: 3
+  autoExportDelay: 5
 };
 
 /**
@@ -46,7 +46,7 @@ async function loadSettings() {
     opacityValue.textContent = `${Math.round(settings.highlightOpacity * 100)}%`;
     defaultExportMethod.value = settings.defaultExportMethod || 'pdf';
     autoExportEnabled.checked = settings.autoExportEnabled !== false;
-    autoExportDelay.value = settings.autoExportDelay || 3;
+    autoExportDelay.value = settings.autoExportDelay || 5;
   } catch (error) {
     logError('Error loading settings', error);
   }
