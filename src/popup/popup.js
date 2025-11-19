@@ -21,6 +21,9 @@ import { URGENT_THRESHOLD, LOAD_TIME_TARGET_MS } from './constants.js';
 import { DraftStorage } from '../lib/change-order/DraftStorage.js';
 import { ChangeOrderModal } from './components/ChangeOrderModal.js';
 
+// Draft autosave interval (30 seconds)
+const DRAFT_AUTOSAVE_INTERVAL_MS = 30000;
+
 // DOM Elements (cached to avoid redundant queries)
 const DOM = {
   totalDetections: document.getElementById('total-detections'),
@@ -70,7 +73,7 @@ async function initialize() {
   console.log('[ScopeShield] Popup initializing...');
 
   await loadDetections();
-  await checkForDraft();
+  checkForDraft(); // Non-blocking - Resume Draft button appears when check completes
   setupEventListeners();
   await badgeManager.update();
 }
@@ -210,12 +213,11 @@ function startDraftAutosave() {
   // Clear any existing interval
   stopDraftAutosave();
 
-  // Autosave every 30 seconds
   draftAutosaveInterval = setInterval(() => {
     saveDraftNow();
-  }, 30000);
+  }, DRAFT_AUTOSAVE_INTERVAL_MS);
 
-  logInfo('Draft autosave started (30s interval)');
+  logInfo(`Draft autosave started (${DRAFT_AUTOSAVE_INTERVAL_MS / 1000}s interval)`);
 }
 
 /**
@@ -355,6 +357,8 @@ function setupEventListeners() {
   });
 
   // Multi-layered draft save (Chrome extension popup lifecycle)
+  // Note: Multiple handlers may fire on popup close - redundant calls to saveDraftNow()
+  // are safe due to guard conditions and fire-and-forget pattern.
   // Layer 1: visibilitychange (most reliable per Chrome 2025 guidance)
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
