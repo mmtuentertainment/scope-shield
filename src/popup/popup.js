@@ -41,6 +41,7 @@ if (!DOM.totalDetections || !DOM.unacknowledged || !DOM.detectionsList) {
 // State
 let detectionEvents = [];
 let currentModal = null; // Track active change order modal for draft saving
+let draftAutosaveInterval = null; // Periodic autosave timer
 
 // Initialize components
 const listRenderer = new DetectionListRenderer(DOM.detectionsList);
@@ -56,6 +57,9 @@ const eventHandlers = new DetectionEventHandlers({
     // Store modal reference for draft saving
     currentModal = modal;
     logInfo('Change order modal created and tracked for draft saving');
+
+    // Start periodic autosave (every 30 seconds)
+    startDraftAutosave();
   }
 });
 
@@ -170,6 +174,53 @@ function showResumeDraftButton() {
 }
 
 /**
+ * Save draft immediately (used by multiple event handlers)
+ */
+function saveDraftNow() {
+  // Save draft if modal exists and has data (even if DOM is destroyed)
+  // Don't save if auto-export is active (draft will be deleted after export)
+  if (currentModal && !currentModal.autoExportActive) {
+    try {
+      const draftState = currentModal.getDraftState();
+      logInfo('Saving draft...');
+
+      // Fire-and-forget save
+      DraftStorage.save(draftState).catch(error => {
+        logError('Failed to save draft', error);
+      });
+    } catch (error) {
+      logError('Failed to get draft state', error);
+    }
+  }
+}
+
+/**
+ * Start periodic autosave while modal is open
+ */
+function startDraftAutosave() {
+  // Clear any existing interval
+  stopDraftAutosave();
+
+  // Autosave every 30 seconds
+  draftAutosaveInterval = setInterval(() => {
+    saveDraftNow();
+  }, 30000);
+
+  logInfo('Draft autosave started (30s interval)');
+}
+
+/**
+ * Stop periodic autosave
+ */
+function stopDraftAutosave() {
+  if (draftAutosaveInterval) {
+    clearInterval(draftAutosaveInterval);
+    draftAutosaveInterval = null;
+    logInfo('Draft autosave stopped');
+  }
+}
+
+/**
  * Handle Resume Draft button click
  */
 async function handleResumeDraft() {
@@ -255,15 +306,26 @@ function setupEventListeners() {
     }
   });
 
-  // Save draft when popup closes (beforeunload)
-  window.addEventListener('beforeunload', () => {
-    if (currentModal && currentModal.modal && !currentModal.autoExportActive) {
-      const draftState = currentModal.getDraftState();
-      // Fire-and-forget (don't block popup close)
-      DraftStorage.save(draftState).catch(error => {
-        logError('Failed to save draft on beforeunload', error);
-      });
+  // Multi-layered draft save (Chrome extension popup lifecycle)
+  // Layer 1: visibilitychange (most reliable per Chrome 2025 guidance)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      logInfo('Popup hidden, saving draft');
+      saveDraftNow();
     }
+  });
+
+  // Layer 2: pagehide (navigation/close detection)
+  window.addEventListener('pagehide', () => {
+    logInfo('Popup pagehide, saving draft');
+    saveDraftNow();
+  });
+
+  // Layer 3: unload (legacy fallback, being deprecated 2025-2026)
+  window.addEventListener('unload', () => {
+    logInfo('Popup unload, saving draft');
+    saveDraftNow();
+    stopDraftAutosave(); // Cleanup interval
   });
 }
 
