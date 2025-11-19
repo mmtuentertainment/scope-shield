@@ -27,23 +27,9 @@ export class DraftStorage {
   static async save(draftData) {
     return new Promise((resolve, reject) => {
       try {
-        // Validate draft structure
-        if (!draftData || !draftData.changeOrderText) {
-          const error = new Error('Invalid draft: missing changeOrderText');
-          logError('Draft validation failed', error);
-          reject(error);
-          return;
-        }
-
-        if (!draftData.metadata) {
-          const error = new Error('Invalid draft: missing metadata');
-          logError('Draft validation failed', error);
-          reject(error);
-          return;
-        }
-
-        if (!draftData.calculatorState) {
-          const error = new Error('Invalid draft: missing calculatorState');
+        // Validate draft structure (all required fields)
+        if (!draftData || !draftData.changeOrderText || !draftData.metadata || !draftData.calculatorState) {
+          const error = new Error('Invalid draft: missing required fields (changeOrderText, metadata, calculatorState)');
           logError('Draft validation failed', error);
           reject(error);
           return;
@@ -101,7 +87,11 @@ export class DraftStorage {
       // Validate draft structure
       if (!draft.changeOrderText || !draft.metadata || !draft.calculatorState) {
         logWarning('Draft is missing required fields, deleting corrupted draft');
-        await DraftStorage.delete();
+        try {
+          await DraftStorage.delete();
+        } catch (err) {
+          logError('Failed to delete corrupted draft', err);
+        }
         return null;
       }
 
@@ -111,7 +101,11 @@ export class DraftStorage {
 
         if (age > MAX_DRAFT_AGE_MS) {
           logInfo(`Draft expired (${Math.floor(age / (24 * 60 * 60 * 1000))} days old), deleting`);
-          await DraftStorage.delete();
+          try {
+            await DraftStorage.delete();
+          } catch (err) {
+            logError('Failed to delete expired draft', err);
+          }
           return null;
         }
       }

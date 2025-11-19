@@ -74,7 +74,7 @@ describe('DraftStorage', () => {
         calculatorState: { hourlyRate: 100, estimatedHours: 5 }
       };
 
-      await expect(DraftStorage.save(invalidDraft)).rejects.toThrow('Invalid draft: missing changeOrderText');
+      await expect(DraftStorage.save(invalidDraft)).rejects.toThrow('Invalid draft: missing required fields');
     });
 
     it('should reject empty draft', async () => {

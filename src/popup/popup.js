@@ -191,10 +191,12 @@ async function handleResumeDraft() {
 
     logInfo('Restoring draft from storage');
 
-    // Restore modal from draft (pass recalculate callback from eventHandlers)
+    // Restore modal from draft
+    // Note: Calculator will be read-only (no recalculation) since we don't have
+    // the original detection events to rebuild the document with new pricing
     const modal = await ChangeOrderModal.restoreFromDraft(
       draftData,
-      eventHandlers.calculatorRecalculateCallback
+      null  // No recalculate callback - calculator is read-only on resume
     );
 
     currentModal = modal;
