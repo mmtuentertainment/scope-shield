@@ -419,4 +419,56 @@ Keep it simple - just detection and highlighting for now.
 
 ---
 
+## Future Work & Enhancement Backlog
+
+**Tracked enhancements from Phase 6 code review** (2025-11-19):
+
+### Feature 003: Remote Selector Configuration
+**Trigger**: Gmail DOM breaks OR 1000+ active users
+**Priority**: HIGH (resilience)
+**Effort**: 15-20 hours
+**Constitutional Note**: Requires Privacy-First exception (remote config fetch must not send user data)
+
+**Problem**: Gmail CSS selectors can change, breaking detection until Chrome Store review (2 week delay)
+**Solution**: Fetch selector configs from GitHub gist, cache locally, graceful offline fallback
+
+**Spec Location**: `specs/003-remote-selector-config/BACKLOG.md`
+**Affects**: Feature 001 (detection engine)
+
+### Feature 004: PDF Internationalization
+**Trigger**: 10+ user complaints about non-Latin character rendering
+**Priority**: MEDIUM (nice-to-have)
+**Effort**: 8-12 hours
+
+**Problem**: jsPDF default fonts don't support emojis, Japanese, Chinese, Arabic
+**Solution**: Bundle Noto Sans subset (~500KB) OR strip unsupported chars with warning
+
+**Spec Location**: Feature 002 "Out of Scope" OR create `specs/004-pdf-i18n/BACKLOG.md`
+**Affects**: Feature 002 (PDF export)
+
+### Feature 005: E2E Test Automation
+**Trigger**: 100+ active users OR manual testing exceeds 1 hour per release
+**Priority**: HIGH (reduces testing burden)
+**Effort**: 20-25 hours
+**Constitutional Alignment**: Quality-First Principle (Phase 2: E2E testing at 100-1K users)
+
+**Problem**: Manual testing takes 30 minutes per release, error-prone
+**Solution**: Puppeteer-based E2E tests for Gmail→Detection→Popup→Export flow
+
+**Spec Location**: `specs/005-e2e-test-automation/BACKLOG.md`
+**Reference Pattern**: PayPlan Feature 063 (test infrastructure)
+
+### Feature 002 Phase 9: Template Error Handling
+**Trigger**: Implementing Phase 9 polish tasks (T286-T369)
+**Priority**: LOW (defensive coding)
+**Effort**: 3-5 hours
+
+**Problem**: TemplateProcessor could fail on malformed inputs in edge cases
+**Solution**: Comprehensive validation + safe fallback (return raw text on parse failure)
+
+**Tasks**: T370-T374 (added to tasks.md Phase 9)
+**Spec Location**: `specs/002-change-order-generator/tasks.md`
+
+---
+
 **Remember**: This project follows Spec-Driven Development. Always create specifications BEFORE implementation. Validate against the constitution BEFORE planning. Measure success AFTER shipping.

@@ -656,6 +656,16 @@ See `IMPLEMENTATION_AUDIT.md` for detailed analysis.
 
 **Checkpoint**: All tests pass, performance metrics meet thresholds (<5s, <3s, <500ms), bundle <600KB, user testing 80%+ success
 
+### Template Engine Error Handling (Code Review Suggestion)
+
+- [ ] [T370] [P] Enhance TemplateProcessor error handling for malformed inputs
+- [ ] [T371] [P] Add comprehensive validation (missing delimiters, circular refs, deep nesting)
+- [ ] [T372] [P] Implement safe fallback rendering (return raw text or error message on parse failure)
+- [ ] [T373] [P] Add user-facing error notification: "Template could not be processed. Using basic format."
+- [ ] [T374] [P] Log template parsing errors with input context for debugging
+
+**Checkpoint**: Template engine handles all edge cases gracefully, users never see broken documents
+
 ---
 
 ## Dependencies & Execution Order
