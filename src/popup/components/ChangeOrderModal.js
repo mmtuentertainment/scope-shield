@@ -49,6 +49,7 @@ export class ChangeOrderModal {
     // Event handlers (bound for cleanup)
     this.handleKeydown = this.handleKeydown.bind(this);
     this.handleCloseClick = this.handleCloseClick.bind(this);
+    this.cancelAutoExportWithNotification = this.cancelAutoExportWithNotification.bind(this);
 
     // Debounced recalculation (300ms to prevent spam)
     this.debouncedRecalculate = debounce(
@@ -167,15 +168,7 @@ export class ChangeOrderModal {
     // Close modal when clicking overlay (not modal content)
     this.overlay.addEventListener('click', (event) => {
       // Cancel auto-export if timer is active
-      if (this.autoExportTimer && this.autoExportTimer.isActive()) {
-        this.autoExportTimer.cancel();
-        showNotification(
-          'auto-export-cancelled',
-          'Auto-export cancelled',
-          'info',
-          2000
-        );
-      }
+      this.cancelAutoExportWithNotification();
 
       if (event.target === this.overlay) {
         this.close();
@@ -192,15 +185,7 @@ export class ChangeOrderModal {
 
     // Cancel auto-export on any click inside modal
     this.modal.addEventListener('click', () => {
-      if (this.autoExportTimer && this.autoExportTimer.isActive()) {
-        this.autoExportTimer.cancel();
-        showNotification(
-          'toast-notification',
-          'Auto-export cancelled',
-          'info',
-          2000
-        );
-      }
+      this.cancelAutoExportWithNotification();
     });
 
     // Header
@@ -339,5 +324,22 @@ export class ChangeOrderModal {
    */
   handleCloseClick() {
     this.close();
+  }
+
+  /**
+   * Cancel auto-export timer and show notification
+   * Extracted to DRY up duplicate logic in overlay and modal click handlers
+   * @private
+   */
+  cancelAutoExportWithNotification() {
+    if (this.autoExportTimer && this.autoExportTimer.isActive()) {
+      this.autoExportTimer.cancel();
+      showNotification(
+        'toast-notification',
+        'Auto-export cancelled',
+        'info',
+        2000
+      );
+    }
   }
 }

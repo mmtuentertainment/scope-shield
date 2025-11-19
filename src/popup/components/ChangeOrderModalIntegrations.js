@@ -142,13 +142,19 @@ export class ChangeOrderModalIntegrations {
       // Load settings
       const settings = await SettingsStorage.get();
 
+      // Guard: Modal may have closed during async settings load
+      if (!this.modal.modal) {
+        logInfo('ChangeOrderModal: Modal closed before auto-export initialization; skipping timer');
+        return;
+      }
+
       // Check if auto-export enabled
       if (!settings.autoExportEnabled) {
         logInfo('ChangeOrderModal: Auto-export disabled in settings');
         return;
       }
 
-      const delay = settings.autoExportDelay || 3;
+      const delay = settings.autoExportDelay || 5;
       const method = settings.defaultExportMethod || 'pdf';
 
       logInfo(`ChangeOrderModal: Initializing auto-export (delay=${delay}s, method=${method})`);
