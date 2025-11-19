@@ -43,6 +43,9 @@ export class ChangeOrderModal {
     this.autoExportTimer = null;
     this.countdownNotification = null;
 
+    // Auto-export coordination flag (prevents draft save during export)
+    this.autoExportActive = false;
+
     // Integration helper (handles calculator, export, auto-export)
     this.integrations = new ChangeOrderModalIntegrations(this);
 
@@ -154,6 +157,50 @@ export class ChangeOrderModal {
 
     // Recreate export controls with new text
     this.integrations.updateExportControls();
+  }
+
+  /**
+   * Get current modal state for draft persistence
+   * @returns {Object} Draft state containing document text, metadata, and calculator state
+   */
+  getDraftState() {
+    const calculatorState = this.calculator ? this.calculator.getState() : {
+      hourlyRate: this.calculatorOptions.hourlyRate || 0,
+      estimatedHours: this.calculatorOptions.estimatedHours || 0
+    };
+
+    return {
+      changeOrderText: this.changeOrderText,
+      metadata: this.metadata,
+      calculatorState,
+      savedAt: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Restore modal from saved draft data
+   * @param {Object} draftData - Draft state to restore
+   * @param {string} draftData.changeOrderText - Saved document text
+   * @param {Object} draftData.metadata - Saved metadata
+   * @param {Object} draftData.calculatorState - Saved calculator state
+   * @param {Function} onRecalculate - Async callback for recalculation
+   * @returns {ChangeOrderModal} Restored modal instance
+   */
+  static async restoreFromDraft(draftData, onRecalculate) {
+    const calculatorOptions = {
+      hourlyRate: draftData.calculatorState.hourlyRate,
+      estimatedHours: draftData.calculatorState.estimatedHours,
+      onRecalculate: onRecalculate || (() => {})
+    };
+
+    const modal = new ChangeOrderModal(
+      draftData.changeOrderText,
+      draftData.metadata,
+      calculatorOptions
+    );
+
+    await modal.show();
+    return modal;
   }
 
   /**

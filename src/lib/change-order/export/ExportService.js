@@ -4,7 +4,9 @@
 import { copyToClipboard, isClipboardAvailable } from './ClipboardExport.js';
 import { downloadPDF } from './PDFGenerator.js';
 import { downloadAsText } from './TextExport.js';
-import { logInfo, logError } from '../../utils/Logger.js';
+import { logInfo, logError, logWarning } from '../../utils/Logger.js';
+import { ExportHistoryStorage } from '../../storage/ExportHistoryStorage.js';
+import { DraftStorage } from '../DraftStorage.js';
 
 /**
  * Export methods
@@ -69,6 +71,20 @@ export class ExportService {
       const duration = performance.now() - startTime;
       if (result.success) {
         logInfo(`ExportService: ${method} export succeeded in ${duration.toFixed(2)}ms`);
+
+        // Save to export history (fire-and-forget)
+        ExportHistoryStorage.save({
+          method,
+          metadata,
+          duration
+        }).catch(err => {
+          logWarning('Failed to save export history', err);
+        });
+
+        // Delete draft after successful export (fire-and-forget)
+        DraftStorage.delete().catch(err => {
+          logWarning('Failed to delete draft after export', err);
+        });
       } else {
         logError(`ExportService: ${method} export failed after ${duration.toFixed(2)}ms`, new Error(result.error));
       }

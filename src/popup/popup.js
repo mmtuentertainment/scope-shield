@@ -7,6 +7,7 @@
  * - DetectionEventHandlers: Processes user actions
  * - BadgeManager: Updates extension badge
  * - NotificationManager: Shows toast notifications
+ * - DraftStorage: Auto-save/restore change order drafts
  */
 
 import { getDetectionEvents } from '../utils/storage.js';
@@ -15,8 +16,10 @@ import { DetectionEventHandlers } from './components/DetectionEventHandlers.js';
 import { BadgeManager } from './components/BadgeManager.js';
 import { showNotification } from './components/NotificationManager.js';
 import { debounce } from './utils/debounce.js';
-import { logError, logWarning } from '../lib/utils/Logger.js';
+import { logError, logWarning, logInfo } from '../lib/utils/Logger.js';
 import { URGENT_THRESHOLD, LOAD_TIME_TARGET_MS } from './constants.js';
+import { DraftStorage } from '../lib/change-order/DraftStorage.js';
+import { ChangeOrderModal } from './components/ChangeOrderModal.js';
 
 // DOM Elements (cached to avoid redundant queries)
 const DOM = {
@@ -37,6 +40,7 @@ if (!DOM.totalDetections || !DOM.unacknowledged || !DOM.detectionsList) {
 
 // State
 let detectionEvents = [];
+let currentModal = null; // Track active change order modal for draft saving
 
 // Initialize components
 const listRenderer = new DetectionListRenderer(DOM.detectionsList);
@@ -57,8 +61,24 @@ async function initialize() {
   console.log('[ScopeShield] Popup initializing...');
 
   await loadDetections();
+  await checkForDraft();
   setupEventListeners();
   await badgeManager.update();
+}
+
+/**
+ * Check for existing draft and show Resume Draft button if found
+ */
+async function checkForDraft() {
+  try {
+    const hasDraft = await DraftStorage.hasDraft();
+    if (hasDraft) {
+      logInfo('Draft found, showing Resume Draft button');
+      showResumeDraftButton();
+    }
+  } catch (error) {
+    logError('Failed to check for draft', error);
+  }
 }
 
 /**
@@ -119,6 +139,77 @@ function updateSummaryStats() {
 }
 
 /**
+ * Show Resume Draft button in actions section
+ */
+function showResumeDraftButton() {
+  if (!DOM.generateReportBtn) return;
+
+  // Check if button already exists
+  if (document.getElementById('resume-draft-btn')) return;
+
+  const resumeBtn = document.createElement('button');
+  resumeBtn.id = 'resume-draft-btn';
+  resumeBtn.className = 'btn btn-secondary';
+  resumeBtn.textContent = 'Resume Draft';
+  resumeBtn.setAttribute('aria-label', 'Resume unsaved change order draft');
+  resumeBtn.setAttribute('role', 'button');
+  resumeBtn.tabIndex = 0;
+
+  // Insert before "Generate Change Order" button
+  DOM.generateReportBtn.parentNode.insertBefore(resumeBtn, DOM.generateReportBtn);
+
+  // Add event listener
+  resumeBtn.addEventListener('click', handleResumeDraft);
+
+  logInfo('Resume Draft button added');
+}
+
+/**
+ * Handle Resume Draft button click
+ */
+async function handleResumeDraft() {
+  const resumeBtn = document.getElementById('resume-draft-btn');
+  if (!resumeBtn) return;
+
+  try {
+    // Show loading state
+    resumeBtn.disabled = true;
+    resumeBtn.textContent = 'Loading...';
+
+    const draftData = await DraftStorage.load();
+
+    if (!draftData) {
+      showNotification('toast-notification', 'Draft no longer available', 'info', 3000);
+      resumeBtn.remove();
+      return;
+    }
+
+    logInfo('Restoring draft from storage');
+
+    // Restore modal from draft (pass recalculate callback from eventHandlers)
+    const modal = await ChangeOrderModal.restoreFromDraft(
+      draftData,
+      eventHandlers.calculatorRecalculateCallback
+    );
+
+    currentModal = modal;
+
+    // Remove Resume Draft button
+    resumeBtn.remove();
+
+  } catch (error) {
+    logError('Failed to restore draft', error);
+    showNotification('toast-notification', 'Failed to restore draft', 'error', 3000);
+
+    // Reset button state
+    if (resumeBtn) {
+      resumeBtn.disabled = false;
+      resumeBtn.textContent = 'Resume Draft';
+    }
+  }
+}
+
+/**
  * Set up event listeners
  */
 function setupEventListeners() {
@@ -154,6 +245,17 @@ function setupEventListeners() {
   chrome.storage.onChanged.addListener((changes, namespace) => {
     if (namespace === 'local' && changes.detectionEvents) {
       loadDetections();
+    }
+  });
+
+  // Save draft when popup closes (beforeunload)
+  window.addEventListener('beforeunload', () => {
+    if (currentModal && currentModal.modal && !currentModal.autoExportActive) {
+      const draftState = currentModal.getDraftState();
+      // Fire-and-forget (don't block popup close)
+      DraftStorage.save(draftState).catch(error => {
+        logError('Failed to save draft on beforeunload', error);
+      });
     }
   });
 }
