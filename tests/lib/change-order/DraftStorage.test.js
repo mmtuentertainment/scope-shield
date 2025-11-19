@@ -82,6 +82,43 @@ describe('DraftStorage', () => {
       await expect(DraftStorage.save({})).rejects.toThrow('Invalid draft');
     });
 
+    it('should reject draft with changeOrderText but missing metadata', async () => {
+      const invalidDraft = {
+        changeOrderText: 'Test change order',
+        calculatorState: { hourlyRate: 100, estimatedHours: 5 }
+        // Missing metadata
+      };
+
+      await expect(DraftStorage.save(invalidDraft)).rejects.toThrow('Invalid draft');
+    });
+
+    it('should reject draft with changeOrderText but missing calculatorState', async () => {
+      const invalidDraft = {
+        changeOrderText: 'Test change order',
+        metadata: { clientName: 'Test Client' }
+        // Missing calculatorState
+      };
+
+      await expect(DraftStorage.save(invalidDraft)).rejects.toThrow('Invalid draft');
+    });
+
+    it('should handle non-quota storage errors', async () => {
+      const draft = {
+        changeOrderText: 'Test',
+        metadata: { clientName: 'Test' },
+        calculatorState: { hourlyRate: 100, estimatedHours: 5 }
+      };
+
+      // Mock generic storage error (not quota)
+      chrome.storage.local.set.mockImplementationOnce((data, callback) => {
+        chrome.runtime.lastError = { message: 'Storage unavailable' };
+        callback();
+        chrome.runtime.lastError = null;
+      });
+
+      await expect(DraftStorage.save(draft)).rejects.toThrow('Storage unavailable');
+    });
+
     it('should handle storage quota exceeded error', async () => {
       const draft = {
         changeOrderText: 'Test',

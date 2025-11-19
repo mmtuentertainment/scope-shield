@@ -35,6 +35,20 @@ export class DraftStorage {
           return;
         }
 
+        if (!draftData.metadata) {
+          const error = new Error('Invalid draft: missing metadata');
+          logError('Draft validation failed', error);
+          reject(error);
+          return;
+        }
+
+        if (!draftData.calculatorState) {
+          const error = new Error('Invalid draft: missing calculatorState');
+          logError('Draft validation failed', error);
+          reject(error);
+          return;
+        }
+
         // Add timestamp if not present
         const draft = {
           ...draftData,
