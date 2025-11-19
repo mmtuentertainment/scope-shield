@@ -177,6 +177,15 @@ function showResumeDraftButton() {
  * Save draft immediately (used by multiple event handlers)
  */
 function saveDraftNow() {
+  // Check if modal has been closed (overlay removed from DOM)
+  if (currentModal && currentModal.overlay && !currentModal.overlay.parentNode) {
+    // Modal was closed, stop autosave and clear reference
+    logInfo('Modal closed, stopping autosave');
+    stopDraftAutosave();
+    currentModal = null;
+    return;
+  }
+
   // Save draft if modal exists and has data (even if DOM is destroyed)
   // Don't save if auto-export is active (draft will be deleted after export)
   if (currentModal && !currentModal.autoExportActive) {
@@ -221,6 +230,39 @@ function stopDraftAutosave() {
 }
 
 /**
+ * Mark calculator inputs as read-only with visual indicator
+ */
+function markCalculatorAsReadOnly() {
+  if (!currentModal || !currentModal.modal) return;
+
+  // Find calculator inputs
+  const rateInput = currentModal.modal.querySelector('#calc-rate');
+  const hoursInput = currentModal.modal.querySelector('#calc-hours');
+
+  if (rateInput) {
+    rateInput.disabled = true;
+    rateInput.title = 'Calculator is read-only when resuming drafts';
+  }
+
+  if (hoursInput) {
+    hoursInput.disabled = true;
+    hoursInput.title = 'Calculator is read-only when resuming drafts';
+  }
+
+  // Add read-only badge to calculator header
+  const calcHeader = currentModal.modal.querySelector('.calculator-header');
+  if (calcHeader && !calcHeader.querySelector('.readonly-badge')) {
+    const badge = document.createElement('span');
+    badge.className = 'readonly-badge';
+    badge.textContent = '(Read-only)';
+    badge.style.cssText = 'color: #666; font-size: 0.9em; font-weight: normal; margin-left: 8px;';
+    calcHeader.appendChild(badge);
+  }
+
+  logInfo('Calculator marked as read-only');
+}
+
+/**
  * Handle Resume Draft button click
  */
 async function handleResumeDraft() {
@@ -251,6 +293,12 @@ async function handleResumeDraft() {
     );
 
     currentModal = modal;
+
+    // Start autosave for resumed draft (CodeRabbit: missing autosave on resume)
+    startDraftAutosave();
+
+    // Mark calculator as read-only (CodeRabbit: UI indicator for read-only state)
+    markCalculatorAsReadOnly();
 
     // Remove Resume Draft button
     resumeBtn.remove();
