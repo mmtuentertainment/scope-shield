@@ -113,6 +113,9 @@ export class ChangeOrderModalIntegrations {
       // Restart auto-export timer after document rebuild
       // (starts even if previously cancelled/completed - enables continuous auto-export)
       if (this.modal.autoExportTimer) {
+        // Set flag when restarting timer
+        this.modal.autoExportActive = true;
+
         if (this.modal.autoExportTimer.isActive()) {
           this.modal.autoExportTimer.reset();
         } else {
@@ -169,11 +172,14 @@ export class ChangeOrderModalIntegrations {
           this.updateCountdownUI(secondsLeft);
         },
         onCancel: () => {
+          // Clear auto-export flag when timer is cancelled
+          this.modal.autoExportActive = false;
           this.hideCountdownUI();
         }
       });
 
-      // Start timer
+      // Start timer and set auto-export active flag
+      this.modal.autoExportActive = true;
       this.modal.autoExportTimer.start();
     } catch (error) {
       logError('ChangeOrderModal: Failed to initialize auto-export', error);
@@ -219,12 +225,18 @@ export class ChangeOrderModalIntegrations {
         );
 
         logInfo('ChangeOrderModal: Auto-export succeeded');
+
+        // Clear auto-export flag after successful export
+        this.modal.autoExportActive = false;
       } else {
         // Show error notification with manual fallback
         throw new Error(result.error || 'Export failed');
       }
     } catch (error) {
       logError('ChangeOrderModal: Auto-export failed', error);
+
+      // Clear auto-export flag on failure
+      this.modal.autoExportActive = false;
 
       showNotification(
         'auto-export-error',

@@ -247,6 +247,17 @@ export class PricingCalculatorWidget {
   }
 
   /**
+   * Get current state for draft persistence
+   * @returns {{hourlyRate: number, estimatedHours: number}}
+   */
+  getState() {
+    return {
+      hourlyRate: this.rate,
+      estimatedHours: this.hours
+    };
+  }
+
+  /**
    * Set values programmatically
    * @param {number} rate - Hourly rate
    * @param {number} hours - Estimated hours
