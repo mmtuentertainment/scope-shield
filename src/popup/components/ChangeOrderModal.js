@@ -190,6 +190,19 @@ export class ChangeOrderModal {
     this.modal.setAttribute('aria-labelledby', 'change-order-modal-title');
     this.modal.setAttribute('aria-describedby', 'change-order-modal-desc');
 
+    // Cancel auto-export on any click inside modal
+    this.modal.addEventListener('click', () => {
+      if (this.autoExportTimer && this.autoExportTimer.isActive()) {
+        this.autoExportTimer.cancel();
+        showNotification(
+          'toast-notification',
+          'Auto-export cancelled',
+          'info',
+          2000
+        );
+      }
+    });
+
     // Header
     const header = this.createHeader();
     this.modal.appendChild(header);
