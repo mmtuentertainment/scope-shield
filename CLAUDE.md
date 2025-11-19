@@ -429,7 +429,7 @@ Keep it simple - just detection and highlighting for now.
 **Effort**: 15-20 hours
 **Constitutional Note**: Requires Privacy-First exception (remote config fetch must not send user data)
 
-**Problem**: Gmail CSS selectors can change, breaking detection until Chrome Store review (2 week delay)
+**Problem**: Gmail CSS selectors can change, breaking detection until Chrome Store review (2-week delay)
 **Solution**: Fetch selector configs from GitHub gist, cache locally, graceful offline fallback
 
 **Spec Location**: `specs/003-remote-selector-config/BACKLOG.md`
