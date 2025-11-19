@@ -55,7 +55,7 @@ describe('StorageSchemas', () => {
       expect(DEFAULTS.settings).toHaveProperty('hourlyRate', 0);
       expect(DEFAULTS.settings).toHaveProperty('defaultExportMethod', 'pdf');
       expect(DEFAULTS.settings).toHaveProperty('autoExportEnabled', true);
-      expect(DEFAULTS.settings).toHaveProperty('autoExportDelay', 3);
+      expect(DEFAULTS.settings).toHaveProperty('autoExportDelay', 5);
     });
 
     it('should provide default change order', () => {
