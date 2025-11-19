@@ -180,8 +180,9 @@ function showResumeDraftButton() {
  * Save draft immediately (used by multiple event handlers)
  */
 function saveDraftNow() {
-  // Check if modal has been closed (overlay removed from DOM)
-  if (currentModal && currentModal.overlay && !currentModal.overlay.parentNode) {
+  // Check if modal has been closed (overlay null or removed from DOM)
+  // ChangeOrderModal.close() sets overlay = null, or overlay.parentNode = null during removal
+  if (currentModal && (!currentModal.overlay || !currentModal.overlay.parentNode)) {
     // Modal was closed, stop autosave and clear reference
     logInfo('Modal closed, stopping autosave');
     stopDraftAutosave();
