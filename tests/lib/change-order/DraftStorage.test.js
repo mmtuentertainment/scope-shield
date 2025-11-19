@@ -419,7 +419,7 @@ describe('DraftStorage', () => {
       expect(await DraftStorage.hasDraft()).toBe(false);
     });
 
-    it('should handle concurrent saves (last write wins)', async () => {
+    it('should handle sequential saves (last write wins)', async () => {
       const draft1 = {
         changeOrderText: 'Draft 1',
         metadata: { clientName: 'Client 1' },
