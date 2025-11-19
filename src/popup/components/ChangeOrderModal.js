@@ -7,8 +7,7 @@
  * @module ChangeOrderModal
  */
 
-import { PricingCalculatorWidget } from '../../lib/change-order/PricingCalculatorWidget.js';
-import { ExportControls } from './ExportControls.js';
+import { ChangeOrderModalIntegrations } from './ChangeOrderModalIntegrations.js';
 import { showNotification } from './NotificationManager.js';
 import { logInfo, logError } from '../../lib/utils/Logger.js';
 import { debounce } from '../utils/debounce.js';
@@ -41,14 +40,20 @@ export class ChangeOrderModal {
     this.exportControls = null;
     this.documentPreview = null;
     this.triggerElement = null;
+    this.autoExportTimer = null;
+    this.countdownNotification = null;
+
+    // Integration helper (handles calculator, export, auto-export)
+    this.integrations = new ChangeOrderModalIntegrations(this);
 
     // Event handlers (bound for cleanup)
     this.handleKeydown = this.handleKeydown.bind(this);
     this.handleCloseClick = this.handleCloseClick.bind(this);
+    this.cancelAutoExportWithNotification = this.cancelAutoExportWithNotification.bind(this);
 
     // Debounced recalculation (300ms to prevent spam)
     this.debouncedRecalculate = debounce(
-      this.recalculateDocument.bind(this),
+      (rate, hours) => this.integrations.recalculateDocument(rate, hours),
       300
     );
   }
@@ -56,7 +61,7 @@ export class ChangeOrderModal {
   /**
    * Show the modal
    */
-  show() {
+  async show() {
     logInfo('ChangeOrderModal: Showing modal');
 
     // Store trigger element for focus restoration
@@ -79,6 +84,9 @@ export class ChangeOrderModal {
     if (closeBtn) {
       closeBtn.focus();
     }
+
+    // Initialize auto-export timer
+    await this.integrations.initializeAutoExport();
   }
 
   /**
@@ -90,6 +98,12 @@ export class ChangeOrderModal {
     // Cancel any pending debounced recalculations
     if (this.debouncedRecalculate && this.debouncedRecalculate.cancel) {
       this.debouncedRecalculate.cancel();
+    }
+
+    // Cancel and destroy auto-export timer
+    if (this.autoExportTimer) {
+      this.autoExportTimer.destroy();
+      this.autoExportTimer = null;
     }
 
     // Cleanup event listeners
@@ -117,6 +131,7 @@ export class ChangeOrderModal {
     this.overlay = null;
     this.modal = null;
     this.documentPreview = null;
+    this.countdownNotification = null;
 
     // Return focus to trigger element
     if (this.triggerElement && typeof this.triggerElement.focus === 'function') {
@@ -138,7 +153,7 @@ export class ChangeOrderModal {
     }
 
     // Recreate export controls with new text
-    this.updateExportControls();
+    this.integrations.updateExportControls();
   }
 
   /**
@@ -152,6 +167,9 @@ export class ChangeOrderModal {
 
     // Close modal when clicking overlay (not modal content)
     this.overlay.addEventListener('click', (event) => {
+      // Cancel auto-export if timer is active
+      this.cancelAutoExportWithNotification();
+
       if (event.target === this.overlay) {
         this.close();
       }
@@ -164,6 +182,11 @@ export class ChangeOrderModal {
     this.modal.setAttribute('aria-modal', 'true');
     this.modal.setAttribute('aria-labelledby', 'change-order-modal-title');
     this.modal.setAttribute('aria-describedby', 'change-order-modal-desc');
+
+    // Cancel auto-export on any click inside modal
+    this.modal.addEventListener('click', () => {
+      this.cancelAutoExportWithNotification();
+    });
 
     // Header
     const header = this.createHeader();
@@ -216,6 +239,15 @@ export class ChangeOrderModal {
     description.textContent = 'Modal dialog for reviewing and exporting change order with pricing calculator';
     body.appendChild(description);
 
+    // Countdown notification (initially hidden)
+    this.countdownNotification = document.createElement('div');
+    this.countdownNotification.className = 'countdown-notification';
+    this.countdownNotification.style.display = 'none';
+    this.countdownNotification.setAttribute('role', 'status');
+    this.countdownNotification.setAttribute('aria-live', 'polite');
+    this.countdownNotification.setAttribute('aria-atomic', 'true');
+    body.appendChild(this.countdownNotification);
+
     // Document preview
     this.documentPreview = document.createElement('pre');
     this.documentPreview.className = 'document-preview';
@@ -225,115 +257,16 @@ export class ChangeOrderModal {
     // Calculator container
     const calculatorContainer = document.createElement('div');
     calculatorContainer.className = 'calculator-container';
-    this.mountCalculator(calculatorContainer);
+    this.integrations.mountCalculator(calculatorContainer);
     body.appendChild(calculatorContainer);
 
     // Export controls container
     const exportContainer = document.createElement('div');
     exportContainer.className = 'export-container';
-    this.mountExportControls(exportContainer);
+    this.integrations.mountExportControls(exportContainer);
     body.appendChild(exportContainer);
 
     return body;
-  }
-
-  /**
-   * Mount calculator widget
-   * @private
-   * @param {HTMLElement} container - Container element
-   */
-  mountCalculator(container) {
-    this.calculator = new PricingCalculatorWidget({
-      initialRate: this.calculatorOptions.hourlyRate || 0,
-      initialHours: this.calculatorOptions.estimatedHours || 0,
-      onCalculate: (values) => {
-        // Debounced recalculation when rate or hours change
-        this.debouncedRecalculate(values.rate, values.hours);
-      }
-    });
-
-    const calculatorElement = this.calculator.render();
-    container.appendChild(calculatorElement);
-  }
-
-  /**
-   * Mount export controls
-   * @private
-   * @param {HTMLElement} container - Container element
-   */
-  mountExportControls(container) {
-    this.exportControls = new ExportControls(this.changeOrderText, {
-      clientName: this.metadata.clientName,
-      freelancerName: this.metadata.freelancerName,
-      date: this.metadata.date
-    });
-
-    const exportElement = this.exportControls.render();
-    container.appendChild(exportElement);
-  }
-
-  /**
-   * Update export controls with new document text
-   * @private
-   */
-  updateExportControls() {
-    if (!this.exportControls) {
-      return;
-    }
-
-    // Get container
-    const container = this.modal.querySelector('.export-container');
-    if (!container) {
-      return;
-    }
-
-    // Cleanup old instance
-    this.exportControls.destroy();
-
-    // Clear container
-    container.textContent = '';
-
-    // Create new instance with updated text
-    this.mountExportControls(container);
-  }
-
-  /**
-   * Recalculate document with new pricing
-   * @private
-   * @param {number} newRate - New hourly rate
-   * @param {number} newHours - New estimated hours
-   */
-  async recalculateDocument(newRate, newHours) {
-    if (!this.calculatorOptions.onRecalculate) {
-      logError('ChangeOrderModal: onRecalculate callback not provided', new Error('Missing callback'));
-      return;
-    }
-
-    try {
-      logInfo(`ChangeOrderModal: Recalculating with rate=${newRate}, hours=${newHours}`);
-
-      // Call the recalculate callback (async)
-      const newDocument = await this.calculatorOptions.onRecalculate(newRate, newHours);
-
-      // Guard: Check if modal still exists before updating
-      if (!this.modal || !this.documentPreview) {
-        logInfo('ChangeOrderModal: Modal closed during recalculation, skipping update');
-        return;
-      }
-
-      // Update document
-      this.updateDocument(newDocument);
-    } catch (error) {
-      logError('ChangeOrderModal: Recalculation failed', error);
-
-      // Notify user of failure
-      showNotification(
-        'recalc-error',
-        'Failed to update document. Please try again.',
-        'error',
-        5000
-      );
-    }
   }
 
   /**
@@ -391,5 +324,22 @@ export class ChangeOrderModal {
    */
   handleCloseClick() {
     this.close();
+  }
+
+  /**
+   * Cancel auto-export timer and show notification
+   * Extracted to DRY up duplicate logic in overlay and modal click handlers
+   * @private
+   */
+  cancelAutoExportWithNotification() {
+    if (this.autoExportTimer && this.autoExportTimer.isActive()) {
+      this.autoExportTimer.cancel();
+      showNotification(
+        'toast-notification',
+        'Auto-export cancelled',
+        'info',
+        2000
+      );
+    }
   }
 }

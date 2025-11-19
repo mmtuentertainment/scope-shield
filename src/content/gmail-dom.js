@@ -1,6 +1,12 @@
 /**
  * Gmail DOM selector utilities
  * Provides stable selectors with fallback chain for Gmail elements
+ *
+ * TODO Feature 003: Remote Selector Configuration
+ * These selectors can break when Gmail updates (every 3-6 months).
+ * Future: Fetch configs from GitHub gist, cache locally.
+ * Trigger: Gmail DOM breaks OR 1000+ users
+ * See: specs/003-remote-selector-config/BACKLOG.md
  */
 
 /**

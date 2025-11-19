@@ -195,7 +195,7 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
 
       // Show modal with calculator and export controls
       const modal = new ChangeOrderModal(document, metadata, calculatorOptions);
-      modal.show();
+      await modal.show();
 
       // Mark all as acknowledged after modal is shown
       await this.acknowledgeMultipleEvents(unacknowledged);

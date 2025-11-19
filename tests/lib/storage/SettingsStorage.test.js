@@ -19,7 +19,7 @@ describe('SettingsStorage', () => {
         hourlyRate: 150,
         defaultExportMethod: 'pdf',
         autoExportEnabled: true,
-        autoExportDelay: 3,
+        autoExportDelay: 5,
         lastUpdated: '2025-11-12T10:00:00Z'
       };
 
@@ -42,7 +42,7 @@ describe('SettingsStorage', () => {
       expect(settings.hourlyRate).toBe(0);
       expect(settings.defaultExportMethod).toBe('pdf');
       expect(settings.autoExportEnabled).toBe(true);
-      expect(settings.autoExportDelay).toBe(3);
+      expect(settings.autoExportDelay).toBe(5);
     });
   });
 
@@ -102,7 +102,7 @@ describe('SettingsStorage', () => {
       expect(defaults.hourlyRate).toBe(0);
       expect(defaults.defaultExportMethod).toBe('pdf');
       expect(defaults.autoExportEnabled).toBe(true);
-      expect(defaults.autoExportDelay).toBe(3);
+      expect(defaults.autoExportDelay).toBe(5);
     });
   });
 

@@ -28,9 +28,8 @@ export function showNotification(
   if (!notification) return null;
 
   // Set notification content and style
-  const classPrefix = 'export-notification';
   notification.textContent = message;
-  notification.className = `${classPrefix} ${classPrefix}-${type}`;
+  notification.className = `notification notification-${type}`;
   notification.style.display = 'block';
 
   logInfo('NotificationManager.showNotification: Notification shown', {

@@ -50,6 +50,11 @@ System MUST NOT transmit any user data (scope definitions, detected messages, cl
 - No analytics tracking user behavior or content
 - Privacy policy explicitly states "no data collection"
 
+**Future Consideration** (Feature 003 - Remote Selector Config):
+- IF remote config fetching is needed (Gmail resilience), requires constitutional exception
+- Exception criteria: (a) no user data transmitted, (b) config cached locally, (c) graceful offline fallback
+- Must document privacy safeguards before implementation
+
 ### II. Simplicity-First for MVP
 
 System MUST use deterministic heuristic-based detection (keyword matching, phrase patterns) for MVP.

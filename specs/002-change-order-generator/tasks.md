@@ -2,8 +2,8 @@
 
 **Feature**: 002-change-order-generator
 **Created**: 2025-11-11
-**Last Updated**: 2025-11-15 (Implementation audit - updated completion status for PR #6, #7, #8)
-**Status**: In Progress - 28% Complete (103/369 tasks)
+**Last Updated**: 2025-11-18 (PR #12 - Phase 6 auto-export implementation complete)
+**Status**: In Progress - 34% Complete (125/369 tasks)
 **Total Tasks**: 369 (T001-T369, all sequential, no duplicates)
 **Estimated Duration**: 39-50 hours (18-22 hours remaining for MVP)
 
@@ -141,9 +141,9 @@ See `IMPLEMENTATION_AUDIT.md` for detailed analysis.
 - [x] [T047] [P] Create `src/popup/settings/settings.css` with styling
 - [x] [T048] Add freelancer name input field to SettingsForm with validation (required)
 - [x] [T049] Add hourly rate input field to SettingsForm with validation (optional, must be > 0)
-- [ ] [T050] Add default export method dropdown to SettingsForm (clipboard/pdf/text) (DEFERRED to Phase 5)
-- [ ] [T051] Add auto-export enabled checkbox to SettingsForm (DEFERRED to Phase 6)
-- [ ] [T052] Add auto-export delay input to SettingsForm (1-10 seconds, default 3) (DEFERRED to Phase 6)
+- [x] [T050] Add default export method dropdown to SettingsForm (clipboard/pdf/text) (Already implemented in settings UI)
+- [x] [T051] Add auto-export enabled checkbox to SettingsForm (Already implemented in settings UI)
+- [x] [T052] Add auto-export delay input to SettingsForm (1-10 seconds, default 3) (Already implemented in settings UI)
 - [x] [T053] Implement SettingsForm.save() to call SettingsStorage.save() with sanitized inputs
 - [x] [T054] Implement SettingsForm.load() to populate form from SettingsStorage.get()
 - [x] [T055] Add success notification after saving settings (uses NotificationManager)
@@ -369,34 +369,34 @@ See `IMPLEMENTATION_AUDIT.md` for detailed analysis.
 
 ### Auto-Export Timer Logic
 
-- [ ] [T191] [P] [US3] Create `src/lib/change-order/AutoExportTimer.js` with start(), cancel() methods
-- [ ] [T192] [P] [US3] Implement AutoExportTimer.start(callback, delay) to trigger after delay seconds
-- [ ] [T193] [P] [US3] Implement debouncing: Reset timer if user edits before countdown completes
-- [ ] [T194] [P] [US3] Implement AutoExportTimer.cancel() to stop countdown
-- [ ] [T195] [P] [US3] Emit countdown events for UI (3... 2... 1...)
-- [ ] [T196] [P] [US3] Create `tests/lib/change-order/AutoExportTimer.test.js`
-- [ ] [T197] [P] [US3] Write test: start() triggers callback after delay
-- [ ] [T198] [P] [US3] Write test: cancel() stops countdown
-- [ ] [T199] [P] [US3] Write test: debouncing resets timer on new edit
+- [x] [T191] [P] [US3] Create `src/lib/change-order/AutoExportTimer.js` with start(), cancel() methods
+- [x] [T192] [P] [US3] Implement AutoExportTimer.start(callback, delay) to trigger after delay seconds
+- [x] [T193] [P] [US3] Implement debouncing: Reset timer if user edits before countdown completes
+- [x] [T194] [P] [US3] Implement AutoExportTimer.cancel() to stop countdown
+- [x] [T195] [P] [US3] Emit countdown events for UI (3... 2... 1...)
+- [x] [T196] [P] [US3] Create `tests/lib/change-order/AutoExportTimer.test.js`
+- [x] [T197] [P] [US3] Write test: start() triggers callback after delay
+- [x] [T198] [P] [US3] Write test: cancel() stops countdown
+- [x] [T199] [P] [US3] Write test: debouncing resets timer on new edit
 
 ### Auto-Export Integration
 
-- [ ] [T200] [US3] Update ChangeOrderView to start auto-export timer after last field edit
-- [ ] [T201] [US3] Load auto-export settings (enabled, default method, delay) from SettingsStorage
-- [ ] [T202] [US3] Skip auto-export if autoExportEnabled is false
-- [ ] [T203] [US3] Call ExportService.export() with defaultExportMethod when timer completes
-- [ ] [T204] [US3] Handle auto-export failure: Show error notification + manual buttons
-- [ ] [T205] [US3] Don't disable auto-export setting if export fails (could be temporary)
+- [x] [T200] [US3] Update ChangeOrderModal to start auto-export timer after document rebuild
+- [x] [T201] [US3] Load auto-export settings (enabled, default method, delay) from SettingsStorage
+- [x] [T202] [US3] Skip auto-export if autoExportEnabled is false
+- [x] [T203] [US3] Call ExportService.export() with defaultExportMethod when timer completes
+- [x] [T204] [US3] Handle auto-export failure: Show error notification + manual buttons
+- [x] [T205] [US3] Don't disable auto-export setting if export fails (could be temporary)
 
 ### Auto-Export UI
 
-- [ ] [T206] [P] [US3] Create countdown indicator component (toast notification)
-- [ ] [T207] [P] [US3] Show countdown progress bar (3s → 0s)
-- [ ] [T208] [P] [US3] Display message: "Auto-exporting in 3... 2... 1..."
-- [ ] [T209] [P] [US3] Allow user to cancel: Click anywhere to stop timer
-- [ ] [T210] [P] [US3] Show "Auto-export cancelled" notification if user clicks
-- [ ] [T211] [P] [US3] Show success notification after auto-export completes
-- [ ] [T212] [P] [US3] Show error notification with manual buttons if auto-export fails
+- [x] [T206] [P] [US3] Create countdown indicator component (countdown notification in modal)
+- [x] [T207] [P] [US3] Show countdown updates (3s → 0s) via text
+- [x] [T208] [P] [US3] Display message: "Auto-exporting in Xs... (click anywhere to cancel)"
+- [x] [T209] [P] [US3] Allow user to cancel: Click anywhere to stop timer
+- [x] [T210] [P] [US3] Show "Auto-export cancelled" notification if user clicks
+- [x] [T211] [P] [US3] Show success notification after auto-export completes
+- [x] [T212] [P] [US3] Show error notification with manual buttons if auto-export fails
 
 **Checkpoint**: Auto-export triggers after 3 seconds, countdown visible, user can cancel, failures fall back to manual buttons
 
@@ -655,6 +655,16 @@ See `IMPLEMENTATION_AUDIT.md` for detailed analysis.
 - [ ] [T369] Re-validate Constitution Check (all 8 principles still PASS)
 
 **Checkpoint**: All tests pass, performance metrics meet thresholds (<5s, <3s, <500ms), bundle <600KB, user testing 80%+ success
+
+### Template Engine Error Handling (Code Review Suggestion)
+
+- [ ] [T370] [P] Enhance TemplateProcessor error handling for malformed inputs
+- [ ] [T371] [P] Add comprehensive validation (missing delimiters, circular refs, deep nesting)
+- [ ] [T372] [P] Implement safe fallback rendering (return raw text or error message on parse failure)
+- [ ] [T373] [P] Add user-facing error notification: "Template could not be processed. Using basic format."
+- [ ] [T374] [P] Log template parsing errors with input context for debugging
+
+**Checkpoint**: Template engine handles all edge cases gracefully, users never see broken documents
 
 ---
 

@@ -6,6 +6,12 @@
  * - Loop blocks {{@each}}...{{/@each}}
  * - Nested structures with proper tag matching
  *
+ * TODO Phase 9: Enhanced Error Handling (T370-T374)
+ * Current try/catch may not handle all malformed input edge cases.
+ * Add: validation for missing delimiters, circular refs, safe fallback
+ * Trigger: Implementing Phase 9 polish tasks (T286-T374)
+ * See: specs/002-change-order-generator/tasks.md Phase 9
+ *
  * @module TemplateProcessor
  */
 

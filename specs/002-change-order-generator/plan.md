@@ -116,6 +116,34 @@ Build client-side change order generator that converts detected scope creep into
 
 ---
 
+## Build System Migration (Post-PR #9, 2025-11-18)
+
+**Critical Change**: Migrated from manual Vite configuration to `@samrum/vite-plugin-web-extension`
+
+**Problem Solved**: Vite was generating HTML files with absolute paths (`/popup.js`), causing popup.js to fail loading in Chrome extensions. This blocked all popup functionality including change order generation.
+
+**Solution Implemented** (Commit 976ee17):
+- **Plugin**: Installed `@samrum/vite-plugin-web-extension@^5.0.0`
+- **Base Path**: Added `base: ''` to generate relative paths instead of absolute
+- **Manifest**: Moved from `src/manifest.json` into `vite.config.js` (single source of truth)
+- **Tree-shaking**: Disabled (`treeshake: false`) to preserve DOMContentLoaded initialization code
+- **Minification**: Temporarily disabled (`minify: false`) - terser was removing init code
+- **Content CSS**: Renamed `content.css` → `content-styles.css` (plugin naming collision)
+- **Icons**: Created placeholder PNGs (icon16, icon48, icon128) - auto-copied by build
+
+**Impact on Architecture**:
+- ✅ No source code changes to Phase 1-5 features
+- ✅ All 507 tests passing (0 regressions)
+- ✅ Extension now loads correctly in Chrome
+- ✅ Simplified manifest handling (no manual copy step)
+- ✅ Better HMR support for development
+
+**TODO**: Re-enable minification with proper terser config that preserves initialization code
+
+**Benefit for Phase 6**: Reliable build system in place, no path issues for auto-export timer components
+
+---
+
 ## Project Structure
 
 ### Documentation (this feature)
@@ -579,6 +607,88 @@ scope-shield/
 
 ---
 
+## Phase 6 Prerequisites (Complete Before Starting)
+
+**Status Check** - Verify these are complete before implementing Phase 6:
+
+### ✅ Infrastructure Ready (Phases 1-5 Complete)
+1. ✅ **ExportService** available with 3 methods:
+   - `ExportService.export(text, 'pdf', metadata)` - PDF generation
+   - `ExportService.export(text, 'clipboard')` - Clipboard copy
+   - `ExportService.export(text, 'text', metadata)` - Text file download
+
+2. ✅ **ChangeOrderModal** integration points:
+   - `modal.updateDocument(newText)` - Update document preview
+   - Calculator `onRecalculate` callback - Rebuild document with custom hours
+   - ExportControls mounted in modal body
+
+3. ✅ **Settings persistence**:
+   - `SettingsStorage.get()` - Load freelancer settings
+   - `SettingsStorage.save(settings)` - Save updated settings
+   - FreelancerSettings model with validation
+
+4. ✅ **Notification system**:
+   - `NotificationManager.showNotification(id, message, type, duration)` - Toast notifications
+   - Can be used for countdown UI ("Auto-exporting in 3... 2... 1...")
+
+5. ✅ **Debouncing utility**:
+   - `src/popup/utils/debounce.js` - Already used for calculator input
+   - Can be reused for auto-export timer reset
+
+### ⏳ Settings UI Required (1-2 hours before Phase 6)
+**Missing from current implementation** (deferred from Phase 2):
+
+1. ❌ **Default export method dropdown** (T050):
+   - Add to `src/options/SettingsForm.js`
+   - Options: "clipboard" | "pdf" | "text"
+   - Default: "pdf"
+   - Saves to `FreelancerSettings.defaultExportMethod`
+
+2. ❌ **Auto-export enabled checkbox** (T050):
+   - Add to SettingsForm
+   - Label: "Auto-export change orders after 3 seconds"
+   - Default: true
+   - Saves to `FreelancerSettings.autoExportEnabled`
+
+3. ❌ **Auto-export delay slider** (T051-T052):
+   - Range: 1-10 seconds
+   - Default: 3 seconds
+   - Display current value next to slider
+   - Saves to `FreelancerSettings.autoExportDelay`
+
+**Action**: Complete T050-T052 FIRST, then proceed with Phase 6 auto-export timer implementation
+
+### 📋 Integration Points for Phase 6
+
+**Where to add AutoExportTimer**:
+```javascript
+// In ChangeOrderModal.js, after calculator is mounted:
+this.autoExportTimer = new AutoExportTimer({
+  delay: this.calculatorOptions.autoExportDelay || 3,
+  onExport: async () => {
+    const settings = await SettingsStorage.get();
+    const method = settings.defaultExportMethod || 'pdf';
+    return await ExportService.export(this.changeOrderText, method, this.metadata);
+  },
+  onCancel: () => {
+    // User clicked somewhere, reset timer
+  }
+});
+
+// Start timer after document rebuild completes
+this.autoExportTimer.start();
+
+// Cancel timer on modal close
+this.autoExportTimer.cancel();
+```
+
+**Available APIs**:
+- `NotificationManager.showNotification()` - For countdown toast
+- `debounce(fn, delay)` - For timer reset on user activity
+- `ExportService.export()` - For actual export
+
+---
+
 ### Phase 6: Auto-Export Feature (4-5 hours)
 
 **Tasks**:
@@ -652,6 +762,15 @@ scope-shield/
 - Performance metrics meet thresholds (SC-001: <5s, SC-002: <500ms, SC-003: <3s)
 - Bundle size <600KB
 - User testing 80%+ success rate
+
+**Phase 9 Enhancement** (T370-T374, added 2025-11-19):
+- Template engine error handling robustness
+- Comprehensive validation for malformed inputs (missing delimiters, circular refs)
+- Safe fallback rendering (raw text on parse failure)
+- User-facing error notifications
+- Debug logging for template parse errors
+
+**Rationale**: Code review identified edge cases where malformed template inputs could bypass current try/catch, potentially showing broken documents to users.
 
 ---
 

@@ -42,7 +42,7 @@ export const DEFAULTS = {
     hourlyRate: 0,
     defaultExportMethod: 'pdf',
     autoExportEnabled: true,
-    autoExportDelay: 3,
+    autoExportDelay: 5,
     lastUpdated: null
   },
 

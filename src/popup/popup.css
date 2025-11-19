@@ -529,6 +529,13 @@ body {
     outline-color: #FF9800;
     box-shadow: 0 0 0 4px rgba(255, 152, 0, 0.3);
   }
+
+  /* Dark mode: Countdown notification */
+  .countdown-notification {
+    background: #1565C0;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  }
 }
 
 /* Toast Notifications */
@@ -542,7 +549,7 @@ body {
   font-size: 14px;
   font-weight: 500;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 10000;
+  z-index: 10002;
   animation: slideUpNotif 0.3s ease-out;
   min-width: 200px;
   text-align: center;
@@ -682,6 +689,34 @@ body {
 .export-container {
   border-top: 1px solid #e0e0e0;
   padding-top: 20px;
+}
+
+/* ==========================================
+   Countdown Notification (Auto-Export)
+   ========================================== */
+
+.countdown-notification {
+  background: #2196F3;
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ==========================================

@@ -1,5 +1,11 @@
 // PDF Generator Service
 // Lazy-loads jsPDF and generates professional PDFs from change orders
+//
+// TODO Feature 004: PDF Internationalization (UTF-8 Font Support)
+// Current: jsPDF default fonts don't support emojis, CJK characters
+// Solution: Bundle Noto Sans subset (~500KB) OR strip with warning
+// Trigger: 10+ user complaints about character encoding
+// See: CLAUDE.md Future Work section
 
 import { logInfo, logError, logWarning } from '../../utils/Logger.js';
 import { generateChangeOrderFilename } from './FilenameUtils.js';
