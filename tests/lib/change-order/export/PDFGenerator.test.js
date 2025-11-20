@@ -239,7 +239,9 @@ describe('PDFGenerator', () => {
       const result = await downloadPDF('Test', {});
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Download blocked');
+      // Phase 8 (T265-T269): Error messages are now categorized
+      expect(result.error).toBe('PDF generation failed');
+      expect(result.fallbackSuggestion).toBe('Try exporting as text instead');
     });
   });
 
