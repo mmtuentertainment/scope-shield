@@ -317,4 +317,25 @@ describe('InlineFieldEditor', () => {
       expect(mockOnSave).not.toHaveBeenCalled();
     });
   });
+
+  // CodeRabbit: Add test for onSave failure path
+  describe('error handling', () => {
+    it('should revert value when onSave throws', () => {
+      const throwingOnSave = vi.fn(() => {
+        throw new Error('Save failed');
+      });
+      const editor = new InlineFieldEditor('field', 'original', {
+        onSave: throwingOnSave
+      });
+
+      const element = editor.render();
+      element.textContent = 'modified';
+
+      element.dispatchEvent(new FocusEvent('blur'));
+
+      // Both internal value and DOM should revert
+      expect(editor.getValue()).toBe('original');
+      expect(element.textContent).toBe('original');
+    });
+  });
 });
