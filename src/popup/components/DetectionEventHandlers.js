@@ -205,6 +205,9 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
       // Show modal with calculator and export controls
       const modal = new ChangeOrderModal(document, metadata, calculatorOptions);
 
+      // CodeRabbit Round 3: Hide spinner before modal (cleanup in finally)
+      spinner.hide();
+
       await modal.show();
 
       // Notify popup.js about modal creation (for draft saving)
@@ -294,8 +297,8 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
       // Show modal
       const modal = new ChangeOrderModal(document, metadata, calculatorOptions);
 
-      // Phase 8 (T295-T298): Hide spinner before showing modal
-      spinner.destroy();
+      // CodeRabbit Round 3: Hide spinner before modal (cleanup in finally)
+      spinner.hide();
 
       await modal.show();
 
