@@ -28,7 +28,13 @@ global.chrome = {
 };
 
 /**
- * Create sample detection events for benchmarking
+ * Generate an array of synthetic detection objects for benchmarking.
+ * @param {number} count - Number of detection objects to generate.
+ * @returns {Array<Object>} An array of detection objects each with properties:
+ *  - `sender` (string): email address mock,
+ *  - `text` (string): sample detection text,
+ *  - `trigger` (string): trigger label,
+ *  - `date` (string): ISO timestamp.
  */
 function createSampleDetections(count) {
   const detections = [];
@@ -44,7 +50,11 @@ function createSampleDetections(count) {
 }
 
 /**
- * Benchmark change order generation
+ * Run timed benchmarks for change order generation across multiple detection counts and log average and 95th-percentile durations.
+ *
+ * Performs several iterations per test case, measures each build invocation's duration, computes the average and p95 (95th percentile)
+ * for each detection count, and prints the metrics and a pass/fail indicator against a 5000 ms p95 target to the console.
+ * Loads persisted freelancer settings before running benchmarks.
  */
 async function benchmarkGeneration() {
   console.log('\n=== CHANGE ORDER GENERATION BENCHMARK ===\n');
@@ -80,7 +90,11 @@ async function benchmarkGeneration() {
 }
 
 /**
- * Benchmark bundle size
+ * Prints human-readable instructions and target thresholds for bundle size analysis.
+ *
+ * Logs the shell command to build and inspect the distribution directory and the
+ * expected size targets: total < 600 KB, feature 001 baseline ~500 KB, and feature 002
+ * budget of < 100 KB increase.
  */
 function benchmarkBundleSize() {
   console.log('\n=== BUNDLE SIZE ANALYSIS ===\n');
@@ -91,7 +105,11 @@ function benchmarkBundleSize() {
 }
 
 /**
- * Performance summary
+ * Print benchmark performance targets and related notes to the console.
+ *
+ * Logs target thresholds for generation, PDF export, clipboard operations, and
+ * bundle size, and indicates that PDF and clipboard measurements require a
+ * browser environment (suggesting manual testing in Chrome DevTools Performance).
  */
 function printSummary() {
   console.log('\n=== PERFORMANCE TARGETS ===\n');
