@@ -227,6 +227,14 @@ export class ExportHistoryStorage {
    */
   static async exportToCSV() {
     try {
+      // CodeRabbit Round 5: Guard for non-DOM context
+      if (typeof document === 'undefined') {
+        return {
+          success: false,
+          error: 'CSV export is only supported from a UI page with DOM access'
+        };
+      }
+
       // Get all history
       const history = await ExportHistoryStorage.getAll();
 
@@ -243,9 +251,9 @@ export class ExportHistoryStorage {
 
       // CodeRabbit CRITICAL: Sanitize for CSV injection and newline handling
       const sanitizeCSV = (str) => {
-        if (!str) return '';
-        // Remove newlines
-        let cleaned = str.replace(/[\r\n]+/g, ' ');
+        if (str == null) return ''; // CodeRabbit Round 5: Use == null
+        // Normalize to string and remove newlines (CodeRabbit Round 5: Handle non-string types)
+        let cleaned = String(str).replace(/[\r\n]+/g, ' ');
         // Prefix formula characters with single quote to prevent execution
         if (/^[=+\-@]/.test(cleaned)) {
           cleaned = "'" + cleaned;
@@ -322,11 +330,11 @@ export class ExportHistoryStorage {
         };
       }
 
-      // Fallback for browsers without quota API
+      // Fallback for browsers without quota API (CodeRabbit Round 5: Use -1 sentinel for percentUsed)
       return {
         available: -1,
         total: -1,
-        percentUsed: 0
+        percentUsed: -1
       };
 
     } catch (error) {
@@ -334,7 +342,7 @@ export class ExportHistoryStorage {
       return {
         available: -1,
         total: -1,
-        percentUsed: 0
+        percentUsed: -1 // CodeRabbit Round 5: Consistent sentinel
       };
     }
   }
