@@ -70,7 +70,10 @@ describe('ChangeOrderBuilder', () => {
       const result = await builder.build(detections, customSettings);
 
       expect(result).toContain('Custom Name');
-      expect(result).toContain('$150');
+      // Phase 9: HTML template format with data-field attributes and bare numeric hourly rate
+      expect(result).toContain('data-field="hourlyRate"');
+      expect(result).toContain('150');
+      expect(result).not.toContain('$150'); // CodeRabbit: Ensure no leading currency symbol
     });
 
     it('should load default settings if none provided', async () => {
@@ -203,9 +206,12 @@ describe('ChangeOrderBuilder', () => {
       expect(result).toContain('client@example.com');
       expect(result).toContain('manager@example.com');
 
-      // Cost calculation
-      expect(result).toContain('6 hours'); // 3 detections * 2 hours
-      expect(result).toContain('$750'); // 6 hours * $125/hr
+      // Cost calculation (Phase 9: HTML format, bare numeric totalHours and totalCost values)
+      expect(result).toContain('data-field="totalHours"');
+      expect(result).toContain('6'); // 3 detections * 2 hours = 6
+      expect(result).toContain('data-field="costEstimate"');
+      expect(result).toContain('750'); // 6 hours * 125/hr = 750
+      expect(result).not.toContain('$750'); // CodeRabbit: Ensure no leading currency symbol
     });
 
     it('should handle change order without hourly rate', async () => {
