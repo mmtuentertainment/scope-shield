@@ -369,7 +369,8 @@ export class ExportControls {
     if (!this.loadingSpinner) {
       this.loadingSpinner = new LoadingSpinner(message);
       const spinnerEl = this.loadingSpinner.render();
-      this.container.appendChild(spinnerEl);
+      // Append to document.body for full-screen overlay, not this.container
+      document.body.appendChild(spinnerEl);
     } else {
       this.loadingSpinner.updateMessage(message);
       this.loadingSpinner.show();
