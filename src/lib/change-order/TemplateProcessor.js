@@ -6,17 +6,17 @@
  * - Loop blocks {{@each}}...{{/@each}}
  * - Nested structures with proper tag matching
  *
- * TODO Phase 9: Enhanced Error Handling (T370-T374)
- * Current try/catch may not handle all malformed input edge cases.
- * Add: validation for missing delimiters, circular refs, safe fallback
- * Trigger: Implementing Phase 9 polish tasks (T286-T374)
- * See: specs/002-change-order-generator/tasks.md Phase 9
+ * Phase 8 (T370-T374): Enhanced Error Handling
+ * - Template validation before processing
+ * - Safe fallback for malformed templates
+ * - User notifications for template errors
  *
  * @module TemplateProcessor
  */
 
 import { getValue, isTruthy, replaceVariables } from './TemplateHelpers.js';
-import { logWarning } from '../utils/Logger.js';
+import { logWarning, logError } from '../utils/Logger.js';
+import { TemplateValidator } from './TemplateValidator.js';
 
 /**
  * Maximum iterations for nested processing to prevent infinite loops
@@ -30,8 +30,24 @@ export const MAX_ITERATIONS = 100;
  * @param {string} text - Text to process
  * @param {object} data - Data for conditional evaluation
  * @returns {string} Processed text
+ * @throws {Error} If template validation fails with errors
  */
 export function processConditionals(text, data) {
+  // Validate template before processing (Phase 8: T370-T374)
+  const validation = TemplateValidator.validate(text);
+  if (!validation.valid) {
+    const errorMsg = `Template validation failed: ${validation.errors.join(', ')}`;
+    logError('processConditionals: Template validation failed', new Error(errorMsg));
+    throw new Error(errorMsg);
+  }
+
+  // Log warnings but continue processing
+  if (validation.warnings.length > 0) {
+    for (const warning of validation.warnings) {
+      logWarning(`Template warning: ${warning}`);
+    }
+  }
+
   let result = text;
   let changed = true;
   let iterations = 0;
@@ -46,6 +62,7 @@ export function processConditionals(text, data) {
 
   if (iterations >= MAX_ITERATIONS) {
     logWarning('Max iterations reached in processConditionals - possible malformed template');
+    throw new Error('Template processing exceeded maximum iterations (possible circular reference)');
   }
 
   return result;

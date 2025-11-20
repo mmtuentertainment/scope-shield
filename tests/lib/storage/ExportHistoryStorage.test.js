@@ -111,24 +111,16 @@ describe('ExportHistoryStorage', () => {
       await expect(ExportHistoryStorage.save({})).rejects.toThrow('Invalid export event');
     });
 
-    it('should handle storage quota exceeded with emergency cleanup', async () => {
-      let callCount = 0;
+    it('should handle storage quota exceeded with quota error', async () => {
+      // Phase 8 (T275-T280): Changed behavior - now rejects with QuotaExceededError for UI handling
 
-      // Mock quota exceeded on first call, success on second
+      // Mock quota exceeded (always fail)
       const originalSet = chrome.storage.local.set;
       chrome.storage.local.set = vi.fn((data, callback) => {
-        callCount++;
-        if (callCount === 1) {
-          // First call: quota exceeded
-          chrome.runtime.lastError = { message: 'QUOTA_BYTES quota exceeded' };
-          callback();
-          chrome.runtime.lastError = null;
-        } else {
-          // Second call (emergency cleanup): success
-          chrome.runtime.lastError = null; // Clear error BEFORE callback
-          chrome.storage.local.data = data;
-          callback();
-        }
+        // Always trigger quota exceeded
+        chrome.runtime.lastError = { message: 'QUOTA_BYTES quota exceeded' };
+        callback();
+        chrome.runtime.lastError = null;
       });
 
       // Restore after test
@@ -146,14 +138,20 @@ describe('ExportHistoryStorage', () => {
       chrome.storage.local.data[STORAGE_KEYS.EXPORT_HISTORY] = mockHistory;
 
       try {
-        await ExportHistoryStorage.save({
-          method: 'clipboard',
-          metadata: { clientName: 'New Client' }
-        });
-
-        // Should have triggered emergency cleanup to 50 entries
-        const history = chrome.storage.local.data[STORAGE_KEYS.EXPORT_HISTORY];
-        expect(history).toHaveLength(50);
+        // Should reject with QuotaExceededError
+        try {
+          await ExportHistoryStorage.save({
+            method: 'clipboard',
+            metadata: { clientName: 'New Client' }
+          });
+          throw new Error('Test failed: should have thrown QuotaExceededError');
+        } catch (error) {
+          // Verify it's the expected quota error with UI metadata
+          expect(error.name).toBe('QuotaExceededError');
+          expect(error.message).toBe('Storage quota exceeded');
+          expect(error.needsCSVExport).toBe(true);
+          expect(error.historyCount).toBe(81); // 80 existing + 1 new
+        }
       } finally {
         restoreMock();
       }

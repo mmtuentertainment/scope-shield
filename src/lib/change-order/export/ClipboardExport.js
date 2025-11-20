@@ -6,7 +6,7 @@ import { logInfo, logError, logWarning } from '../../utils/Logger.js';
 /**
  * Copy text to system clipboard
  * @param {string} text - Text to copy
- * @returns {Promise<{success: boolean, error?: string}>}
+ * @returns {Promise<{success: boolean, error?: string, fallbackSuggestion?: string, needsManualCopy?: boolean}>}
  */
 export async function copyToClipboard(text) {
   const startTime = performance.now();
@@ -24,7 +24,9 @@ export async function copyToClipboard(text) {
     if (!navigator.clipboard || !navigator.clipboard.writeText) {
       return {
         success: false,
-        error: 'Clipboard API not available in this browser'
+        error: 'Clipboard API not available in this browser',
+        fallbackSuggestion: 'Use "Select All" button to manually copy text',
+        needsManualCopy: true
       };
     }
 
@@ -42,23 +44,33 @@ export async function copyToClipboard(text) {
     return { success: true };
 
   } catch (error) {
+    // Phase 8 (T270-T274): Enhanced clipboard permission error handling
     const duration = performance.now() - startTime;
     logError(`ClipboardExport: Failed after ${duration.toFixed(2)}ms`, error);
 
-    // Determine error type and provide helpful message
+    // Determine error type and provide helpful message with fallback
     let errorMessage = 'Failed to copy to clipboard';
+    let fallbackSuggestion = 'Try using "Download as Text" instead';
+    let needsManualCopy = false;
 
     if (error.name === 'NotAllowedError') {
-      errorMessage = 'Clipboard access denied. Please grant permission or select and copy manually.';
+      errorMessage = 'Clipboard access denied';
+      fallbackSuggestion = 'Click "Select All" below, then press Ctrl+C to copy';
+      needsManualCopy = true; // Trigger SelectAllButton display
     } else if (error.name === 'SecurityError') {
-      errorMessage = 'Clipboard access blocked by browser security policy.';
+      errorMessage = 'Clipboard blocked by browser security policy';
+      fallbackSuggestion = 'Use "Select All" button and manual copy (Ctrl+C)';
+      needsManualCopy = true;
     } else if (error.message) {
       errorMessage = `Clipboard error: ${error.message}`;
+      fallbackSuggestion = 'Use "Download as Text" for alternative export';
     }
 
     return {
       success: false,
-      error: errorMessage
+      error: errorMessage,
+      fallbackSuggestion,
+      needsManualCopy
     };
   }
 }

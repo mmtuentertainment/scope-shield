@@ -21,6 +21,8 @@
 import { processConditionals, processLoops } from './TemplateProcessor.js';
 import { replaceVariables } from './TemplateHelpers.js';
 import { logError } from '../utils/Logger.js';
+import { renderFallback } from './fallbackTemplate.js';
+import { showNotification } from '../../popup/components/NotificationManager.js';
 
 export class TemplateEngine {
   /**
@@ -52,9 +54,24 @@ export class TemplateEngine {
 
       return result;
     } catch (error) {
-      // If rendering fails, return original template to avoid data loss
+      // Phase 8 (T370-T374): Enhanced error handling with fallback
       logError('Template rendering failed', error);
-      return template;
+
+      // Show user notification about template error
+      try {
+        showNotification(
+          'template-error',
+          'Template error detected. Using simplified format.',
+          'warning',
+          5000
+        );
+      } catch (notificationError) {
+        // Notification failed (likely popup not open), just log
+        logError('Failed to show template error notification', notificationError);
+      }
+
+      // Use fallback template
+      return renderFallback(safeData);
     }
   }
 }

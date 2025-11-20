@@ -73,23 +73,15 @@ export class ExportHistoryStorage {
               if (chrome.runtime.lastError) {
                 const errorMessage = chrome.runtime.lastError.message;
 
-                // Handle quota exceeded - emergency cleanup
+                // Phase 8 (T275-T280): Enhanced quota exceeded handling
                 if (errorMessage.includes('QUOTA_BYTES')) {
-                  logWarning('Storage quota exceeded, performing emergency cleanup');
-                  // Keep only last 50 entries to free space
-                  const reducedHistory = history.slice(0, 50);
-                  chrome.storage.local.set(
-                    { [STORAGE_KEYS.EXPORT_HISTORY]: reducedHistory },
-                    () => {
-                      if (chrome.runtime.lastError) {
-                        logError('Emergency cleanup failed', chrome.runtime.lastError);
-                        reject(new Error('Storage quota exceeded and cleanup failed'));
-                      } else {
-                        logInfo('Emergency cleanup succeeded, saved export with 50 entries');
-                        resolve();
-                      }
-                    }
-                  );
+                  logError('Storage quota exceeded', new Error(errorMessage));
+                  // Reject with special quota error for UI handling
+                  const quotaError = new Error('Storage quota exceeded');
+                  quotaError.name = 'QuotaExceededError';
+                  quotaError.needsCSVExport = true; // Signal to show CSV export button
+                  quotaError.historyCount = history.length;
+                  reject(quotaError);
                 } else {
                   logError('Failed to save export history', chrome.runtime.lastError);
                   reject(new Error(errorMessage));
@@ -226,5 +218,110 @@ export class ExportHistoryStorage {
         reject(error);
       }
     });
+  }
+
+  /**
+   * Export history to CSV file (Phase 8: T275-T280)
+   * Used when storage quota is exceeded to free up space
+   * @returns {Promise<{success: boolean, filename?: string, error?: string}>}
+   */
+  static async exportToCSV() {
+    try {
+      // Get all history
+      const history = await ExportHistoryStorage.getAll();
+
+      if (history.length === 0) {
+        return {
+          success: false,
+          error: 'No export history to export'
+        };
+      }
+
+      // Build CSV content
+      const headers = ['Export ID', 'Method', 'Client Name', 'Freelancer Name', 'Total Cost', 'Exported At', 'Duration (ms)'];
+      const csvRows = [headers.join(',')];
+
+      for (const entry of history) {
+        const row = [
+          entry.id || '',
+          entry.method || '',
+          `"${(entry.clientName || '').replace(/"/g, '""')}"`, // Escape quotes
+          `"${(entry.freelancerName || '').replace(/"/g, '""')}"`,
+          entry.totalCost || 0,
+          entry.exportedAt || '',
+          entry.duration || 0
+        ];
+        csvRows.push(row.join(','));
+      }
+
+      const csvContent = csvRows.join('\n');
+
+      // Generate filename
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `ScopeShield_Export_History_${timestamp}.csv`;
+
+      // Create and trigger download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+
+      // Cleanup
+      URL.revokeObjectURL(url);
+
+      logInfo(`ExportHistoryStorage: Exported ${history.length} entries to ${filename}`);
+
+      return {
+        success: true,
+        filename
+      };
+
+    } catch (error) {
+      logError('ExportHistoryStorage: CSV export failed', error);
+      return {
+        success: false,
+        error: `Failed to export CSV: ${error.message}`
+      };
+    }
+  }
+
+  /**
+   * Check available storage quota
+   * Phase 8 (T275-T280): Proactive quota monitoring
+   * @returns {Promise<{available: number, total: number, percentUsed: number}>}
+   */
+  static async checkQuota() {
+    try {
+      // Check if storage quota API is available
+      if (navigator.storage && navigator.storage.estimate) {
+        const estimate = await navigator.storage.estimate();
+        const available = estimate.quota || 0;
+        const used = estimate.usage || 0;
+        const percentUsed = available > 0 ? (used / available) * 100 : 0;
+
+        return {
+          available: available - used,
+          total: available,
+          percentUsed
+        };
+      }
+
+      // Fallback for browsers without quota API
+      return {
+        available: -1,
+        total: -1,
+        percentUsed: 0
+      };
+
+    } catch (error) {
+      logWarning('Failed to check storage quota', error);
+      return {
+        available: -1,
+        total: -1,
+        percentUsed: 0
+      };
+    }
   }
 }

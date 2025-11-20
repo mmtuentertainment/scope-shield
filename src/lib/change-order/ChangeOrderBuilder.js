@@ -1,6 +1,7 @@
 import { TemplateEngine } from './TemplateEngine.js';
 import { FreelancerSettings } from '../storage/FreelancerSettings.js';
 import { logWarning, logError } from '../utils/Logger.js';
+import { truncateText } from '../utils/Sanitizer.js'; // Phase 8 (T241-T244)
 
 /**
  * Builds professional change order documents from scope creep detections
@@ -89,13 +90,24 @@ export class ChangeOrderBuilder {
       generatedDate: this.getCurrentDate().toISOString().split('T')[0],
       freelancerName: settings.freelancerName || 'Freelancer',
       hoursPerDetection: ChangeOrderBuilder.HOURS_PER_DETECTION,
-      detections: detections.map((detection, index) => ({
-        index: index + 1,
-        sender: detection.sender || 'Unknown',
-        text: detection.text || '(No text)',
-        trigger: detection.trigger || 'Unknown',
-        date: this.formatDate(detection.date)
-      })),
+      detections: detections.map((detection, index) => {
+        // Phase 8 (T241-T244): Truncate long detected text
+        const rawText = detection.text || '(No text)';
+        const truncated = rawText.length > 500 ? truncateText(rawText, 200) : rawText;
+
+        // Phase 8 (T245-T249): Handle missing client name
+        const senderName = detection.sender && detection.sender.trim() !== '' ? detection.sender : 'Client';
+
+        return {
+          index: index + 1,
+          sender: senderName,
+          text: truncated,
+          fullText: rawText.length > 500 ? rawText : null, // Store full text for expandable details
+          trigger: detection.trigger || 'Unknown',
+          date: this.formatDate(detection.date),
+          missingClientName: !detection.sender || detection.sender.trim() === '' // Flag for UI highlighting
+        };
+      }),
       totalDetections: detections.length,
       totalHours,
       hasHourlyRate,
