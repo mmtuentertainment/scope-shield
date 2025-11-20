@@ -50,9 +50,10 @@ export class SelectAllButton {
     this.container.style.border = '1px solid #ffc107';
     this.container.style.borderRadius = '4px';
 
-    // Create instruction text
+    // Create instruction text (CodeRabbit Round 3: Add ARIA for accessibility)
     const instruction = document.createElement('p');
     instruction.className = 'select-all-instruction';
+    instruction.id = `select-all-instruction-${Date.now()}`;
     instruction.textContent = 'Clipboard access denied. Use the button below to select text:';
     instruction.style.margin = '0 0 10px 0';
     instruction.style.fontSize = '12px';
@@ -62,6 +63,7 @@ export class SelectAllButton {
     // Create select all button
     this.button = document.createElement('button');
     this.button.className = 'btn btn-secondary select-all-btn';
+    this.button.setAttribute('aria-describedby', instruction.id); // CodeRabbit Round 3
     this.button.textContent = '✓ Select All Text';
     this.button.addEventListener('click', this.handleClick);
     this.container.appendChild(this.button);

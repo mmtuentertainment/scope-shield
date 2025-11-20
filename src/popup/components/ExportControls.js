@@ -315,6 +315,12 @@ export class ExportControls {
    * @private
    */
   showSelectAllButton() {
+    // CodeRabbit Round 3: Guard against destroyed component
+    if (!this.container) {
+      logError('ExportControls: Cannot show SelectAllButton - component destroyed');
+      return;
+    }
+
     // Find or create document preview element
     if (!this.documentPreview) {
       this.documentPreview = document.querySelector('.document-preview');
@@ -355,6 +361,11 @@ export class ExportControls {
    * @private
    */
   showLoadingSpinner(message) {
+    // CodeRabbit Round 3: Guard against destroyed component
+    if (!this.container) {
+      return;
+    }
+
     if (!this.loadingSpinner) {
       this.loadingSpinner = new LoadingSpinner(message);
       const spinnerEl = this.loadingSpinner.render();
