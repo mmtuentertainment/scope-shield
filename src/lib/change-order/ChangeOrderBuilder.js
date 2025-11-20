@@ -105,7 +105,7 @@ export class ChangeOrderBuilder {
           fullText: rawText.length > 500 ? rawText : null, // Store full text for expandable details
           trigger: detection.trigger || 'Unknown',
           date: this.formatDate(detection.date),
-          missingClientName: !detection.sender || detection.sender.trim() === '' // Flag for UI highlighting
+          missingClientName: typeof detection.sender !== 'string' || detection.sender.trim() === '' // CodeRabbit: Fix type safety
         };
       }),
       totalDetections: detections.length,

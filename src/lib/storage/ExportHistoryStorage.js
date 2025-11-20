@@ -260,13 +260,15 @@ export class ExportHistoryStorage {
       const timestamp = new Date().toISOString().split('T')[0];
       const filename = `ScopeShield_Export_History_${timestamp}.csv`;
 
-      // Create and trigger download
+      // Create and trigger download (CodeRabbit: Append to DOM for browser compatibility)
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = filename;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
 
       // Cleanup
       URL.revokeObjectURL(url);

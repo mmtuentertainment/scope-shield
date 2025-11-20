@@ -30,6 +30,7 @@ export class SelectAllButton {
     this.container = null;
     this.button = null;
     this.resetTimeoutId = null; // CodeRabbit: Track timeout for cleanup
+    this.textareaTimeoutId = null; // CodeRabbit: Track textarea cleanup timeout
 
     // Event handlers (bound for cleanup)
     this.handleClick = this.handleClick.bind(this);
@@ -141,11 +142,15 @@ export class SelectAllButton {
     textarea.focus();
     textarea.select();
 
-    // Cleanup after a brief moment
-    setTimeout(() => {
+    // Cleanup after a brief moment (CodeRabbit: Track timeout for cleanup)
+    if (this.textareaTimeoutId) {
+      clearTimeout(this.textareaTimeoutId);
+    }
+    this.textareaTimeoutId = setTimeout(() => {
       if (textarea.parentNode) {
         textarea.parentNode.removeChild(textarea);
       }
+      this.textareaTimeoutId = null;
     }, 100);
 
     this.button.textContent = '✓ Text Selected! Press Ctrl+C';
@@ -177,10 +182,14 @@ export class SelectAllButton {
    * Cleanup and remove event listeners
    */
   destroy() {
-    // CodeRabbit: Clear pending timeout to prevent race condition
+    // CodeRabbit: Clear pending timeouts to prevent race conditions
     if (this.resetTimeoutId) {
       clearTimeout(this.resetTimeoutId);
       this.resetTimeoutId = null;
+    }
+    if (this.textareaTimeoutId) {
+      clearTimeout(this.textareaTimeoutId);
+      this.textareaTimeoutId = null;
     }
 
     if (this.button) {
