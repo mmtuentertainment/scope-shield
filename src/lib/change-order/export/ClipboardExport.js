@@ -12,11 +12,13 @@ export async function copyToClipboard(text) {
   const startTime = performance.now();
 
   try {
-    // Validate input
+    // Validate input (CodeRabbit: Uniform result shape)
     if (!text || typeof text !== 'string') {
       return {
         success: false,
-        error: 'Invalid text provided for clipboard copy'
+        error: 'Invalid text provided for clipboard copy',
+        fallbackSuggestion: 'Use "Download as Text" instead',
+        needsManualCopy: false
       };
     }
 

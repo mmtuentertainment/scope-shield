@@ -91,12 +91,12 @@ export class ChangeOrderBuilder {
       freelancerName: settings.freelancerName || 'Freelancer',
       hoursPerDetection: ChangeOrderBuilder.HOURS_PER_DETECTION,
       detections: detections.map((detection, index) => {
-        // Phase 8 (T241-T244): Truncate long detected text
-        const rawText = detection.text || '(No text)';
+        // Phase 8 (T241-T244): Truncate long detected text (CodeRabbit: Guard text type)
+        const rawText = typeof detection.text === 'string' ? detection.text : '(No text)';
         const truncated = rawText.length > 500 ? truncateText(rawText, 200) : rawText;
 
-        // Phase 8 (T245-T249): Handle missing client name
-        const senderName = detection.sender && detection.sender.trim() !== '' ? detection.sender : 'Client';
+        // Phase 8 (T245-T249): Handle missing client name (CodeRabbit: Guard sender type)
+        const senderName = typeof detection.sender === 'string' && detection.sender.trim() !== '' ? detection.sender : 'Client';
 
         return {
           index: index + 1,

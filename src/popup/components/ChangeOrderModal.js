@@ -427,7 +427,14 @@ export class ChangeOrderModal {
   handleFieldEdit(fieldName, newValue) {
     logInfo(`ChangeOrderModal: Field "${fieldName}" edited to "${newValue}"`);
 
-    // Update metadata
+    // Update metadata (CodeRabbit: Defensive type check)
+    if (!this.metadata || typeof this.metadata !== 'object') {
+      logError(
+        'ChangeOrderModal.handleFieldEdit: metadata is not an object',
+        new TypeError(`Expected metadata object, got ${typeof this.metadata}`)
+      );
+      return;
+    }
     this.metadata[fieldName] = newValue;
 
     // Reset auto-export timer (user is actively editing)

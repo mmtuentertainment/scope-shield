@@ -109,12 +109,13 @@ export async function generatePDF(text, metadata = {}) {
     } catch (outputError) {
       logError('PDFGenerator: Blob generation failed', outputError);
 
-      // Check for out-of-memory errors
-      if (outputError.message && outputError.message.toLowerCase().includes('memory')) {
+      // Check for out-of-memory errors (CodeRabbit: Guard message type)
+      const errMsg = typeof outputError.message === 'string' ? outputError.message : '';
+      if (errMsg.toLowerCase().includes('memory')) {
         throw new Error('Out of memory: Document too large for PDF generation');
       }
 
-      throw new Error(`Failed to generate PDF output: ${outputError.message}`);
+      throw new Error(`Failed to generate PDF output: ${errMsg}`);
     }
 
     const duration = performance.now() - startTime;
@@ -281,15 +282,17 @@ export async function downloadPDF(text, metadata = {}) {
     // Generate filename
     const filename = generateChangeOrderFilename(metadata, 'pdf');
 
-    // Create download link
+    // Create download link (CodeRabbit: Use try/finally for URL cleanup)
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-
-    // Cleanup
-    URL.revokeObjectURL(url);
+    try {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+    } finally {
+      // Always revoke URL, even if click() throws
+      URL.revokeObjectURL(url);
+    }
 
     logInfo(`PDFGenerator: Downloaded as "${filename}"`);
 
@@ -299,20 +302,21 @@ export async function downloadPDF(text, metadata = {}) {
     // Phase 8 (T265-T269): Enhanced PDF error handling with fallback suggestions
     logError('PDFGenerator: Download failed', error);
 
-    // Determine error type and provide specific guidance
+    // Determine error type and provide specific guidance (CodeRabbit: Normalize message once)
+    const msg = typeof error.message === 'string' ? error.message : '';
     let errorMessage = 'PDF generation failed';
     let fallbackSuggestion = 'Try exporting as text instead';
 
-    if (error.message && error.message.includes('Failed to load PDF library')) {
+    if (msg.includes('Failed to load PDF library')) {
       errorMessage = 'PDF library failed to load';
       fallbackSuggestion = 'Use "Download as Text" for a simple .txt file';
-    } else if (error.message && error.message.includes('Out of memory')) {
+    } else if (msg.includes('Out of memory')) {
       errorMessage = 'Document too large for PDF generation';
       fallbackSuggestion = 'Use "Download as Text" for large documents';
-    } else if (error.message && error.message.includes('Invalid text')) {
+    } else if (msg.includes('Invalid text')) {
       errorMessage = 'Document content cannot be converted to PDF';
       fallbackSuggestion = 'Use "Download as Text" instead';
-    } else if (error.name === 'QuotaExceededError') {
+    } else if (error.name === 'QuotaExceededError' || msg.includes('QUOTA') || msg.includes('quota')) {
       errorMessage = 'Insufficient storage space for PDF';
       fallbackSuggestion = 'Free up browser storage or use "Copy to Clipboard"';
     }

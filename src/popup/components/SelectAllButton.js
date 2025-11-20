@@ -29,6 +29,7 @@ export class SelectAllButton {
     this.textContainer = textContainer;
     this.container = null;
     this.button = null;
+    this.resetTimeoutId = null; // CodeRabbit: Track timeout for cleanup
 
     // Event handlers (bound for cleanup)
     this.handleClick = this.handleClick.bind(this);
@@ -92,6 +93,10 @@ export class SelectAllButton {
 
       // Clear existing selection and add new range
       const selection = window.getSelection();
+      // CodeRabbit: Guard against null selection
+      if (!selection) {
+        throw new Error('window.getSelection() returned null');
+      }
       selection.removeAllRanges();
       selection.addRange(range);
 
@@ -99,10 +104,15 @@ export class SelectAllButton {
       this.button.textContent = '✓ Text Selected! Press Ctrl+C to copy';
       this.button.classList.add('selection-active');
 
-      // Restore button text after 3 seconds
-      setTimeout(() => {
+      // Restore button text after 3 seconds (CodeRabbit: Track timeout and guard callback)
+      if (this.resetTimeoutId) {
+        clearTimeout(this.resetTimeoutId);
+      }
+      this.resetTimeoutId = setTimeout(() => {
+        if (!this.button) return; // Component may have been destroyed
         this.button.textContent = '✓ Select All Text';
         this.button.classList.remove('selection-active');
+        this.resetTimeoutId = null;
       }, 3000);
 
       logInfo('SelectAllButton: Text selected successfully');
@@ -167,6 +177,12 @@ export class SelectAllButton {
    * Cleanup and remove event listeners
    */
   destroy() {
+    // CodeRabbit: Clear pending timeout to prevent race condition
+    if (this.resetTimeoutId) {
+      clearTimeout(this.resetTimeoutId);
+      this.resetTimeoutId = null;
+    }
+
     if (this.button) {
       this.button.removeEventListener('click', this.handleClick);
     }

@@ -28,6 +28,7 @@ export class ExportControls {
     this.selectAllButton = null; // Phase 8 (T270-T274)
     this.documentPreview = null; // Phase 8 (T270-T274) - for SelectAllButton
     this.loadingSpinner = null; // Phase 8 (T295-T298)
+    this.selectAllTimeoutId = null; // Phase 8 (T270-T274) - CodeRabbit: Track timeout for cleanup
   }
 
   /**
@@ -120,8 +121,12 @@ export class ExportControls {
         showNotification('toast-notification', '📋 Copied to clipboard! Ready to paste into email or message.', 'success', 3000);
         logInfo('ExportControls: Clipboard export successful');
 
-        // Hide SelectAllButton if it was showing
+        // Hide SelectAllButton if it was showing and cancel any pending show (CodeRabbit)
         this.hideSelectAllButton();
+        if (this.selectAllTimeoutId) {
+          clearTimeout(this.selectAllTimeoutId);
+          this.selectAllTimeoutId = null;
+        }
       } else {
         showNotification('toast-notification', `❌ ${result.error}`, 'error', 5000);
 
@@ -133,7 +138,14 @@ export class ExportControls {
 
         // Phase 8 (T270-T274): Show SelectAllButton for manual copy fallback
         if (result.needsManualCopy) {
-          setTimeout(() => this.showSelectAllButton(), 2500);
+          // CodeRabbit: Clear any existing timeout and track new one
+          if (this.selectAllTimeoutId) {
+            clearTimeout(this.selectAllTimeoutId);
+          }
+          this.selectAllTimeoutId = setTimeout(() => {
+            if (!this.container) return; // Component may have been destroyed
+            this.showSelectAllButton();
+          }, 2500);
         }
 
         logError('ExportControls: Clipboard export failed', new Error(result.error));
@@ -369,6 +381,12 @@ export class ExportControls {
    * Note: Event listeners are cleaned up automatically when buttons are removed from DOM
    */
   destroy() {
+    // CodeRabbit: Clear pending timeout to prevent race condition
+    if (this.selectAllTimeoutId) {
+      clearTimeout(this.selectAllTimeoutId);
+      this.selectAllTimeoutId = null;
+    }
+
     // Cleanup SelectAllButton (Phase 8)
     if (this.selectAllButton) {
       this.selectAllButton.destroy();

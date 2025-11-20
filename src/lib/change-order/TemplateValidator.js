@@ -236,8 +236,9 @@ export class TemplateValidator {
       const arrayName = match[1].trim();
       const loopContent = match[2];
 
-      // Check if loop content references the same array variable
-      const varPattern = new RegExp(`\\{\\{${arrayName}(?:[.}]|\\s)`, 'g');
+      // Check if loop content references the same array variable (CodeRabbit: Escape regex)
+      const escapedArrayName = arrayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const varPattern = new RegExp(`\\{\\{${escapedArrayName}(?:[.}]|\\s)`, 'g');
       if (varPattern.test(loopContent)) {
         warnings.push(`Loop over "${arrayName}" references itself inside loop body (potential circular reference)`);
       }

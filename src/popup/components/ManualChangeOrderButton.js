@@ -39,6 +39,11 @@ export class ManualChangeOrderButton {
    * @returns {HTMLElement} Button container element
    */
   render() {
+    // CodeRabbit: Guard against repeated render calls
+    if (this.container) {
+      return this.container;
+    }
+
     // Create container
     this.container = document.createElement('div');
     this.container.className = 'manual-change-order-container';
@@ -70,6 +75,8 @@ export class ManualChangeOrderButton {
    * @private
    */
   async handleClick() {
+    // CodeRabbit: Guard against button being null
+    if (!this.button) return;
     if (this.button.disabled) {
       return; // Prevent double-click
     }
@@ -125,7 +132,8 @@ export class ManualChangeOrderButton {
    * @returns {boolean} True if visible
    */
   isVisible() {
-    return this.container && this.container.style.display !== 'none';
+    // CodeRabbit: Ensure boolean return type
+    return !!this.container && this.container.style.display !== 'none';
   }
 
   /**

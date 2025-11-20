@@ -36,8 +36,9 @@ export class InlineFieldEditor {
     this.value = initialValue || '';
     this.onSave = options.onSave;
     this.onEdit = options.onEdit;
-    this.maxLength = options.maxLength || 500;
-    this.multiline = options.multiline || false;
+    // CodeRabbit: Tighten option defaults to handle falsy-but-intentional values
+    this.maxLength = typeof options.maxLength === 'number' && options.maxLength > 0 ? options.maxLength : 500;
+    this.multiline = options.multiline === true;
 
     // DOM references
     this.element = null;
@@ -106,9 +107,10 @@ export class InlineFieldEditor {
       // Truncate text
       this.element.textContent = text.slice(0, this.maxLength);
 
-      // Restore cursor to end
+      // Restore cursor to end (CodeRabbit: Guard getSelection)
       const range = document.createRange();
       const selection = window.getSelection();
+      if (!selection) return; // No selection available
       range.selectNodeContents(this.element);
       range.collapse(false);
       selection.removeAllRanges();
@@ -150,9 +152,6 @@ export class InlineFieldEditor {
       return;
     }
 
-    // Update internal value
-    this.value = sanitized;
-
     // Update DOM to reflect sanitized value
     this.element.textContent = sanitized;
 
@@ -162,10 +161,13 @@ export class InlineFieldEditor {
     // Notify parent
     try {
       this.onSave(this.fieldName, sanitized);
+      // CodeRabbit: Only update internal value after successful save
+      this.value = sanitized;
       logInfo(`InlineFieldEditor: Saved ${this.fieldName} = "${sanitized}"`);
     } catch (error) {
       logError('InlineFieldEditor: onSave callback failed', error);
-      // Revert on error
+      // CodeRabbit: Revert both DOM and internal value on error
+      this.value = this.originalValue;
       this.revert();
     }
   }

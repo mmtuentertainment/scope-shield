@@ -167,6 +167,7 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
     const spinnerEl = spinner.render();
     document.body.appendChild(spinnerEl);
 
+    // CodeRabbit: Use try/finally for spinner cleanup
     try {
       // Transform events to detection format
       const detections = unacknowledged.map(event => ({
@@ -204,9 +205,6 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
       // Show modal with calculator and export controls
       const modal = new ChangeOrderModal(document, metadata, calculatorOptions);
 
-      // Phase 8 (T295-T298): Hide spinner before showing modal
-      spinner.destroy();
-
       await modal.show();
 
       // Notify popup.js about modal creation (for draft saving)
@@ -218,11 +216,11 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
       await this.acknowledgeMultipleEvents(unacknowledged);
       this.onEventsChanged();
     } catch (error) {
-      // Phase 8 (T295-T298): Always cleanup spinner on error
-      spinner.destroy();
-
       logError('DetectionEventHandlers.generateReport failed', error);
       showNotification('toast-notification', 'Failed to generate report', 'error', 3000);
+    } finally {
+      // CodeRabbit: Always cleanup spinner in finally block
+      spinner.destroy();
     }
   }
 
@@ -262,6 +260,7 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
     const spinnerEl = spinner.render();
     document.body.appendChild(spinnerEl);
 
+    // CodeRabbit: Use try/finally for spinner cleanup
     try {
       // Load freelancer settings
       const settings = await SettingsStorage.get();
@@ -306,11 +305,11 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
       showNotification('toast-notification', 'Manual change order created. Fill in details and export.', 'info', 5000);
 
     } catch (error) {
-      // Phase 8 (T295-T298): Always cleanup spinner on error
-      spinner.destroy();
-
       logError('DetectionEventHandlers.createManualChangeOrder failed', error);
       showNotification('toast-notification', 'Failed to create manual change order', 'error', 3000);
+    } finally {
+      // CodeRabbit: Always cleanup spinner in finally block
+      spinner.destroy();
     }
   }
 }

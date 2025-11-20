@@ -15,7 +15,7 @@
  * @param {Object} variables - Template variables
  * @returns {string} Plain-text formatted change order
  */
-export function generateFallbackChangeOrder(variables) {
+export function generateFallbackChangeOrder(variables = {}) { // CodeRabbit: Default to prevent null errors
   const {
     clientName = 'Client',
     freelancerName = 'Freelancer',

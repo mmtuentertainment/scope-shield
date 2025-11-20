@@ -73,8 +73,8 @@ export class ExportHistoryStorage {
               if (chrome.runtime.lastError) {
                 const errorMessage = chrome.runtime.lastError.message;
 
-                // Phase 8 (T275-T280): Enhanced quota exceeded handling
-                if (errorMessage.includes('QUOTA_BYTES')) {
+                // Phase 8 (T275-T280): Enhanced quota exceeded handling (CodeRabbit: Guard string type)
+                if (typeof errorMessage === 'string' && errorMessage.includes('QUOTA_BYTES')) {
                   logError('Storage quota exceeded', new Error(errorMessage));
                   // Reject with special quota error for UI handling
                   const quotaError = new Error('Storage quota exceeded');

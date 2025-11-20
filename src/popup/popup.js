@@ -146,6 +146,7 @@ async function loadDetections() {
 
     updateSummaryStats();
     renderList();
+    updateManualButtonVisibility(); // CodeRabbit: Update visibility on storage changes
   } catch (error) {
     logError('Popup.loadDetections failed', error);
     showNotification('toast-notification', 'Failed to load detections', 'error', 5000);
