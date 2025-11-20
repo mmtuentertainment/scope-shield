@@ -70,6 +70,103 @@ npm run build
 npm test
 ```
 
+## 📘 Usage Guide (Phase 9)
+
+### First-Time Setup
+1. Install extension (see Installation above)
+2. Click ScopeShield icon in Chrome toolbar
+3. Navigate to **Settings** tab
+4. Enter your name (required)
+5. Optionally set hourly rate for pricing calculator
+6. Save settings
+
+### Using Detection
+1. Open Gmail in Chrome
+2. Read client emails normally
+3. When scope creep detected:
+   - Yellow/orange highlighting appears on trigger phrases
+   - Browser notification pops up
+   - Extension badge shows detection count
+
+### Generating Change Orders
+1. Click ScopeShield icon
+2. Review detected scope creep items in list
+3. Select items to include (checkboxes)
+4. Click "Generate Change Order"
+5. Review generated document
+6. Edit fields if needed (click to edit inline)
+7. Export using one of three options:
+   - **Copy to Clipboard** - Paste into email
+   - **Export as PDF** - Download professional document
+   - **Export as Text** - Plain text for Slack/messaging
+
+### Auto-Export Feature
+1. Enable in Settings: "Auto-export after editing"
+2. Set delay (default: 5 seconds)
+3. Choose default export method
+4. When generating change orders:
+   - Make your edits
+   - Countdown appears (5...4...3...2...1)
+   - Auto-exports using your default method
+   - Click anywhere to cancel countdown
+
+## 🔧 Troubleshooting
+
+### No Detections Showing
+- **Check Gmail is open** - Extension only works on mail.google.com
+- **Verify extension is enabled** - Check chrome://extensions
+- **Look for trigger words** - Detection requires specific phrases (see Detection Logic)
+- **Check console** - Open DevTools (F12), look for [ScopeShield] logs
+
+### Highlighting Not Appearing
+- **Gmail UI changed** - Try refreshing page (Ctrl+R)
+- **Check dark mode** - Yellow highlight works in both light/dark
+- **Verify no CSS conflicts** - Disable other Gmail extensions temporarily
+
+### Change Order Generation Slow
+- **Target: <5 seconds** - If slower, check:
+  - Too many detections? (50+ items may take longer)
+  - Slow CPU? (check Task Manager)
+  - Run benchmark: `node scripts/benchmark.js`
+
+### PDF Export Fails
+- **Fallback: Export as Text** - Use text export instead
+- **Check browser permissions** - Allow downloads in chrome://settings/content
+- **Console errors?** - Check DevTools for jsPDF errors
+
+### Clipboard Copy Denied
+- **Use Select All button** - Appears automatically on clipboard failure
+- **Grant permissions** - Chrome may block clipboard access
+- **Manual copy** - Select text and Ctrl+C
+
+### Extension Icon Not Showing
+- **Pin extension** - Click puzzle piece icon, pin ScopeShield
+- **Restart Chrome** - Sometimes required after installation
+
+### Storage Quota Exceeded
+- **Export to CSV** - Notification appears with export button
+- **Clear old detections** - Settings → Clear History
+- **Target capacity** - 1,000 detection events (~500KB)
+
+## 🎯 Performance Benchmarks
+
+Run performance tests:
+```bash
+node scripts/benchmark.js
+```
+
+**Targets:**
+- Generation: <5s for 50 detections
+- PDF Export: <3s
+- Clipboard: <500ms
+- Bundle: <600KB
+
+Check actual bundle size:
+```bash
+npm run build
+du -sh dist/
+```
+
 ## 📖 Development Workflow
 
 This project follows **Spec-Driven Development (SDD)** using GitHub Spec-Kit:

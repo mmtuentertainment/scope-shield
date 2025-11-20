@@ -153,14 +153,15 @@ export class ChangeOrderModal {
 
   /**
    * Update document text (called after recalculation)
-   * @param {string} newText - Updated change order text
+   * Phase 9 refactor: HTML rendering instead of plain text
+   * @param {string} newText - Updated change order HTML
    */
   updateDocument(newText) {
     this.changeOrderText = newText;
 
-    // Update preview
+    // Update preview (Phase 9: innerHTML for HTML template)
     if (this.documentPreview) {
-      this.documentPreview.textContent = newText;
+      this.documentPreview.innerHTML = newText;
     }
 
     // Recreate export controls with new text
@@ -322,11 +323,52 @@ export class ChangeOrderModal {
     this.countdownNotification.setAttribute('aria-atomic', 'true');
     body.appendChild(this.countdownNotification);
 
-    // Document preview
-    this.documentPreview = document.createElement('pre');
+    // Document preview (Phase 9 refactor: HTML template with data-field attributes)
+    this.documentPreview = document.createElement('div');
     this.documentPreview.className = 'document-preview';
-    this.documentPreview.textContent = this.changeOrderText;
+    // Safe HTML rendering (template engine output is already safe - no user input in template structure)
+    this.documentPreview.innerHTML = this.changeOrderText;
     body.appendChild(this.documentPreview);
+
+    // Phase 9 (T286-T290): Inline field editing DOM integration
+    const editableFields = ['costEstimate', 'totalHours', 'hourlyRate'];
+
+    editableFields.forEach(fieldName => {
+      const fieldElement = this.documentPreview.querySelector(`[data-field="${fieldName}"]`);
+      if (fieldElement) {
+        const editor = new InlineFieldEditor(fieldName, fieldElement.textContent, {
+          onSave: (field, value) => this.handleFieldEdit(field, value),
+          maxLength: 500
+        });
+        const editorEl = editor.render();
+        fieldElement.parentNode.replaceChild(editorEl, fieldElement);
+        this.fieldEditors[fieldName] = editor;
+      }
+    });
+
+    // Phase 9 (T246-T247): Yellow highlighting for missing client name
+    if (this.metadata.missingClientName) {
+      // Check all client name fields (one per detection)
+      const clientFields = this.documentPreview.querySelectorAll('[data-field^="clientName-"]');
+      clientFields.forEach(clientField => {
+        clientField.style.backgroundColor = '#FFF9C4';  // Light yellow
+        clientField.title = 'Please edit client name';
+        clientField.classList.add('requires-edit');
+      });
+    }
+
+    // Phase 9 (T243): Expandable details for long text
+    this.documentPreview.addEventListener('click', (e) => {
+      if (e.target.classList.contains('expand-details')) {
+        const fullText = e.target.dataset.fullText;
+        const messageP = e.target.parentElement;
+
+        // Replace truncated text + button with full text
+        const textNode = document.createTextNode(`"${fullText}"`);
+        messageP.innerHTML = '<strong>Message:</strong> ';
+        messageP.appendChild(textNode);
+      }
+    });
 
     // Calculator container
     const calculatorContainer = document.createElement('div');
