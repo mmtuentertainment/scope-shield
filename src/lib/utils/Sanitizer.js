@@ -68,5 +68,6 @@ export function truncateText(text, maxLength = 200) {
   if (typeof text !== 'string') return '';
   if (text.length <= maxLength) return text;
 
-  return `${text.slice(0, maxLength)}...`;
+  // CodeRabbit CRITICAL: Use Unicode-aware truncation to preserve emoji
+  return `${[...text].slice(0, maxLength).join('')}...`;
 }

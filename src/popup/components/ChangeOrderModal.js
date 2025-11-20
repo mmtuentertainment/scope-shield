@@ -425,7 +425,7 @@ export class ChangeOrderModal {
    * @private
    */
   handleFieldEdit(fieldName, newValue) {
-    logInfo(`ChangeOrderModal: Field "${fieldName}" edited to "${newValue}"`);
+    logInfo(`ChangeOrderModal: Field "${fieldName}" edited`); // CodeRabbit: Avoid logging PII
 
     // Update metadata (CodeRabbit: Defensive type check)
     if (!this.metadata || typeof this.metadata !== 'object') {

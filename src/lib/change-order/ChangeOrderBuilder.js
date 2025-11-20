@@ -21,6 +21,20 @@ export class ChangeOrderBuilder {
    */
   static HOURS_PER_DETECTION = 2;
 
+  /**
+   * Maximum text length before truncation
+   * @constant {number}
+   * CodeRabbit: Extract magic number
+   */
+  static MAX_TEXT_LENGTH = 500;
+
+  /**
+   * Truncated text length
+   * @constant {number}
+   * CodeRabbit: Extract magic number
+   */
+  static TRUNCATED_TEXT_LENGTH = 200;
+
   constructor() {
     this.engine = new TemplateEngine();
   }
@@ -91,9 +105,10 @@ export class ChangeOrderBuilder {
       freelancerName: settings.freelancerName || 'Freelancer',
       hoursPerDetection: ChangeOrderBuilder.HOURS_PER_DETECTION,
       detections: detections.map((detection, index) => {
-        // Phase 8 (T241-T244): Truncate long detected text (CodeRabbit: Guard text type)
+        // Phase 8 (T241-T244): Truncate long detected text (CodeRabbit: Guard text type + use constants)
         const rawText = typeof detection.text === 'string' ? detection.text : '(No text)';
-        const truncated = rawText.length > 500 ? truncateText(rawText, 200) : rawText;
+        const shouldTruncate = rawText.length > ChangeOrderBuilder.MAX_TEXT_LENGTH;
+        const truncated = shouldTruncate ? truncateText(rawText, ChangeOrderBuilder.TRUNCATED_TEXT_LENGTH) : rawText;
 
         // Phase 8 (T245-T249): Handle missing client name (CodeRabbit: Extract validation for DRY)
         const hasSender = typeof detection.sender === 'string' && detection.sender.trim() !== '';
@@ -103,7 +118,7 @@ export class ChangeOrderBuilder {
           index: index + 1,
           sender: senderName,
           text: truncated,
-          fullText: rawText.length > 500 ? rawText : null, // Store full text for expandable details
+          fullText: shouldTruncate ? rawText : null, // Store full text for expandable details
           trigger: detection.trigger || 'Unknown',
           date: this.formatDate(detection.date),
           missingClientName: !hasSender // CodeRabbit: Reuse validation

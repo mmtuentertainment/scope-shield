@@ -31,6 +31,7 @@ export class SelectAllButton {
     this.button = null;
     this.resetTimeoutId = null; // CodeRabbit: Track timeout for cleanup
     this.textareaTimeoutId = null; // CodeRabbit: Track textarea cleanup timeout
+    this.pendingTextarea = null; // CodeRabbit CRITICAL: Track textarea for cleanup
 
     // Event handlers (bound for cleanup)
     this.handleClick = this.handleClick.bind(this);
@@ -133,7 +134,14 @@ export class SelectAllButton {
    * @private
    */
   selectViaTextarea() {
+    // CodeRabbit CRITICAL: Clean up any existing textarea first
+    if (this.pendingTextarea && this.pendingTextarea.parentNode) {
+      this.pendingTextarea.parentNode.removeChild(this.pendingTextarea);
+      this.pendingTextarea = null;
+    }
+
     const textarea = document.createElement('textarea');
+    this.pendingTextarea = textarea; // Track for cleanup
     textarea.value = this.textToSelect;
     textarea.style.position = 'fixed';
     textarea.style.top = '0';
@@ -152,6 +160,7 @@ export class SelectAllButton {
       if (textarea.parentNode) {
         textarea.parentNode.removeChild(textarea);
       }
+      this.pendingTextarea = null;
       this.textareaTimeoutId = null;
     }, 100);
 
@@ -192,6 +201,12 @@ export class SelectAllButton {
     if (this.textareaTimeoutId) {
       clearTimeout(this.textareaTimeoutId);
       this.textareaTimeoutId = null;
+    }
+
+    // CodeRabbit CRITICAL: Clean up pending textarea to prevent DOM leak
+    if (this.pendingTextarea && this.pendingTextarea.parentNode) {
+      this.pendingTextarea.parentNode.removeChild(this.pendingTextarea);
+      this.pendingTextarea = null;
     }
 
     if (this.button) {

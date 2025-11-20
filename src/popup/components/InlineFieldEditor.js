@@ -146,24 +146,23 @@ export class InlineFieldEditor {
     // Sanitize input
     const sanitized = sanitizeText(rawValue, this.maxLength);
 
-    // Check if value actually changed
-    if (sanitized === this.value) {
-      this.element.classList.remove('editing');
-      return;
-    }
-
-    // Update DOM to reflect sanitized value
+    // CodeRabbit Round 4: Always update DOM to sanitized value first
     this.element.textContent = sanitized;
 
     // Remove visual indicator
     this.element.classList.remove('editing');
+
+    // If sanitized value is unchanged, nothing to save
+    if (sanitized === this.value) {
+      return;
+    }
 
     // Notify parent
     try {
       this.onSave(this.fieldName, sanitized);
       // CodeRabbit: Only update internal value after successful save
       this.value = sanitized;
-      logInfo(`InlineFieldEditor: Saved ${this.fieldName} = "${sanitized}"`);
+      logInfo(`InlineFieldEditor: Saved ${this.fieldName}`); // CodeRabbit Round 4: Avoid logging PII
     } catch (error) {
       logError('InlineFieldEditor: onSave callback failed', error);
       // CodeRabbit: Revert both DOM and internal value on error

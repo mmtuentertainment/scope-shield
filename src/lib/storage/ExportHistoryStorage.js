@@ -241,12 +241,24 @@ export class ExportHistoryStorage {
       const headers = ['Export ID', 'Method', 'Client Name', 'Freelancer Name', 'Total Cost', 'Exported At', 'Duration (ms)'];
       const csvRows = [headers.join(',')];
 
+      // CodeRabbit CRITICAL: Sanitize for CSV injection and newline handling
+      const sanitizeCSV = (str) => {
+        if (!str) return '';
+        // Remove newlines
+        let cleaned = str.replace(/[\r\n]+/g, ' ');
+        // Prefix formula characters with single quote to prevent execution
+        if (/^[=+\-@]/.test(cleaned)) {
+          cleaned = "'" + cleaned;
+        }
+        return cleaned.replace(/"/g, '""');
+      };
+
       for (const entry of history) {
         const row = [
           entry.id || '',
           entry.method || '',
-          `"${(entry.clientName || '').replace(/"/g, '""')}"`, // Escape quotes
-          `"${(entry.freelancerName || '').replace(/"/g, '""')}"`,
+          `"${sanitizeCSV(entry.clientName)}"`,
+          `"${sanitizeCSV(entry.freelancerName)}"`,
           entry.totalCost || 0,
           entry.exportedAt || '',
           entry.duration || 0
@@ -299,13 +311,13 @@ export class ExportHistoryStorage {
       // Check if storage quota API is available
       if (navigator.storage && navigator.storage.estimate) {
         const estimate = await navigator.storage.estimate();
-        const quota = estimate.quota || 0; // CodeRabbit: Clarify variable naming
+        const totalQuota = estimate.quota || 0; // CodeRabbit: Rename for clarity
         const used = estimate.usage || 0;
-        const percentUsed = quota > 0 ? (used / quota) * 100 : 0;
+        const percentUsed = totalQuota > 0 ? (used / totalQuota) * 100 : 0;
 
         return {
-          available: quota - used,
-          total: quota,
+          available: totalQuota - used,
+          total: totalQuota,
           percentUsed
         };
       }
