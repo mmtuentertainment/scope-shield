@@ -1,6 +1,7 @@
 import { TemplateEngine } from './TemplateEngine.js';
 import { FreelancerSettings } from '../storage/FreelancerSettings.js';
 import { logWarning, logError } from '../utils/Logger.js';
+import { truncateText } from '../utils/Sanitizer.js'; // Phase 8 (T241-T244)
 
 /**
  * Builds professional change order documents from scope creep detections
@@ -19,6 +20,20 @@ export class ChangeOrderBuilder {
    * @constant {number}
    */
   static HOURS_PER_DETECTION = 2;
+
+  /**
+   * Maximum text length before truncation
+   * @constant {number}
+   * CodeRabbit: Extract magic number
+   */
+  static MAX_TEXT_LENGTH = 500;
+
+  /**
+   * Truncated text length
+   * @constant {number}
+   * CodeRabbit: Extract magic number
+   */
+  static TRUNCATED_TEXT_LENGTH = 200;
 
   constructor() {
     this.engine = new TemplateEngine();
@@ -89,13 +104,26 @@ export class ChangeOrderBuilder {
       generatedDate: this.getCurrentDate().toISOString().split('T')[0],
       freelancerName: settings.freelancerName || 'Freelancer',
       hoursPerDetection: ChangeOrderBuilder.HOURS_PER_DETECTION,
-      detections: detections.map((detection, index) => ({
-        index: index + 1,
-        sender: detection.sender || 'Unknown',
-        text: detection.text || '(No text)',
-        trigger: detection.trigger || 'Unknown',
-        date: this.formatDate(detection.date)
-      })),
+      detections: detections.map((detection, index) => {
+        // Phase 8 (T241-T244): Truncate long detected text (CodeRabbit: Guard text type + use constants)
+        const rawText = typeof detection.text === 'string' ? detection.text : '(No text)';
+        const shouldTruncate = rawText.length > ChangeOrderBuilder.MAX_TEXT_LENGTH;
+        const truncated = shouldTruncate ? truncateText(rawText, ChangeOrderBuilder.TRUNCATED_TEXT_LENGTH) : rawText;
+
+        // Phase 8 (T245-T249): Handle missing client name (CodeRabbit: Extract validation for DRY)
+        const hasSender = typeof detection.sender === 'string' && detection.sender.trim() !== '';
+        const senderName = hasSender ? detection.sender : 'Client';
+
+        return {
+          index: index + 1,
+          sender: senderName,
+          text: truncated,
+          fullText: shouldTruncate ? rawText : null, // Store full text for expandable details
+          trigger: detection.trigger || 'Unknown',
+          date: this.formatDate(detection.date),
+          missingClientName: !hasSender // CodeRabbit: Reuse validation
+        };
+      }),
       totalDetections: detections.length,
       totalHours,
       hasHourlyRate,

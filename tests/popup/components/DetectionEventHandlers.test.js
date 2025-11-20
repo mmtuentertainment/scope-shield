@@ -372,9 +372,9 @@ describe('DetectionEventHandlers', () => {
       // Should not throw
       await expect(handlers.acknowledgeMultipleEvents(mockEvents)).resolves.toBeUndefined();
 
-      // Both should still be marked acknowledged locally
-      expect(mockEvents[0].acknowledged).toBe(true);
-      expect(mockEvents[1].acknowledged).toBe(true);
+      // CodeRabbit Round 3: Only successful acknowledgements are marked locally
+      expect(mockEvents[0].acknowledged).toBe(true); // Success
+      expect(mockEvents[1].acknowledged).toBe(false); // Failed - remains unacknowledged
     });
   });
 });

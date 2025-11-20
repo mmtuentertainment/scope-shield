@@ -56,8 +56,10 @@ describe('ClipboardExport', () => {
       const result = await copyToClipboard('Test text');
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Clipboard access denied');
-      expect(result.error).toContain('grant permission or select and copy manually');
+      // Phase 8 (T270-T274): Enhanced error messages with fallback guidance
+      expect(result.error).toBe('Clipboard access denied');
+      expect(result.fallbackSuggestion).toContain('Select All');
+      expect(result.needsManualCopy).toBe(true);
     });
 
     it('should handle security error', async () => {

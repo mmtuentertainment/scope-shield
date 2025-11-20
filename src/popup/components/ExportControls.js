@@ -4,6 +4,8 @@
 import { ExportService } from '../../lib/change-order/export/ExportService.js';
 import { showNotification } from './NotificationManager.js';
 import { logInfo, logError } from '../../lib/utils/Logger.js';
+import { SelectAllButton } from './SelectAllButton.js'; // Phase 8 (T270-T274)
+import { LoadingSpinner } from './LoadingSpinner.js'; // Phase 8 (T295-T298)
 
 /**
  * Export Controls Component
@@ -23,6 +25,10 @@ export class ExportControls {
     this.container = null;
     this.buttons = {};
     this.isExporting = false;
+    this.selectAllButton = null; // Phase 8 (T270-T274)
+    this.documentPreview = null; // Phase 8 (T270-T274) - for SelectAllButton
+    this.loadingSpinner = null; // Phase 8 (T295-T298)
+    this.selectAllTimeoutId = null; // Phase 8 (T270-T274) - CodeRabbit: Track timeout for cleanup
   }
 
   /**
@@ -106,14 +112,28 @@ export class ExportControls {
   async handleClipboard() {
     if (this.isExporting) return;
 
+    const exportStartTime = Date.now(); // Track for minimum spinner display
     try {
       this.setLoading(true, 'clipboard');
 
       const result = await ExportService.copyToClipboard(this.changeOrderText);
 
+      // Ensure spinner shows for minimum 200ms for visibility
+      const elapsed = Date.now() - exportStartTime;
+      if (elapsed < 200) {
+        await new Promise(resolve => setTimeout(resolve, 200 - elapsed));
+      }
+
       if (result.success) {
         showNotification('toast-notification', '📋 Copied to clipboard! Ready to paste into email or message.', 'success', 3000);
         logInfo('ExportControls: Clipboard export successful');
+
+        // Hide SelectAllButton if it was showing and cancel any pending show (CodeRabbit)
+        this.hideSelectAllButton();
+        if (this.selectAllTimeoutId) {
+          clearTimeout(this.selectAllTimeoutId);
+          this.selectAllTimeoutId = null;
+        }
       } else {
         showNotification('toast-notification', `❌ ${result.error}`, 'error', 5000);
 
@@ -121,6 +141,18 @@ export class ExportControls {
           setTimeout(() => {
             showNotification('toast-notification', `💡 ${result.fallbackSuggestion}`, 'info', 5000);
           }, 2000);
+        }
+
+        // Phase 8 (T270-T274): Show SelectAllButton for manual copy fallback
+        if (result.needsManualCopy) {
+          // CodeRabbit: Clear any existing timeout and track new one
+          if (this.selectAllTimeoutId) {
+            clearTimeout(this.selectAllTimeoutId);
+          }
+          this.selectAllTimeoutId = setTimeout(() => {
+            if (!this.container) return; // Component may have been destroyed
+            this.showSelectAllButton();
+          }, 2500);
         }
 
         logError('ExportControls: Clipboard export failed', new Error(result.error));
@@ -141,6 +173,7 @@ export class ExportControls {
   async handlePDF() {
     if (this.isExporting) return;
 
+    const exportStartTime = Date.now(); // Track for minimum spinner display
     try {
       this.setLoading(true, 'pdf');
 
@@ -148,6 +181,12 @@ export class ExportControls {
         this.changeOrderText,
         this.metadata
       );
+
+      // Ensure spinner shows for minimum 200ms for visibility
+      const elapsed = Date.now() - exportStartTime;
+      if (elapsed < 200) {
+        await new Promise(resolve => setTimeout(resolve, 200 - elapsed));
+      }
 
       if (result.success) {
         showNotification('toast-notification', '📄 PDF downloaded successfully!', 'success', 3000);
@@ -178,9 +217,10 @@ export class ExportControls {
    * Handle text export
    * @private
    */
-  handleText() {
+  async handleText() {
     if (this.isExporting) return;
 
+    const exportStartTime = Date.now(); // Track for minimum spinner display
     try {
       this.setLoading(true, 'text');
 
@@ -188,6 +228,12 @@ export class ExportControls {
         this.changeOrderText,
         this.metadata
       );
+
+      // Ensure spinner shows for minimum 200ms for visibility
+      const elapsed = Date.now() - exportStartTime;
+      if (elapsed < 200) {
+        await new Promise(resolve => setTimeout(resolve, 200 - elapsed));
+      }
 
       if (result.success) {
         showNotification('toast-notification', '📝 Text file downloaded successfully!', 'success', 3000);
@@ -229,6 +275,7 @@ export class ExportControls {
 
   /**
    * Set loading state for button
+   * Phase 8 (T295-T298): Enhanced with LoadingSpinner
    * @param {boolean} loading - Loading state
    * @param {string} buttonKey - Button key ('clipboard', 'pdf', 'text')
    * @private
@@ -249,10 +296,16 @@ export class ExportControls {
       }
       button.dataset.originalText = button.textContent;
       button.textContent = 'Exporting...';
+
+      // Phase 8 (T295-T298): Show loading spinner
+      this.showLoadingSpinner(`Exporting as ${buttonKey}...`);
     } else {
       button.disabled = false;
       button.classList.remove('loading');
       this.restoreButtonContent(button);
+
+      // Phase 8 (T295-T298): Hide loading spinner
+      this.hideLoadingSpinner();
     }
 
     // Disable all other buttons during export
@@ -278,15 +331,113 @@ export class ExportControls {
   }
 
   /**
+   * Show SelectAllButton for manual copy fallback
+   * Phase 8 (T270-T274)
+   * @private
+   */
+  showSelectAllButton() {
+    // CodeRabbit Round 3: Guard against destroyed component
+    if (!this.container) {
+      logError('ExportControls: Cannot show SelectAllButton - component destroyed');
+      return;
+    }
+
+    // Find or create document preview element
+    if (!this.documentPreview) {
+      this.documentPreview = document.querySelector('.document-preview');
+      if (!this.documentPreview) {
+        logError('ExportControls: Cannot show SelectAllButton - document preview not found');
+        return;
+      }
+    }
+
+    // Create SelectAllButton if not exists
+    if (!this.selectAllButton) {
+      this.selectAllButton = new SelectAllButton(this.changeOrderText, this.documentPreview);
+      const buttonElement = this.selectAllButton.render();
+      this.container.appendChild(buttonElement);
+    } else {
+      this.selectAllButton.show();
+    }
+
+    logInfo('ExportControls: SelectAllButton shown');
+  }
+
+  /**
+   * Hide SelectAllButton
+   * Phase 8 (T270-T274)
+   * @private
+   */
+  hideSelectAllButton() {
+    if (this.selectAllButton) {
+      this.selectAllButton.hide();
+      logInfo('ExportControls: SelectAllButton hidden');
+    }
+  }
+
+  /**
+   * Show loading spinner
+   * Phase 8 (T295-T298)
+   * @param {string} message - Loading message
+   * @private
+   */
+  showLoadingSpinner(message) {
+    // CodeRabbit Round 3: Guard against destroyed component
+    if (!this.container) {
+      return;
+    }
+
+    if (!this.loadingSpinner) {
+      this.loadingSpinner = new LoadingSpinner(message);
+      const spinnerEl = this.loadingSpinner.render();
+      // Append to document.body for full-screen overlay, not this.container
+      document.body.appendChild(spinnerEl);
+    } else {
+      this.loadingSpinner.updateMessage(message);
+      this.loadingSpinner.show();
+    }
+  }
+
+  /**
+   * Hide loading spinner
+   * Phase 8 (T295-T298)
+   * @private
+   */
+  hideLoadingSpinner() {
+    if (this.loadingSpinner) {
+      this.loadingSpinner.hide();
+    }
+  }
+
+  /**
    * Cleanup component
    * Note: Event listeners are cleaned up automatically when buttons are removed from DOM
    */
   destroy() {
+    // CodeRabbit: Clear pending timeout to prevent race condition
+    if (this.selectAllTimeoutId) {
+      clearTimeout(this.selectAllTimeoutId);
+      this.selectAllTimeoutId = null;
+    }
+
+    // Cleanup SelectAllButton (Phase 8)
+    if (this.selectAllButton) {
+      this.selectAllButton.destroy();
+      this.selectAllButton = null;
+    }
+
+    // Cleanup LoadingSpinner (Phase 8)
+    if (this.loadingSpinner) {
+      this.loadingSpinner.destroy();
+      this.loadingSpinner = null;
+    }
+
     if (this.container && this.container.parentNode) {
       this.container.parentNode.removeChild(this.container);
     }
 
     this.container = null;
     this.buttons = {};
+    this.documentPreview = null;
   }
 }

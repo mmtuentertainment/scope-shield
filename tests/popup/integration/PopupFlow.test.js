@@ -18,7 +18,9 @@ vi.mock('../../../src/popup/components/NotificationManager.js', () => ({
 
 // Mock Logger
 vi.mock('../../../src/lib/utils/Logger.js', () => ({
-  logError: vi.fn()
+  logError: vi.fn(),
+  logWarning: vi.fn(),
+  logInfo: vi.fn() // Phase 8: Added for LoadingSpinner
 }));
 
 // Mock SettingsStorage for loading freelancer settings

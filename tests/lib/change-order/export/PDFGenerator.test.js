@@ -239,7 +239,12 @@ describe('PDFGenerator', () => {
       const result = await downloadPDF('Test', {});
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Download blocked');
+      // Phase 8 (T265-T269): Error messages are now categorized
+      expect(result.error).toBe('PDF generation failed');
+      expect(result.fallbackSuggestion).toBe('Try exporting as text instead');
+      // CodeRabbit: Verify URL cleanup happens even on error
+      expect(mockURL.created.length).toBe(1);
+      expect(mockURL.revoked.length).toBe(1);
     });
   });
 

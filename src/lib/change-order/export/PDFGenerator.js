@@ -65,29 +65,58 @@ export async function generatePDF(text, metadata = {}) {
     // Load jsPDF
     const jsPDF = await loadJsPDF();
 
-    // Create PDF document
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
+    // Create PDF document (Phase 8: T265-T269 - wrap in try/catch for jsPDF errors)
+    let doc;
+    try {
+      doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+    } catch (jsPDFError) {
+      logError('PDFGenerator: jsPDF initialization failed', jsPDFError);
+      throw new Error(`Failed to initialize PDF: ${jsPDFError.message}`);
+    }
 
     // Set metadata
     if (metadata.clientName) {
-      doc.setProperties({
-        title: `Change Order - ${metadata.clientName}`,
-        subject: 'Change Order Request',
-        author: metadata.freelancerName || 'ScopeShield User',
-        keywords: 'change order, scope creep',
-        creator: 'ScopeShield Chrome Extension'
-      });
+      try {
+        doc.setProperties({
+          title: `Change Order - ${metadata.clientName}`,
+          subject: 'Change Order Request',
+          author: metadata.freelancerName || 'ScopeShield User',
+          keywords: 'change order, scope creep',
+          creator: 'ScopeShield Chrome Extension'
+        });
+      } catch (metadataError) {
+        // Metadata errors are non-critical, just log and continue
+        logWarning('PDFGenerator: Failed to set PDF metadata', metadataError);
+      }
     }
 
-    // Format text for PDF
-    formatTextToPDF(doc, text);
+    // Format text for PDF (Phase 8: T265-T269 - catch formatting errors)
+    try {
+      formatTextToPDF(doc, text);
+    } catch (formatError) {
+      logError('PDFGenerator: Text formatting failed', formatError);
+      throw new Error(`Failed to format document: ${formatError.message}`);
+    }
 
-    // Generate blob
-    const blob = doc.output('blob');
+    // Generate blob (Phase 8: T265-T269 - catch output errors)
+    let blob;
+    try {
+      blob = doc.output('blob');
+    } catch (outputError) {
+      logError('PDFGenerator: Blob generation failed', outputError);
+
+      // Check for out-of-memory errors (CodeRabbit: Guard message type)
+      const errMsg = typeof outputError.message === 'string' ? outputError.message : '';
+      if (errMsg.toLowerCase().includes('memory')) {
+        throw new Error('Out of memory: Document too large for PDF generation');
+      }
+
+      throw new Error(`Failed to generate PDF output: ${errMsg}`);
+    }
 
     const duration = performance.now() - startTime;
     logInfo(`PDFGenerator: Generated PDF (${(blob.size / 1024).toFixed(2)}KB) in ${duration.toFixed(2)}ms`);
@@ -243,7 +272,7 @@ function formatTextToPDF(doc, text) {
  * Download PDF file
  * @param {string} text - Change order text
  * @param {Object} metadata - PDF metadata including filename info
- * @returns {Promise<{success: boolean, error?: string}>}
+ * @returns {Promise<{success: boolean, error?: string, fallbackSuggestion?: string}>}
  */
 export async function downloadPDF(text, metadata = {}) {
   try {
@@ -253,25 +282,49 @@ export async function downloadPDF(text, metadata = {}) {
     // Generate filename
     const filename = generateChangeOrderFilename(metadata, 'pdf');
 
-    // Create download link
+    // Create download link (CodeRabbit: Use try/finally for URL cleanup)
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-
-    // Cleanup
-    URL.revokeObjectURL(url);
+    try {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+    } finally {
+      // Always revoke URL, even if click() throws
+      URL.revokeObjectURL(url);
+    }
 
     logInfo(`PDFGenerator: Downloaded as "${filename}"`);
 
     return { success: true };
 
   } catch (error) {
+    // Phase 8 (T265-T269): Enhanced PDF error handling with fallback suggestions
     logError('PDFGenerator: Download failed', error);
+
+    // Determine error type and provide specific guidance (CodeRabbit: Normalize message once)
+    const msg = typeof error.message === 'string' ? error.message : '';
+    let errorMessage = 'PDF generation failed';
+    let fallbackSuggestion = 'Try exporting as text instead';
+
+    if (msg.includes('Failed to load PDF library')) {
+      errorMessage = 'PDF library failed to load';
+      fallbackSuggestion = 'Use "Download as Text" for a simple .txt file';
+    } else if (msg.includes('Out of memory')) {
+      errorMessage = 'Document too large for PDF generation';
+      fallbackSuggestion = 'Use "Download as Text" for large documents';
+    } else if (msg.includes('Invalid text')) {
+      errorMessage = 'Document content cannot be converted to PDF';
+      fallbackSuggestion = 'Use "Download as Text" instead';
+    } else if (error.name === 'QuotaExceededError' || msg.includes('QUOTA') || msg.includes('quota')) {
+      errorMessage = 'Insufficient storage space for PDF';
+      fallbackSuggestion = 'Free up browser storage or use "Copy to Clipboard"';
+    }
+
     return {
       success: false,
-      error: `Failed to download PDF: ${error.message}`
+      error: errorMessage,
+      fallbackSuggestion
     };
   }
 }

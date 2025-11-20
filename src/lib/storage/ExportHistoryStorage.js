@@ -73,23 +73,15 @@ export class ExportHistoryStorage {
               if (chrome.runtime.lastError) {
                 const errorMessage = chrome.runtime.lastError.message;
 
-                // Handle quota exceeded - emergency cleanup
-                if (errorMessage.includes('QUOTA_BYTES')) {
-                  logWarning('Storage quota exceeded, performing emergency cleanup');
-                  // Keep only last 50 entries to free space
-                  const reducedHistory = history.slice(0, 50);
-                  chrome.storage.local.set(
-                    { [STORAGE_KEYS.EXPORT_HISTORY]: reducedHistory },
-                    () => {
-                      if (chrome.runtime.lastError) {
-                        logError('Emergency cleanup failed', chrome.runtime.lastError);
-                        reject(new Error('Storage quota exceeded and cleanup failed'));
-                      } else {
-                        logInfo('Emergency cleanup succeeded, saved export with 50 entries');
-                        resolve();
-                      }
-                    }
-                  );
+                // Phase 8 (T275-T280): Enhanced quota exceeded handling (CodeRabbit: Guard string type)
+                if (typeof errorMessage === 'string' && errorMessage.includes('QUOTA_BYTES')) {
+                  logError('Storage quota exceeded', new Error(errorMessage));
+                  // Reject with special quota error for UI handling
+                  const quotaError = new Error('Storage quota exceeded');
+                  quotaError.name = 'QuotaExceededError';
+                  quotaError.needsCSVExport = true; // Signal to show CSV export button
+                  quotaError.historyCount = history.length;
+                  reject(quotaError);
                 } else {
                   logError('Failed to save export history', chrome.runtime.lastError);
                   reject(new Error(errorMessage));
@@ -226,5 +218,132 @@ export class ExportHistoryStorage {
         reject(error);
       }
     });
+  }
+
+  /**
+   * Export history to CSV file (Phase 8: T275-T280)
+   * Used when storage quota is exceeded to free up space
+   * @returns {Promise<{success: boolean, filename?: string, error?: string}>}
+   */
+  static async exportToCSV() {
+    try {
+      // CodeRabbit Round 5: Guard for non-DOM context
+      if (typeof document === 'undefined') {
+        return {
+          success: false,
+          error: 'CSV export is only supported from a UI page with DOM access'
+        };
+      }
+
+      // Get all history
+      const history = await ExportHistoryStorage.getAll();
+
+      if (history.length === 0) {
+        return {
+          success: false,
+          error: 'No export history to export'
+        };
+      }
+
+      // Build CSV content
+      const headers = ['Export ID', 'Method', 'Client Name', 'Freelancer Name', 'Total Cost', 'Exported At', 'Duration (ms)'];
+      const csvRows = [headers.join(',')];
+
+      // CodeRabbit CRITICAL: Sanitize for CSV injection and newline handling
+      const sanitizeCSV = (str) => {
+        if (str == null) return ''; // CodeRabbit Round 5: Use == null
+        // Normalize to string and remove newlines (CodeRabbit Round 5: Handle non-string types)
+        let cleaned = String(str).replace(/[\r\n]+/g, ' ');
+        // Prefix formula characters with single quote to prevent execution
+        if (/^[=+\-@]/.test(cleaned)) {
+          cleaned = "'" + cleaned;
+        }
+        return cleaned.replace(/"/g, '""');
+      };
+
+      for (const entry of history) {
+        const row = [
+          entry.id || '',
+          entry.method || '',
+          `"${sanitizeCSV(entry.clientName)}"`,
+          `"${sanitizeCSV(entry.freelancerName)}"`,
+          entry.totalCost || 0,
+          entry.exportedAt || '',
+          entry.duration || 0
+        ];
+        csvRows.push(row.join(','));
+      }
+
+      const csvContent = csvRows.join('\n');
+
+      // Generate filename
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `ScopeShield_Export_History_${timestamp}.csv`;
+
+      // Create and trigger download (CodeRabbit: Append to DOM for browser compatibility)
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Cleanup
+      URL.revokeObjectURL(url);
+
+      logInfo(`ExportHistoryStorage: Exported ${history.length} entries to ${filename}`);
+
+      return {
+        success: true,
+        filename
+      };
+
+    } catch (error) {
+      logError('ExportHistoryStorage: CSV export failed', error);
+      return {
+        success: false,
+        error: `Failed to export CSV: ${error.message}`
+      };
+    }
+  }
+
+  /**
+   * Check available storage quota
+   * Phase 8 (T275-T280): Proactive quota monitoring
+   * @returns {Promise<{available: number, total: number, percentUsed: number}>}
+   */
+  static async checkQuota() {
+    try {
+      // Check if storage quota API is available
+      if (navigator.storage && navigator.storage.estimate) {
+        const estimate = await navigator.storage.estimate();
+        const totalQuota = estimate.quota || 0; // CodeRabbit: Rename for clarity
+        const used = estimate.usage || 0;
+        const percentUsed = totalQuota > 0 ? (used / totalQuota) * 100 : 0;
+
+        return {
+          available: totalQuota - used,
+          total: totalQuota,
+          percentUsed
+        };
+      }
+
+      // Fallback for browsers without quota API (CodeRabbit Round 5: Use -1 sentinel for percentUsed)
+      return {
+        available: -1,
+        total: -1,
+        percentUsed: -1
+      };
+
+    } catch (error) {
+      logWarning('Failed to check storage quota', error);
+      return {
+        available: -1,
+        total: -1,
+        percentUsed: -1 // CodeRabbit Round 5: Consistent sentinel
+      };
+    }
   }
 }

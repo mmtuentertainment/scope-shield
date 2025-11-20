@@ -20,6 +20,7 @@ import { logError, logWarning, logInfo } from '../lib/utils/Logger.js';
 import { URGENT_THRESHOLD, LOAD_TIME_TARGET_MS } from './constants.js';
 import { DraftStorage } from '../lib/change-order/DraftStorage.js';
 import { ChangeOrderModal } from './components/ChangeOrderModal.js';
+import { ManualChangeOrderButton } from './components/ManualChangeOrderButton.js'; // Phase 8 (T281-T285)
 
 // Draft autosave interval (30 seconds)
 const DRAFT_AUTOSAVE_INTERVAL_MS = 30000;
@@ -55,6 +56,7 @@ const eventHandlers = new DetectionEventHandlers({
     updateSummaryStats();
     renderList();
     badgeManager.update();
+    updateManualButtonVisibility(); // Phase 8 (T281-T285)
   }, 100),
   onModalCreated: (modal) => {
     // Store modal reference for draft saving
@@ -66,6 +68,11 @@ const eventHandlers = new DetectionEventHandlers({
   }
 });
 
+// Phase 8 (T281-T285): Manual change order button
+const manualButton = new ManualChangeOrderButton({
+  onCreateManual: () => eventHandlers.createManualChangeOrder()
+});
+
 /**
  * Initialize popup
  */
@@ -75,6 +82,7 @@ async function initialize() {
   await loadDetections();
   checkForDraft(); // Non-blocking - Resume Draft button appears when check completes
   setupEventListeners();
+  mountManualButton(); // Phase 8 (T281-T285)
   await badgeManager.update();
 }
 
@@ -90,6 +98,41 @@ async function checkForDraft() {
     }
   } catch (error) {
     logError('Failed to check for draft', error);
+  }
+}
+
+/**
+ * Mount manual change order button in DOM
+ * Phase 8 (T281-T285)
+ */
+function mountManualButton() {
+  if (!DOM.detectionsList) return;
+
+  const buttonContainer = manualButton.render();
+
+  // CodeRabbit: Guard parent existence
+  const parent = DOM.detectionsList.parentNode;
+  if (!parent) {
+    logError('Popup.mountManualButton: detectionsList has no parent node', new Error('Parent node missing'));
+    return;
+  }
+  parent.insertBefore(buttonContainer, DOM.detectionsList);
+
+  // Update visibility based on current detections
+  updateManualButtonVisibility();
+}
+
+/**
+ * Update manual button visibility based on detection count
+ * Phase 8 (T281-T285): Show button only when no detections exist
+ */
+function updateManualButtonVisibility() {
+  if (!manualButton) return;
+
+  if (detectionEvents.length === 0) {
+    manualButton.show();
+  } else {
+    manualButton.hide();
   }
 }
 
@@ -110,6 +153,7 @@ async function loadDetections() {
 
     updateSummaryStats();
     renderList();
+    updateManualButtonVisibility(); // CodeRabbit: Update visibility on storage changes
   } catch (error) {
     logError('Popup.loadDetections failed', error);
     showNotification('toast-notification', 'Failed to load detections', 'error', 5000);

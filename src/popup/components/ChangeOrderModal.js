@@ -11,6 +11,7 @@ import { ChangeOrderModalIntegrations } from './ChangeOrderModalIntegrations.js'
 import { showNotification } from './NotificationManager.js';
 import { logInfo, logError } from '../../lib/utils/Logger.js';
 import { debounce } from '../utils/debounce.js';
+import { InlineFieldEditor } from './InlineFieldEditor.js'; // Phase 8 (T286-T294)
 
 /**
  * Change Order Modal
@@ -42,6 +43,7 @@ export class ChangeOrderModal {
     this.triggerElement = null;
     this.autoExportTimer = null;
     this.countdownNotification = null;
+    this.fieldEditors = {}; // Phase 8 (T286-T294): Inline field editors
 
     // Auto-export coordination flag (prevents draft save during export)
     this.autoExportActive = false;
@@ -125,6 +127,12 @@ export class ChangeOrderModal {
       this.exportControls.destroy();
       this.exportControls = null;
     }
+
+    // Phase 8 (T286-T294): Cleanup field editors
+    Object.values(this.fieldEditors).forEach(editor => {
+      if (editor) editor.destroy();
+    });
+    this.fieldEditors = {};
 
     // Remove from DOM
     if (this.overlay && this.overlay.parentNode) {
@@ -406,6 +414,33 @@ export class ChangeOrderModal {
         'info',
         2000
       );
+    }
+  }
+
+  /**
+   * Handle field edit (called by InlineFieldEditor on blur)
+   * Phase 8 (T286-T294)
+   * @param {string} fieldName - Name of edited field
+   * @param {string} newValue - New field value (already sanitized)
+   * @private
+   */
+  handleFieldEdit(fieldName, newValue) {
+    logInfo(`ChangeOrderModal: Field "${fieldName}" edited`); // CodeRabbit: Avoid logging PII
+
+    // Update metadata (CodeRabbit: Defensive type check)
+    if (!this.metadata || typeof this.metadata !== 'object') {
+      logError(
+        'ChangeOrderModal.handleFieldEdit: metadata is not an object',
+        new TypeError(`Expected metadata object, got ${typeof this.metadata}`)
+      );
+      return;
+    }
+    this.metadata[fieldName] = newValue;
+
+    // Reset auto-export timer (user is actively editing)
+    if (this.autoExportTimer && this.autoExportTimer.isActive()) {
+      this.autoExportTimer.reset();
+      logInfo('Auto-export timer reset due to field edit');
     }
   }
 }

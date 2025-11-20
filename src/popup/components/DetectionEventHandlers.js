@@ -13,10 +13,11 @@
 
 import { acknowledgeEvent, clearAllEvents } from '../../utils/storage.js';
 import { showNotification } from './NotificationManager.js';
-import { logError, logWarning } from '../../lib/utils/Logger.js';
+import { logError, logWarning, logInfo } from '../../lib/utils/Logger.js';
 import { ChangeOrderBuilder } from '../../lib/change-order/ChangeOrderBuilder.js';
 import { ChangeOrderModal } from './ChangeOrderModal.js';
 import { SettingsStorage } from '../../lib/storage/SettingsStorage.js';
+import { LoadingSpinner } from './LoadingSpinner.js'; // Phase 8 (T295-T298)
 
 /**
  * Detection Event Handlers Class
@@ -161,6 +162,13 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
       return;
     }
 
+    // Phase 8 (T295-T298): Show loading spinner during generation
+    const spinner = new LoadingSpinner('Generating change order...');
+    const spinnerEl = spinner.render();
+    document.body.appendChild(spinnerEl);
+    const spinnerStartTime = Date.now(); // Track for minimum display time
+
+    // CodeRabbit: Use try/finally for spinner cleanup
     try {
       // Transform events to detection format
       const detections = unacknowledged.map(event => ({
@@ -197,6 +205,16 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
 
       // Show modal with calculator and export controls
       const modal = new ChangeOrderModal(document, metadata, calculatorOptions);
+
+      // Ensure spinner shows for minimum 300ms for visibility
+      const elapsed = Date.now() - spinnerStartTime;
+      if (elapsed < 300) {
+        await new Promise(resolve => setTimeout(resolve, 300 - elapsed));
+      }
+
+      // CodeRabbit Round 3: Hide spinner before modal (cleanup in finally)
+      spinner.hide();
+
       await modal.show();
 
       // Notify popup.js about modal creation (for draft saving)
@@ -210,6 +228,9 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
     } catch (error) {
       logError('DetectionEventHandlers.generateReport failed', error);
       showNotification('toast-notification', 'Failed to generate report', 'error', 3000);
+    } finally {
+      // CodeRabbit: Always cleanup spinner in finally block
+      spinner.destroy();
     }
   }
 
@@ -233,9 +254,81 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
       );
     }
 
-    // Mark all as acknowledged locally
-    events.forEach(event => {
-      event.acknowledged = true;
+    // CodeRabbit: Mark only successfully acknowledged events locally
+    events.forEach((event, index) => {
+      if (results[index] && results[index].status === 'fulfilled') {
+        event.acknowledged = true;
+      }
     });
+  }
+
+  /**
+   * Create manual change order without detection events
+   * Phase 8 (T281-T285): Manual change order creation
+   */
+  async createManualChangeOrder() {
+    // Phase 8 (T295-T298): Show loading spinner during generation
+    const spinner = new LoadingSpinner('Creating manual change order...');
+    const spinnerEl = spinner.render();
+    document.body.appendChild(spinnerEl);
+    const spinnerStartTime = Date.now(); // Track for minimum display time
+
+    // CodeRabbit: Use try/finally for spinner cleanup
+    try {
+      // Load freelancer settings
+      const settings = await SettingsStorage.get();
+
+      // Build blank change order with minimal data
+      const builder = new ChangeOrderBuilder();
+      const blankDetections = []; // Empty detections for manual entry
+
+      const document = await builder.build(blankDetections, settings);
+
+      // Metadata with defaults
+      const metadata = {
+        clientName: '', // Empty - user will fill manually
+        freelancerName: settings.freelancerName || '',
+        date: new Date().toISOString().split('T')[0]
+      };
+
+      // Calculator options with defaults
+      const calculatorOptions = {
+        hourlyRate: settings.hourlyRate || 0,
+        estimatedHours: 0, // User will set manually
+        onRecalculate: async (newRate, newHours) => {
+          // Rebuild with new pricing
+          const updatedSettings = { ...settings, hourlyRate: newRate };
+          return await builder.build([], updatedSettings);
+        }
+      };
+
+      // Show modal
+      const modal = new ChangeOrderModal(document, metadata, calculatorOptions);
+
+      // Ensure spinner shows for minimum 300ms for visibility
+      const elapsed = Date.now() - spinnerStartTime;
+      if (elapsed < 300) {
+        await new Promise(resolve => setTimeout(resolve, 300 - elapsed));
+      }
+
+      // CodeRabbit Round 3: Hide spinner before modal (cleanup in finally)
+      spinner.hide();
+
+      await modal.show();
+
+      // Notify popup.js about modal creation (for draft saving)
+      if (this.onModalCreated) {
+        this.onModalCreated(modal);
+      }
+
+      showNotification('toast-notification', 'Manual change order created. Fill in details and export.', 'info', 5000);
+
+    } catch (error) {
+      logError('DetectionEventHandlers.createManualChangeOrder failed', error);
+      showNotification('toast-notification', 'Failed to create manual change order', 'error', 3000);
+    } finally {
+      // CodeRabbit: Always cleanup spinner in finally block
+      spinner.destroy();
+    }
   }
 }
