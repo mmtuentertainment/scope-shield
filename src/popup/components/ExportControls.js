@@ -112,10 +112,17 @@ export class ExportControls {
   async handleClipboard() {
     if (this.isExporting) return;
 
+    const exportStartTime = Date.now(); // Track for minimum spinner display
     try {
       this.setLoading(true, 'clipboard');
 
       const result = await ExportService.copyToClipboard(this.changeOrderText);
+
+      // Ensure spinner shows for minimum 200ms for visibility
+      const elapsed = Date.now() - exportStartTime;
+      if (elapsed < 200) {
+        await new Promise(resolve => setTimeout(resolve, 200 - elapsed));
+      }
 
       if (result.success) {
         showNotification('toast-notification', '📋 Copied to clipboard! Ready to paste into email or message.', 'success', 3000);
@@ -166,6 +173,7 @@ export class ExportControls {
   async handlePDF() {
     if (this.isExporting) return;
 
+    const exportStartTime = Date.now(); // Track for minimum spinner display
     try {
       this.setLoading(true, 'pdf');
 
@@ -173,6 +181,12 @@ export class ExportControls {
         this.changeOrderText,
         this.metadata
       );
+
+      // Ensure spinner shows for minimum 200ms for visibility
+      const elapsed = Date.now() - exportStartTime;
+      if (elapsed < 200) {
+        await new Promise(resolve => setTimeout(resolve, 200 - elapsed));
+      }
 
       if (result.success) {
         showNotification('toast-notification', '📄 PDF downloaded successfully!', 'success', 3000);
@@ -203,9 +217,10 @@ export class ExportControls {
    * Handle text export
    * @private
    */
-  handleText() {
+  async handleText() {
     if (this.isExporting) return;
 
+    const exportStartTime = Date.now(); // Track for minimum spinner display
     try {
       this.setLoading(true, 'text');
 
@@ -213,6 +228,12 @@ export class ExportControls {
         this.changeOrderText,
         this.metadata
       );
+
+      // Ensure spinner shows for minimum 200ms for visibility
+      const elapsed = Date.now() - exportStartTime;
+      if (elapsed < 200) {
+        await new Promise(resolve => setTimeout(resolve, 200 - elapsed));
+      }
 
       if (result.success) {
         showNotification('toast-notification', '📝 Text file downloaded successfully!', 'success', 3000);
