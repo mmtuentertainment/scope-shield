@@ -117,7 +117,7 @@
 - [ ] Generate change order
 - [ ] Click "Export as PDF"
 - [ ] **VERIFY**: PDF downloads within 3 seconds
-- [ ] **VERIFY**: Filename format: "ChangeOrder_ClientName_2025-11-20.pdf"
+- [ ] **VERIFY**: Filename matches pattern: `ChangeOrder_<ClientName>_<YYYY-MM-DD>.pdf` (e.g., "ChangeOrder_ClientName_2025-11-20.pdf")
 - [ ] Open PDF
 - [ ] **VERIFY**: All sections visible, formatting professional
 

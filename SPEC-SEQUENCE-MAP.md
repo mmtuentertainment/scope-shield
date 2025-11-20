@@ -258,17 +258,17 @@
 **Effort**: 12-16 hours
 **Priority**: 🟢 MEDIUM (organic discovery)
 
-**What**: Dedicated landing page with SEO optimization for "scope creep detection"
+**What**: Dedicated landing page with search engine optimization for "scope creep detection"
 
 **Deliverables**:
 - Landing page (scopeshield.dev or similar)
-- SEO optimization (keywords: scope creep, freelance, change order)
+- Search optimization (keywords: scope creep, freelance, change order)
 - Comparison page (vs Scopematter, vs PM tools)
 - Blog posts (3-5 articles on scope creep prevention)
 - Schema markup for search engines
 
 **Success Criteria**:
-- Rank top 10 for "scope creep chrome extension"
+- Rank top 10 for "scope creep Chrome extension"
 - Organic installs >20% of total
 - Landing page conversion rate ≥5%
 

@@ -799,6 +799,23 @@ body {
   background: #F57C00;
 }
 
+/* CodeRabbit: Dark mode overrides for change order document */
+@media (prefers-color-scheme: dark) {
+  .change-order-document .detection-item {
+    background: #2D2D2D;
+    border-left-color: #FFB74D;
+  }
+
+  .change-order-document h2 {
+    color: #E0E0E0;
+    border-bottom-color: #FFB74D;
+  }
+
+  .change-order-document h1 {
+    color: #FFB74D;
+  }
+}
+
 .calculator-container,
 .export-container {
   border-top: 1px solid #e0e0e0;

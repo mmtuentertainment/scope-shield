@@ -213,10 +213,10 @@ This document can be generated when scope creep is detected.`;
     <h2>SCOPE CREEP DETECTIONS ({{totalDetections}} items)</h2>
     <div class="detection-list">
       {{@each detections}}
-      <div class="detection-item" data-detection-index="{{index}}">
-        <p><strong>{{index}}. From:</strong> <span data-field="clientName-{{index}}">{{sender}}</span></p>
+      <div class="detection-item" data-detection-index="{{index}}"{{@if missingClientName}} data-missing-client="true"{{/@if}}>
+        <p><strong>{{index}}. From:</strong> <span data-field="clientName-{{index}}"{{@if missingClientName}} class="requires-edit" style="background-color: #FFF9C4;" title="Please edit client name"{{/@if}}>{{sender}}</span></p>
         <p><strong>Date:</strong> {{date}}</p>
-        <p><strong>Message:</strong> "{{text}}"</p>
+        <p><strong>Message:</strong> "{{text}}"{{@if fullText}} <button class="expand-details" data-full-text="{{fullText}}">Show More</button>{{/@if}}</p>
         <p><strong>Trigger Word:</strong> "{{trigger}}"</p>
       </div>
       {{/@each}}

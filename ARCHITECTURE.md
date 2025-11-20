@@ -2,7 +2,7 @@
 
 **Purpose**: System design documentation for developers and contributors
 
-**Last Updated**: 2025-11-20 (Post-Phase 8)
+**Last Updated**: 2025-11-20 (Phase 9 Complete)
 
 ---
 
@@ -217,8 +217,9 @@
 ## Security Model
 
 ### XSS Prevention
-- ✅ NO `innerHTML` with user content (template structure only)
-- ✅ `textContent` for user-provided data
+- ✅ NO `innerHTML` with unsanitized user content
+- ✅ `innerHTML` used ONLY with TemplateEngine output (pre-sanitized data in controlled structure)
+- ✅ `textContent` for direct user-provided data
 - ✅ Input sanitization via `Sanitizer.sanitizeText()`
 - ✅ CSP-compliant (no inline scripts)
 
@@ -253,7 +254,7 @@
 ### Bundle Optimization
 1. **Lazy loading** - jsPDF loaded on-demand
 2. **Tree shaking** - Vite removes unused code
-3. **No frameworks** - Vanilla JS (keeps bundle <500KB)
+3. **No frameworks** - Vanilla JS (target: <600KB uncompressed, ~210KB gzipped)
 
 ---
 

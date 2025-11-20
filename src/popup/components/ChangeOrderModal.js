@@ -153,7 +153,8 @@ export class ChangeOrderModal {
 
   /**
    * Update document text (called after recalculation)
-   * Phase 9 refactor: HTML rendering instead of plain text
+   * Phase 9 refactor: HTML rendering + re-attach inline editors
+   * CodeRabbit: Clean up orphaned editors before replacing DOM
    * @param {string} newText - Updated change order HTML
    */
   updateDocument(newText) {
@@ -161,7 +162,38 @@ export class ChangeOrderModal {
 
     // Update preview (Phase 9: innerHTML for HTML template)
     if (this.documentPreview) {
+      // CodeRabbit: Destroy existing field editors before rewriting DOM
+      Object.values(this.fieldEditors).forEach(editor => {
+        if (editor) editor.destroy();
+      });
+      this.fieldEditors = {};
+
       this.documentPreview.innerHTML = newText;
+
+      // CodeRabbit: Re-attach inline editors after HTML update
+      const editableFields = ['costEstimate', 'totalHours', 'hourlyRate'];
+      editableFields.forEach(fieldName => {
+        const fieldElement = this.documentPreview.querySelector(`[data-field="${fieldName}"]`);
+        if (fieldElement) {
+          const editor = new InlineFieldEditor(fieldName, fieldElement.textContent, {
+            onSave: (field, value) => this.handleFieldEdit(field, value),
+            maxLength: 500
+          });
+          const editorEl = editor.render();
+          fieldElement.parentNode.replaceChild(editorEl, fieldElement);
+          this.fieldEditors[fieldName] = editor;
+        }
+      });
+
+      // CodeRabbit: Re-apply missing client-name highlight after recalculation
+      if (this.metadata && this.metadata.missingClientName) {
+        const clientFields = this.documentPreview.querySelectorAll('[data-field^="clientName-"]');
+        clientFields.forEach(clientField => {
+          clientField.style.backgroundColor = '#FFF9C4';
+          clientField.title = 'Please edit client name';
+          clientField.classList.add('requires-edit');
+        });
+      }
     }
 
     // Recreate export controls with new text
@@ -346,22 +378,15 @@ export class ChangeOrderModal {
       }
     });
 
-    // Phase 9 (T246-T247): Yellow highlighting for missing client name
-    if (this.metadata.missingClientName) {
-      // Check all client name fields (one per detection)
-      const clientFields = this.documentPreview.querySelectorAll('[data-field^="clientName-"]');
-      clientFields.forEach(clientField => {
-        clientField.style.backgroundColor = '#FFF9C4';  // Light yellow
-        clientField.title = 'Please edit client name';
-        clientField.classList.add('requires-edit');
-      });
-    }
-
     // Phase 9 (T243): Expandable details for long text
+    // CodeRabbit: Defensive handling for missing data or unexpected DOM
     this.documentPreview.addEventListener('click', (e) => {
       if (e.target.classList.contains('expand-details')) {
         const fullText = e.target.dataset.fullText;
-        const messageP = e.target.parentElement;
+        if (!fullText) return; // CodeRabbit: Guard against missing data-full-text
+
+        const messageP = e.target.closest('p'); // CodeRabbit: Use closest() for DOM flexibility
+        if (!messageP) return; // CodeRabbit: Guard against unexpected structure
 
         // Replace truncated text + button with full text
         const textNode = document.createTextNode(`"${fullText}"`);

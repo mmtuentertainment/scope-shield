@@ -2,7 +2,7 @@
 
 **Automatically detect scope creep and generate billable change orders for freelancers**
 
-A Chrome extension that monitors Gmail and Slack for client requests that fall outside the original project scope, highlights them, and generates professional change order templates with one click.
+A Chrome extension that monitors Gmail for client requests that fall outside the original project scope, highlights them, and generates professional change order templates with one click.
 
 ## 🎯 Problem
 
@@ -23,11 +23,11 @@ ScopeShield acts as your scope creep watchdog:
 
 ## 🚀 Features (MVP)
 
-- ✅ **Scope Input**: Paste original project description on first use
-- ✅ **Smart Detection**: Monitors Gmail/Slack for scope creep trigger words
+- ✅ **Gmail Detection**: Monitors Gmail for scope creep trigger words (Slack support planned for v2)
 - ✅ **Visual Alerts**: Yellow highlight + browser notification
 - ✅ **Change Order Generator**: One-click template with pre-filled details
-- ✅ **Dashboard**: Shows "Scope Creep Prevented: $X this month"
+- ✅ **Export Options**: PDF, Clipboard, Text formats
+- ✅ **Pricing Calculator**: Hourly rate × hours estimation
 
 ## 🔐 Privacy First
 
@@ -101,6 +101,7 @@ npm test
    - **Export as Text** - Plain text for Slack/messaging
 
 ### Auto-Export Feature
+```text
 1. Enable in Settings: "Auto-export after editing"
 2. Set delay (default: 5 seconds)
 3. Choose default export method
@@ -109,6 +110,7 @@ npm test
    - Countdown appears (5...4...3...2...1)
    - Auto-exports using your default method
    - Click anywhere to cancel countdown
+```
 
 ## 🔧 Troubleshooting
 
@@ -120,7 +122,7 @@ npm test
 
 ### Highlighting Not Appearing
 - **Gmail UI changed** - Try refreshing page (Ctrl+R)
-- **Check dark mode** - Yellow highlight works in both light/dark
+- **Check dark mode** - Yellow highlight works in both light and dark modes
 - **Verify no CSS conflicts** - Disable other Gmail extensions temporarily
 
 ### Change Order Generation Slow
@@ -193,11 +195,11 @@ This project follows **Spec-Driven Development (SDD)** using GitHub Spec-Kit:
 
 ## 📊 Success Metrics
 
-- ✅ 70%+ detection accuracy (keyword-based heuristics)
+- ✅ 75%+ detection accuracy (keyword-based heuristics, 50+ trigger patterns)
 - ✅ <5 seconds to generate change order
-- ✅ Works on Gmail and Slack web
+- ✅ Works on Gmail (Slack workspace bot planned for v2 after 100 users)
 - ✅ <500ms detection latency (real-time)
-- ✅ Chrome Web Store approved within 2 weeks
+- ✅ Chrome Web Store compliant (Manifest V3)
 
 ## 🗺️ Roadmap
 
