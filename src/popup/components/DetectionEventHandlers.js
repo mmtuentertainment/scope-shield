@@ -166,6 +166,7 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
     const spinner = new LoadingSpinner('Generating change order...');
     const spinnerEl = spinner.render();
     document.body.appendChild(spinnerEl);
+    const spinnerStartTime = Date.now(); // Track for minimum display time
 
     // CodeRabbit: Use try/finally for spinner cleanup
     try {
@@ -204,6 +205,12 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
 
       // Show modal with calculator and export controls
       const modal = new ChangeOrderModal(document, metadata, calculatorOptions);
+
+      // Ensure spinner shows for minimum 300ms for visibility
+      const elapsed = Date.now() - spinnerStartTime;
+      if (elapsed < 300) {
+        await new Promise(resolve => setTimeout(resolve, 300 - elapsed));
+      }
 
       // CodeRabbit Round 3: Hide spinner before modal (cleanup in finally)
       spinner.hide();
@@ -264,6 +271,7 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
     const spinner = new LoadingSpinner('Creating manual change order...');
     const spinnerEl = spinner.render();
     document.body.appendChild(spinnerEl);
+    const spinnerStartTime = Date.now(); // Track for minimum display time
 
     // CodeRabbit: Use try/finally for spinner cleanup
     try {
@@ -296,6 +304,12 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
 
       // Show modal
       const modal = new ChangeOrderModal(document, metadata, calculatorOptions);
+
+      // Ensure spinner shows for minimum 300ms for visibility
+      const elapsed = Date.now() - spinnerStartTime;
+      if (elapsed < 300) {
+        await new Promise(resolve => setTimeout(resolve, 300 - elapsed));
+      }
 
       // CodeRabbit Round 3: Hide spinner before modal (cleanup in finally)
       spinner.hide();
