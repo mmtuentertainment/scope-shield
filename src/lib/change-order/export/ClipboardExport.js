@@ -4,9 +4,9 @@
 import { logInfo, logError, logWarning } from '../../utils/Logger.js';
 
 /**
- * Copy text to system clipboard
- * @param {string} text - Text to copy
- * @returns {Promise<{success: boolean, error?: string, fallbackSuggestion?: string, needsManualCopy?: boolean}>}
+ * Copy the given text into the system clipboard and return a status object describing the outcome.
+ * @param {string} text - The text to copy; must be a non-empty string.
+ * @returns {{success: boolean, error?: string, fallbackSuggestion?: string, needsManualCopy?: boolean}} On success, `{ success: true }`. On failure, `{ success: false, error }` with an optional `fallbackSuggestion` explaining an alternative and `needsManualCopy` set to `true` when a manual copy (e.g., Select All + Ctrl/C) is required.
  */
 export async function copyToClipboard(text) {
   const startTime = performance.now();

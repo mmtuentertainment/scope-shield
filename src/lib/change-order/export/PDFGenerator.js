@@ -45,13 +45,14 @@ async function loadJsPDF() {
 }
 
 /**
- * Generate PDF from text content
- * @param {string} text - Change order text
- * @param {Object} metadata - PDF metadata
- * @param {string} metadata.clientName - Client name for metadata
- * @param {string} metadata.freelancerName - Freelancer name for metadata
- * @param {string} metadata.date - Date for metadata
- * @returns {Promise<Blob>} PDF blob
+ * Create a PDF Blob from change order text and optional metadata.
+ * @param {string} text - Change order text to render into the PDF.
+ * @param {Object} [metadata] - Optional metadata applied to the PDF.
+ * @param {string} [metadata.clientName] - Client name used in the document title.
+ * @param {string} [metadata.freelancerName] - Freelancer name used as the author.
+ * @param {string} [metadata.date] - Date string to include in metadata (informational).
+ * @returns {Blob} A Blob containing the generated PDF.
+ * @throws {Error} If the input text is invalid, jsPDF initialization fails, text formatting fails, PDF output fails, or the document is too large (out of memory).
  */
 export async function generatePDF(text, metadata = {}) {
   const startTime = performance.now();
@@ -268,10 +269,11 @@ function formatTextToPDF(doc, text) {
 }
 
 /**
- * Download PDF file
- * @param {string} text - Change order text
- * @param {Object} metadata - PDF metadata including filename info
- * @returns {Promise<{success: boolean, error?: string, fallbackSuggestion?: string}>}
+ * Trigger download of a PDF generated from change order text.
+ *
+ * @param {string} text - Change order text to include in the PDF.
+ * @param {Object} metadata - PDF generation metadata and filename information (for example `clientName`, date, or other identifying fields).
+ * @returns {{success: boolean, error?: string, fallbackSuggestion?: string}} Operation result: `success` is `true` when the download was initiated successfully, `false` otherwise. When `success` is `false`, `error` contains a short failure message and `fallbackSuggestion` suggests an alternative action.
  */
 export async function downloadPDF(text, metadata = {}) {
   try {

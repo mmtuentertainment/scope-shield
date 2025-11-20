@@ -74,7 +74,10 @@ const manualButton = new ManualChangeOrderButton({
 });
 
 /**
- * Initialize popup
+ * Prepare and mount the popup UI and related background state.
+ *
+ * Performs the initial detection load, checks for any saved change-order draft (which can surface a Resume Draft button),
+ * attaches UI and lifecycle event handlers, mounts the manual change-order button, and refreshes the extension badge.
  */
 async function initialize() {
   console.log('[ScopeShield] Popup initializing...');
@@ -102,8 +105,10 @@ async function checkForDraft() {
 }
 
 /**
- * Mount manual change order button in DOM
- * Phase 8 (T281-T285)
+ * Insert the manual change order button into the popup DOM just before the detections list.
+ *
+ * If the detections list element is not present, the function does nothing. After mounting the
+ * button it updates the button's visibility based on the current detectionEvents state.
  */
 function mountManualButton() {
   if (!DOM.detectionsList) return;
@@ -116,8 +121,10 @@ function mountManualButton() {
 }
 
 /**
- * Update manual button visibility based on detection count
- * Phase 8 (T281-T285): Show button only when no detections exist
+ * Toggle visibility of the manual change-order button based on current detections.
+ *
+ * Shows the manual button when there are zero detection events; hides it when any detections exist.
+ * If the manual button is not initialized, this function is a no-op.
  */
 function updateManualButtonVisibility() {
   if (!manualButton) return;

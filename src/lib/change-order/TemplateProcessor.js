@@ -25,12 +25,11 @@ import { TemplateValidator } from './TemplateValidator.js';
 export const MAX_ITERATIONS = 100;
 
 /**
- * Process conditional blocks {{@if condition}}...{{@else}}...{{/@if}}
- * Handles nested conditionals by finding matching pairs
- * @param {string} text - Text to process
- * @param {object} data - Data for conditional evaluation
- * @returns {string} Processed text
- * @throws {Error} If template validation fails with errors
+ * Processes template conditional blocks ({{@if ...}}...{{@else}}...{{/@if}}) and replaces them based on provided data.
+ * @param {string} text - Template text containing conditional blocks.
+ * @param {object} data - Context used to evaluate conditional expressions.
+ * @returns {string} The template with conditional blocks resolved.
+ * @throws {Error} If template validation fails with errors or if maximum processing iterations are exceeded.
  */
 export function processConditionals(text, data) {
   // Validate template before processing (Phase 8: T370-T374)
