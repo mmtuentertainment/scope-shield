@@ -15,22 +15,24 @@
 
 ## Execution Status
 
+**Note:** Spec numbers = creation order (permanent). Execution order shown below.
+
 | Spec | Name | Status | Phase | Beach Money Impact |
 |------|------|--------|-------|-------------------|
 | **001** | Detection Engine | ✅ COMPLETE | Foundation | Enables core value prop |
 | **002** | Change Order Generator | ✅ COMPLETE | Foundation | Monetization path |
-| **003** | Pattern Expansion (18→50+) | 📋 NEXT | Quality | 75-85% accuracy (trust) |
-| **004** | Accuracy Validation | 📋 PLANNED | Quality | Production confidence |
-| **005** | Chrome Web Store Prep | 📋 PLANNED | Launch | Users can find it |
-| **006** | Store Submission & Approval | 📋 PLANNED | Launch | Users can install |
-| **007** | Error Monitoring (Sentry) | 📋 PLANNED | Automation | Self-healing |
-| **008** | Usage Analytics | 📋 PLANNED | Automation | Data-driven decisions |
-| **009** | Launch Campaign (PH, HN) | 📋 PLANNED | Marketing | User acquisition |
-| **010** | SEO & Landing Page | 📋 PLANNED | Marketing | Organic discovery |
-| **011** | User Onboarding Flow | 📋 PLANNED | Marketing | Retention |
-| **012** | Remote Selector Config | 📋 PLANNED | Automation | Gmail-proof |
-| **013** | Self-Service Support | 📋 PLANNED | Automation | Reduce support burden |
-| **014** | E2E Test Automation | 📋 PLANNED | Automation | Regression prevention |
+| **003** | Remote Selector Config | 🔒 GATED | Automation | Gmail DOM resilience |
+| **004** | Pattern Expansion (18→50+) | 📋 NEXT | Quality | 75-85% accuracy (trust) |
+| **005** | E2E Test Automation | 🔒 GATED | Automation | Regression prevention |
+| **006** | Accuracy Validation | 📋 PLANNED | Quality | Production confidence |
+| **007** | Chrome Web Store Prep | 📋 PLANNED | Launch | Users can find it |
+| **008** | Store Submission & Approval | 📋 PLANNED | Launch | Users can install |
+| **009** | Error Monitoring (Sentry) | 📋 PLANNED | Automation | Self-healing |
+| **010** | Usage Analytics | 📋 PLANNED | Automation | Data-driven decisions |
+| **011** | Launch Campaign (PH, HN) | 📋 PLANNED | Marketing | User acquisition |
+| **012** | SEO & Landing Page | 📋 PLANNED | Marketing | Organic discovery |
+| **013** | User Onboarding Flow | 📋 PLANNED | Marketing | Retention |
+| **014** | Self-Service Support | 📋 PLANNED | Automation | Reduce support burden |
 | **015** | Freemium Gates | 📋 PLANNED | Revenue | Upgrade prompts |
 | **016** | Stripe Integration | 📋 PLANNED | Revenue | Payment processing |
 | **017** | Retention Automation | 📋 PLANNED | Revenue | Churn prevention |
@@ -56,31 +58,35 @@
 - **Outcome**: Product works end-to-end
 
 ### QUALITY LAYER (Week 1-2)
-**Specs 003-005** - Make it reliable before launch
-- **003**: Pattern expansion (18→50+ patterns, research-validated)
-- **004**: Production validation (50-email corpus, 75%+ accuracy gate)
-- **005**: Chrome Web Store preparation (listing, screenshots, privacy policy)
+**Specs 004, 006-007** - Make it reliable before launch
+- **004**: Pattern expansion (18→50+ patterns, research-validated)
+- **006**: Production validation (50-email corpus, 75%+ accuracy gate)
+- **007**: Chrome Web Store preparation (listing, screenshots, privacy policy)
 - **Gate**: Product works reliably at target accuracy → READY TO DEPLOY
 
+**Deferred (GATED):**
+- **003**: Remote Selector Config (trigger: Gmail breaks OR 1K users)
+- **005**: E2E Test Automation (trigger: 100 users OR >1hr manual testing)
+
 ### DEPLOYMENT LAYER (Week 2-3)
-**Specs 006-008** - Get users, monitor performance
-- **006**: Chrome Web Store submission (upload, approval process)
-- **007**: Error monitoring (Sentry integration, console logging, feedback forms)
-- **008**: Usage analytics (installs, detections, conversions - privacy-safe)
+**Specs 008-010** - Get users, monitor performance
+- **008**: Chrome Web Store submission (upload, approval process)
+- **009**: Error monitoring (Sentry integration, console logging, feedback forms)
+- **010**: Usage analytics (installs, detections, conversions - privacy-safe)
 - **Gate**: Extension live, users installing → READY TO MARKET
 
 ### MARKETING LAYER (Week 3-4)
-**Specs 009-011** - Get discovered, retain users
-- **009**: Launch campaign (Product Hunt, Hacker News, Reddit, demo video)
-- **010**: SEO & content (landing page, blog posts, comparison vs Scopematter)
-- **011**: User onboarding (tutorial, demo mode, email drip campaign)
+**Specs 011-013** - Get discovered, retain users
+- **011**: Launch campaign (Product Hunt, Hacker News, Reddit, demo video)
+- **012**: SEO & content (landing page, blog posts, comparison vs Scopematter)
+- **013**: User onboarding (tutorial, demo mode, email drip campaign)
 - **Gate**: 100+ users, organic discovery working → READY TO AUTOMATE
 
 ### AUTOMATION LAYER (Month 2-3)
-**Specs 012-014** - Reduce maintenance burden
-- **012**: Remote selector config (Gmail DOM resilience, no Store review delays)
-- **013**: Self-service support (FAQ bot, documentation search, troubleshooting wizard)
-- **014**: E2E test automation (Puppeteer, CI/CD, regression prevention)
+**Specs 003, 005, 014** - Reduce maintenance burden
+- **003**: Remote selector config (Gmail DOM resilience) - [ALREADY EXISTS, GATED]
+- **005**: E2E test automation (Puppeteer, CI/CD) - [ALREADY EXISTS, GATED]
+- **014**: Self-service support (FAQ bot, documentation search, troubleshooting wizard)
 - **Gate**: Product runs itself, minimal support → READY TO MONETIZE
 
 ### REVENUE LAYER (Month 3-6)
@@ -101,7 +107,7 @@
 
 ## Detailed Spec Descriptions
 
-### Spec 003: Pattern Expansion (Research-Validated)
+### Spec 004: Pattern Expansion (Research-Validated)
 
 **Trigger**: IMMEDIATE (before launch)
 **Effort**: 8-12 hours
