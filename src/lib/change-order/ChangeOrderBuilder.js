@@ -95,8 +95,9 @@ export class ChangeOrderBuilder {
         const rawText = typeof detection.text === 'string' ? detection.text : '(No text)';
         const truncated = rawText.length > 500 ? truncateText(rawText, 200) : rawText;
 
-        // Phase 8 (T245-T249): Handle missing client name (CodeRabbit: Guard sender type)
-        const senderName = typeof detection.sender === 'string' && detection.sender.trim() !== '' ? detection.sender : 'Client';
+        // Phase 8 (T245-T249): Handle missing client name (CodeRabbit: Extract validation for DRY)
+        const hasSender = typeof detection.sender === 'string' && detection.sender.trim() !== '';
+        const senderName = hasSender ? detection.sender : 'Client';
 
         return {
           index: index + 1,
@@ -105,7 +106,7 @@ export class ChangeOrderBuilder {
           fullText: rawText.length > 500 ? rawText : null, // Store full text for expandable details
           trigger: detection.trigger || 'Unknown',
           date: this.formatDate(detection.date),
-          missingClientName: typeof detection.sender !== 'string' || detection.sender.trim() === '' // CodeRabbit: Fix type safety
+          missingClientName: !hasSender // CodeRabbit: Reuse validation
         };
       }),
       totalDetections: detections.length,

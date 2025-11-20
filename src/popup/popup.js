@@ -109,7 +109,14 @@ function mountManualButton() {
   if (!DOM.detectionsList) return;
 
   const buttonContainer = manualButton.render();
-  DOM.detectionsList.parentNode.insertBefore(buttonContainer, DOM.detectionsList);
+
+  // CodeRabbit: Guard parent existence
+  const parent = DOM.detectionsList.parentNode;
+  if (!parent) {
+    logError('Popup.mountManualButton: detectionsList has no parent node', new Error('Parent node missing'));
+    return;
+  }
+  parent.insertBefore(buttonContainer, DOM.detectionsList);
 
   // Update visibility based on current detections
   updateManualButtonVisibility();

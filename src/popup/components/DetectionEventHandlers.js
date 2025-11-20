@@ -244,9 +244,11 @@ Time: ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown'
       );
     }
 
-    // Mark all as acknowledged locally
-    events.forEach(event => {
-      event.acknowledged = true;
+    // CodeRabbit: Mark only successfully acknowledged events locally
+    events.forEach((event, index) => {
+      if (results[index] && results[index].status === 'fulfilled') {
+        event.acknowledged = true;
+      }
     });
   }
 

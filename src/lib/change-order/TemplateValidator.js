@@ -203,10 +203,13 @@ export class TemplateValidator {
           i++;
         }
       }
-      // Check for any closing tag
-      else if (text.substring(i).startsWith('{{/@if}}') || text.substring(i).startsWith('{{/@each}}')) {
+      // Check for any closing tag (CodeRabbit: Use actual tag lengths)
+      else if (text.substring(i).startsWith('{{/@if}}')) {
         currentDepth--;
-        i += 8; // Length of {{/@if}} or {{/@each}}
+        i += '{{/@if}}'.length;
+      } else if (text.substring(i).startsWith('{{/@each}}')) {
+        currentDepth--;
+        i += '{{/@each}}'.length;
       }
       else {
         i++;

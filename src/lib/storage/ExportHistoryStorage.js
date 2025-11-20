@@ -299,13 +299,13 @@ export class ExportHistoryStorage {
       // Check if storage quota API is available
       if (navigator.storage && navigator.storage.estimate) {
         const estimate = await navigator.storage.estimate();
-        const available = estimate.quota || 0;
+        const quota = estimate.quota || 0; // CodeRabbit: Clarify variable naming
         const used = estimate.usage || 0;
-        const percentUsed = available > 0 ? (used / available) * 100 : 0;
+        const percentUsed = quota > 0 ? (used / quota) * 100 : 0;
 
         return {
-          available: available - used,
-          total: available,
+          available: quota - used,
+          total: quota,
           percentUsed
         };
       }
