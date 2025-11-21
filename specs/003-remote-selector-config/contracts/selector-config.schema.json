@@ -1,0 +1,160 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://scopeshield.example.com/schemas/selector-config.schema.json",
+  "title": "ScopeShield Selector Configuration",
+  "description": "JSON Schema for ScopeShield remote CSS selector configuration",
+  "type": "object",
+  "required": ["version", "lastUpdated", "selectors", "fallbacks"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Semantic version of this config (MAJOR.MINOR.PATCH)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "examples": ["1.0.0", "1.2.3", "2.0.0"]
+    },
+    "lastUpdated": {
+      "type": "string",
+      "description": "ISO 8601 timestamp when config was published (UTC)",
+      "format": "date-time",
+      "examples": ["2025-11-20T10:30:00Z"]
+    },
+    "selectors": {
+      "type": "object",
+      "description": "Primary CSS selectors for Gmail DOM elements",
+      "required": ["composeButton", "messageBody", "senderName", "subjectLine", "timestamp"],
+      "properties": {
+        "composeButton": {
+          "type": "string",
+          "description": "Selector for Gmail compose button",
+          "minLength": 1,
+          "examples": [".T-I.T-I-KE", "[role='button'][aria-label*='Compose']"]
+        },
+        "messageBody": {
+          "type": "string",
+          "description": "Selector for email message body content",
+          "minLength": 1,
+          "examples": [".a3s.aiL", "[data-message-body]", ".message-content"]
+        },
+        "senderName": {
+          "type": "string",
+          "description": "Selector for email sender name",
+          "minLength": 1,
+          "examples": [".gD", "[data-sender]", ".sender-name"]
+        },
+        "subjectLine": {
+          "type": "string",
+          "description": "Selector for email subject line",
+          "minLength": 1,
+          "examples": [".hP", "[data-subject]", "h2.subject"]
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Selector for message timestamp",
+          "minLength": 1,
+          "examples": [".g3", "[data-time]", ".timestamp"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "fallbacks": {
+      "type": "object",
+      "description": "Fallback selector chains for Gmail A/B testing resilience",
+      "required": ["composeButton", "messageBody", "senderName", "subjectLine", "timestamp"],
+      "properties": {
+        "composeButton": {
+          "type": "array",
+          "description": "Ordered fallback selectors for compose button (try in sequence)",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "examples": [[".T-I-KE", "[role='button'][aria-label*='Compose']"]]
+        },
+        "messageBody": {
+          "type": "array",
+          "description": "Ordered fallback selectors for message body",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "examples": [[".a3s.aiL", "[data-message-body]", ".message-content"]]
+        },
+        "senderName": {
+          "type": "array",
+          "description": "Ordered fallback selectors for sender name",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "examples": [[".gD", "[data-sender]", ".sender-name"]]
+        },
+        "subjectLine": {
+          "type": "array",
+          "description": "Ordered fallback selectors for subject line",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "examples": [[".hP", "[data-subject]", "h2.subject"]]
+        },
+        "timestamp": {
+          "type": "array",
+          "description": "Ordered fallback selectors for timestamp",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "examples": [[".g3", "[data-time]", ".timestamp"]]
+        }
+      },
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional metadata for developer reference (not used by extension)",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Human-readable change notes",
+          "examples": ["Gmail selectors for new UI (Nov 2025)", "Rollback to v1.2.0 selectors"]
+        },
+        "gmailVersion": {
+          "type": "string",
+          "description": "Gmail UI version this config targets",
+          "examples": ["2025.11.01", "2025.12.15"]
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "version": "1.2.3",
+      "lastUpdated": "2025-11-20T10:30:00Z",
+      "selectors": {
+        "composeButton": ".T-I.T-I-KE",
+        "messageBody": ".a3s.aiL",
+        "senderName": ".gD",
+        "subjectLine": ".hP",
+        "timestamp": ".g3"
+      },
+      "fallbacks": {
+        "composeButton": [".T-I-KE", "[role='button'][aria-label*='Compose']"],
+        "messageBody": [".a3s.aiL", "[data-message-body]", ".message-content"],
+        "senderName": [".gD", "[data-sender]", ".sender-name"],
+        "subjectLine": [".hP", "[data-subject]", "h2.subject"],
+        "timestamp": [".g3", "[data-time]", ".timestamp"]
+      },
+      "metadata": {
+        "description": "Gmail selectors for new UI (Nov 2025)",
+        "gmailVersion": "2025.11.01"
+      }
+    }
+  ]
+}
