@@ -64,6 +64,18 @@ async function sendNotification(event) {
       return;
     }
 
+    // Check if notifications are enabled in settings (default: true)
+    const result = await chrome.storage.local.get('scopeshield_settings_v1');
+    const settings = result['scopeshield_settings_v1'] || {};
+    const notificationsEnabled = settings.enableNotifications !== false; // undefined = true (default enabled)
+
+    if (!notificationsEnabled) {
+      console.log('[ScopeShield] Notifications disabled in settings, skipping');
+      return;
+    }
+
+    console.log('[ScopeShield] Notifications enabled, creating notification...');
+
     // Create notification with confidence-based messaging
     const triggerWeight = Number.isFinite(event.triggerWeight) ? event.triggerWeight : 0;
     const confidenceText = triggerWeight >= 8 ? 'High confidence' :
@@ -76,7 +88,7 @@ async function sendNotification(event) {
 
     const notificationOptions = {
       type: 'basic',
-      iconUrl: chrome.runtime.getURL('assets/icons/icon128.png'),
+      iconUrl: '/assets/icons/icon128.png', // Simplified path (Chrome resolves relative to extension root)
       title: 'ScopeShield: Scope Creep Detected',
       message: `${senderName}: "${detectedText}..."`,
       contextMessage: `${confidenceText} • ${triggerWord}`,
