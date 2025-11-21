@@ -12,8 +12,9 @@ export default defineConfig({
     // Enable globals (describe, it, expect without imports)
     globals: true,
 
-    // Test timeout (10s for async operations)
+    // Test timeout (10s for async operations, 5s for hooks)
     testTimeout: 10000,
+    hookTimeout: 5000,
 
     // Coverage configuration (T009)
     coverage: {

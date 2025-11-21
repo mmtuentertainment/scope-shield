@@ -21,6 +21,8 @@ import { URGENT_THRESHOLD, LOAD_TIME_TARGET_MS } from './constants.js';
 import { DraftStorage } from '../lib/change-order/DraftStorage.js';
 import { ChangeOrderModal } from './components/ChangeOrderModal.js';
 import { ManualChangeOrderButton } from './components/ManualChangeOrderButton.js'; // Phase 8 (T281-T285)
+import { WelcomeModal } from './WelcomeModal.js'; // First-run onboarding
+import { FirstRunDetector } from '../lib/utils/FirstRunDetector.js'; // First-run detection
 
 // Draft autosave interval (30 seconds)
 const DRAFT_AUTOSAVE_INTERVAL_MS = 30000;
@@ -78,6 +80,20 @@ const manualButton = new ManualChangeOrderButton({
  */
 async function initialize() {
   console.log('[ScopeShield] Popup initializing...');
+
+  // Check if first run - show welcome modal to collect freelancer name
+  const isFirstRun = await FirstRunDetector.isFirstRun();
+  if (isFirstRun) {
+    logInfo('First run detected, showing welcome modal');
+    const welcomeModal = new WelcomeModal();
+    try {
+      await welcomeModal.show(); // Blocks until user completes setup
+      logInfo('Welcome modal completed successfully');
+    } catch (error) {
+      logError('Welcome modal failed', error);
+      // Continue initialization even if modal fails
+    }
+  }
 
   await loadDetections();
   checkForDraft(); // Non-blocking - Resume Draft button appears when check completes
@@ -383,14 +399,14 @@ function setupEventListeners() {
   if (DOM.helpLink) {
     DOM.helpLink.addEventListener('click', (e) => {
       e.preventDefault();
-      chrome.tabs.create({ url: 'https://github.com/mmtuentertainment/scope-shield/wiki' });
+      chrome.tabs.create({ url: 'https://github.com/mmtuentertainment/scope-shield#-usage-guide-phase-9' });
     });
   }
 
   if (DOM.feedbackLink) {
     DOM.feedbackLink.addEventListener('click', (e) => {
       e.preventDefault();
-      chrome.tabs.create({ url: 'https://github.com/mmtuentertainment/scope-shield/issues' });
+      chrome.tabs.create({ url: 'https://github.com/mmtuentertainment/scope-shield/issues/new' });
     });
   }
 

@@ -5,6 +5,8 @@
 import { logError } from '../lib/utils/Logger.js';
 
 // DOM Elements
+const freelancerName = document.getElementById('freelancer-name');
+const hourlyRate = document.getElementById('hourly-rate');
 const enableNotifications = document.getElementById('enable-notifications');
 const enableHighlights = document.getElementById('enable-highlights');
 const confidenceThreshold = document.getElementById('confidence-threshold');
@@ -20,6 +22,8 @@ const statusEl = document.getElementById('status');
 
 // Default settings
 const DEFAULT_SETTINGS = {
+  freelancerName: '',
+  hourlyRate: 0,
   enableNotifications: true,
   enableHighlights: true,
   confidenceThreshold: 5,
@@ -38,6 +42,8 @@ async function loadSettings() {
     const result = await chrome.storage.local.get('settings');
     const settings = result.settings || DEFAULT_SETTINGS;
 
+    freelancerName.value = settings.freelancerName || '';
+    hourlyRate.value = settings.hourlyRate || '';
     enableNotifications.checked = settings.enableNotifications;
     enableHighlights.checked = settings.enableHighlights;
     confidenceThreshold.value = settings.confidenceThreshold;
@@ -56,7 +62,17 @@ async function loadSettings() {
  * Save settings to storage
  */
 async function saveSettings() {
+  // Validate required fields
+  const nameValue = freelancerName.value.trim();
+  if (!nameValue) {
+    showStatus('Freelancer name is required', 'error');
+    freelancerName.focus();
+    return;
+  }
+
   const settings = {
+    freelancerName: nameValue,
+    hourlyRate: hourlyRate.value ? parseFloat(hourlyRate.value) : 0,
     enableNotifications: enableNotifications.checked,
     enableHighlights: enableHighlights.checked,
     confidenceThreshold: parseInt(confidenceThreshold.value),

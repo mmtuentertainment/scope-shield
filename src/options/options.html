@@ -56,6 +56,25 @@
     </section>
 
     <section>
+      <h2>Profile Information</h2>
+      <div class="setting" role="group" aria-labelledby="name-label">
+        <label id="name-label">
+          Freelancer name <span class="required" aria-label="required">*</span>:
+          <input type="text" id="freelancer-name" placeholder="Your name (appears on change orders)" maxlength="100" required>
+        </label>
+        <small>Required for generating change orders</small>
+      </div>
+      <div class="setting" role="group" aria-labelledby="rate-label">
+        <label id="rate-label">
+          Hourly rate (optional):
+          <input type="number" id="hourly-rate" placeholder="150" min="0" max="10000" step="1">
+          <span>$/hour</span>
+        </label>
+        <small>Used by pricing calculator to estimate change order costs</small>
+      </div>
+    </section>
+
+    <section>
       <h2>Export Settings</h2>
       <div class="setting" role="group" aria-labelledby="export-method-label">
         <label id="export-method-label">
