@@ -74,12 +74,12 @@ async function saveSettings() {
 
   const settings = {
     freelancerName: nameValue,
-    hourlyRate: hourlyRate.value ? parseFloat(hourlyRate.value) : 0,
+    hourlyRate: Math.max(0, Math.min(10000, hourlyRate.value ? parseFloat(hourlyRate.value) : 0)),
     enableNotifications: enableNotifications.checked,
     enableHighlights: enableHighlights.checked,
-    confidenceThreshold: parseInt(confidenceThreshold.value),
+    confidenceThreshold: Math.max(1, Math.min(10, parseInt(confidenceThreshold.value))),
     highlightColor: highlightColor.value,
-    highlightOpacity: parseFloat(highlightOpacity.value),
+    highlightOpacity: Math.max(0.3, Math.min(1, parseFloat(highlightOpacity.value))),
     defaultExportMethod: defaultExportMethod.value,
     autoExportEnabled: autoExportEnabled.checked,
     autoExportDelay: Math.max(1, Math.min(10, parseInt(autoExportDelay.value))),
