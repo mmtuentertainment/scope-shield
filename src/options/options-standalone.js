@@ -1,10 +1,10 @@
 /**
- * ScopeShield Options Page Script
+ * ScopeShield Options Page Script (Standalone - No Imports)
+ * Simplified version for bundling issues
  */
 
-import { logError } from '../lib/utils/Logger.js';
-import { SettingsStorage } from '../lib/storage/SettingsStorage.js';
-import { FreelancerSettings } from '../lib/storage/FreelancerSettings.js';
+// Storage key (matches SettingsStorage.js)
+const STORAGE_KEY = 'scopeshield_settings_v1';
 
 // DOM Elements
 const freelancerName = document.getElementById('freelancer-name');
@@ -41,7 +41,8 @@ const DEFAULT_SETTINGS = {
  */
 async function loadSettings() {
   try {
-    const settings = await SettingsStorage.get();
+    const result = await chrome.storage.local.get(STORAGE_KEY);
+    const settings = result[STORAGE_KEY] || DEFAULT_SETTINGS;
 
     freelancerName.value = settings.freelancerName || '';
     hourlyRate.value = settings.hourlyRate || '';
@@ -55,7 +56,7 @@ async function loadSettings() {
     autoExportEnabled.checked = settings.autoExportEnabled !== false;
     autoExportDelay.value = settings.autoExportDelay || 5;
   } catch (error) {
-    logError('Error loading settings', error);
+    console.error('[ScopeShield ERROR] Error loading settings', error);
   }
 }
 
@@ -71,7 +72,7 @@ async function saveSettings() {
     return;
   }
 
-  const settings = new FreelancerSettings({
+  const settings = {
     freelancerName: nameValue,
     hourlyRate: hourlyRate.value ? parseFloat(hourlyRate.value) : 0,
     enableNotifications: enableNotifications.checked,
@@ -81,14 +82,16 @@ async function saveSettings() {
     highlightOpacity: parseFloat(highlightOpacity.value),
     defaultExportMethod: defaultExportMethod.value,
     autoExportEnabled: autoExportEnabled.checked,
-    autoExportDelay: Math.max(1, Math.min(10, parseInt(autoExportDelay.value)))
-  });
+    autoExportDelay: Math.max(1, Math.min(10, parseInt(autoExportDelay.value))),
+    lastUpdated: new Date().toISOString()
+  };
 
   try {
-    await SettingsStorage.save(settings);
+    await chrome.storage.local.set({ [STORAGE_KEY]: settings });
+    console.log('[ScopeShield] Settings saved successfully', settings);
     showStatus('Settings saved successfully!', 'success');
   } catch (error) {
-    logError('Error saving settings', error);
+    console.error('[ScopeShield ERROR] Error saving settings', error);
     showStatus('Failed to save settings', 'error');
   }
 }
@@ -102,12 +105,11 @@ async function resetSettings() {
   }
 
   try {
-    const defaults = FreelancerSettings.getDefaults();
-    await SettingsStorage.save(defaults);
+    await chrome.storage.local.set({ [STORAGE_KEY]: DEFAULT_SETTINGS });
     await loadSettings();
     showStatus('Settings reset to defaults', 'success');
   } catch (error) {
-    logError('Error resetting settings', error);
+    console.error('[ScopeShield ERROR] Error resetting settings', error);
     showStatus('Failed to reset settings', 'error');
   }
 }

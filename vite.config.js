@@ -20,6 +20,14 @@ export default defineConfig({
         {
           src: 'src/options/options.html',
           dest: 'src/options'
+        },
+        {
+          src: 'src/options/options-standalone.js',
+          dest: 'src/options'
+        },
+        {
+          src: 'src/options/options.css',
+          dest: 'src/options'
         }
       ]
     })
