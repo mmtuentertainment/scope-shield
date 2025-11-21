@@ -1,14 +1,182 @@
 # CodeRabbit Configuration for ScopeShield
 # Optimizes reviews for large PRs with many test files
+# Customized for Spec-Kit workflow + AI-optimized summaries
 
 language: "en-US"
 early_access: false
 reviews:
   # Request changes workflow
   request_changes_workflow: true
-  
-  # High-level summary
+
+  # High-level summary (CUSTOMIZED FOR AI ANALYSIS)
   high_level_summary: true
+
+  # Custom summary format optimized for AI code review
+  high_level_summary_instructions: |
+    Generate a comprehensive, AI-optimized summary in **7 sections** with specific formatting:
+
+    ## 🎯 CHANGE CLASSIFICATION
+
+    **Type**: [Feature | Bug Fix | Refactor | Documentation | Spec Work | Hotfix]
+    **Scope**: [Which feature/component affected]
+    **Risk Level**: [CRITICAL | HIGH | MEDIUM | LOW]
+    **Breaking Changes**: [YES/NO - if YES, list what breaks]
+    **Spec-Kit Phase**: [Spec | Plan | Tasks | Implement | Analyze | N/A]
+
+    ## 📋 SPEC ALIGNMENT (For Spec-Kit PRs Only)
+
+    **Feature**: [Feature number and name, e.g., "Feature 002 - Change Order Generator"]
+    **User Stories Addressed**: [List user story IDs, e.g., US1, US2, US3]
+    **Requirements Fulfilled**: [List FR/NFR IDs, e.g., FR-001, FR-005, NFR-003]
+    **Tasks Completed**: [Task IDs from tasks.md, e.g., T042-T055]
+    **Chunk**: [Chunk number if chunked delivery, e.g., "Chunk 3 of 6"]
+    **Constitutional Compliance**: [Table showing 8 principles with PASS/WARN/FAIL status]
+
+    Skip this section if PR is not Spec-Kit related (bug fixes, refactors, etc.)
+
+    ## 💥 IMPACT ANALYSIS
+
+    **User-Facing Changes**:
+    - [Bullet list of what users will notice]
+    - [Include: new features, UI changes, behavior changes]
+
+    **Internal Changes**:
+    - [Bullet list of technical changes users won't see]
+    - [Include: refactors, performance improvements, tech debt]
+
+    **Side Effects & Ripple Impact**:
+    - [What else might be affected by these changes]
+    - [Include: dependent components, shared utilities, data schemas]
+
+    **Performance Impact**:
+    - [Bundle size change: +X KB or -X KB]
+    - [Runtime performance: faster/slower/neutral]
+    - [Memory usage: increased/decreased/neutral]
+
+    ## 🧪 TESTING EVIDENCE
+
+    **Test Coverage**:
+    - Unit tests: [X files added/modified, Y new tests]
+    - Integration tests: [X scenarios covered]
+    - Manual testing: [YES/NO - if YES, describe what was tested]
+    - E2E tests: [YES/NO/DEFERRED]
+
+    **Coverage Metrics** (if available):
+    - Overall: [X%]
+    - Business logic: [X%]
+    - Critical paths: [X%]
+
+    **Untested Areas** (flag for reviewer):
+    - [List any code paths without test coverage]
+    - [Explain why (deferred, manual only, etc.)]
+
+    ## 🔍 REVIEW FOCUS AREAS
+
+    **CRITICAL (Must Review Carefully)**:
+    - [List files/functions with high risk]
+    - [Security-sensitive code]
+    - [Complex business logic]
+    - [Data migrations or schema changes]
+
+    **HIGH (Review Thoroughly)**:
+    - [Important logic changes]
+    - [Error handling paths]
+    - [Performance-critical code]
+
+    **MEDIUM (Skim for Obvious Issues)**:
+    - [Refactors with good test coverage]
+    - [UI component changes]
+    - [Documentation updates]
+
+    **LOW (Auto-Approve If Tests Pass)**:
+    - [Test file additions]
+    - [Comment/doc improvements]
+    - [Minor formatting fixes]
+
+    ## 📦 DEPENDENCIES & REQUIREMENTS
+
+    **New Dependencies**:
+    - [List new packages added with versions]
+    - [Justify why each is needed]
+
+    **Updated Dependencies**:
+    - [Package name: old version → new version]
+    - [Breaking changes if any]
+
+    **Environment Changes**:
+    - [New environment variables]
+    - [Configuration file changes]
+    - [Build script modifications]
+
+    **Database/Storage Changes**:
+    - [Schema migrations]
+    - [New storage keys]
+    - [Data format changes]
+
+    If none: State "No dependency or environment changes"
+
+    ## 📊 PR STATISTICS & CONTRIBUTOR SUMMARY
+
+    | Metric | Value |
+    |--------|-------|
+    | **Files Changed** | [X] |
+    | **Lines Added** | [X] |
+    | **Lines Removed** | [X] |
+    | **Net Change** | [+/- X] |
+    | **Test Files** | [X] |
+    | **Documentation Files** | [X] |
+    | **Largest File Changed** | [filename] ([X] lines) |
+    | **Most Complex Change** | [filename or function] |
+
+    **Contributor Table**:
+    | Contributor | Files | Lines Added | Lines Removed | Net |
+    |-------------|-------|-------------|---------------|-----|
+    | [Name] | [X] | [X] | [X] | [+/- X] |
+
+    **Commit Breakdown**:
+    - [X] feature commits
+    - [X] bug fix commits
+    - [X] refactor commits
+    - [X] documentation commits
+    - [X] test commits
+
+    ## ⚠️ REVIEWER GUIDANCE & RISK ASSESSMENT
+
+    **Before Merging, Verify**:
+    - [ ] All tests pass (unit + integration)
+    - [ ] Manual testing completed (if required)
+    - [ ] No security vulnerabilities introduced
+    - [ ] Performance budget not exceeded
+    - [ ] Documentation updated
+    - [ ] Breaking changes communicated
+    - [ ] Constitutional compliance (if Spec-Kit project)
+
+    **Risk Factors**:
+    - [List specific risks, e.g., "Changes auth flow - high risk of login failures"]
+    - [Flag untested code paths]
+    - [Note any TODO/FIXME comments added]
+
+    **Merge Confidence**: [HIGH | MEDIUM | LOW]
+    - HIGH: Well-tested, low risk, incremental change
+    - MEDIUM: Some unknowns, manual testing needed
+    - LOW: Major refactor, insufficient testing, high risk
+
+    **Recommended Action**:
+    - [APPROVE | REQUEST CHANGES | NEEDS DISCUSSION]
+    - [Explain why]
+
+    ---
+
+    **Formatting Rules**:
+    - Use markdown tables for structured data
+    - Use ✅/❌/⚠️ icons for status indicators
+    - Keep each section under 300 words (except Impact Analysis can be longer)
+    - Use bullet lists for clarity
+    - Highlight numbers/metrics in **bold**
+    - Use `code blocks` for file paths, function names, error messages
+    - Link to specs/docs when applicable
+
+    **Tone**: Technical, concise, actionable. Assume reviewer is an AI or senior engineer familiar with the codebase.
   
   # Review settings
   poem: false
