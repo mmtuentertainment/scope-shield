@@ -106,14 +106,14 @@ We will update this policy if our practices change. Updates will be posted with 
 
 ## Open Source
 
-ScopeShield is open source: https://github.com/mmtuentertainment/scope-shield
+ScopeShield is [open source on GitHub](https://github.com/mmtuentertainment/scope-shield).
 
 You can inspect the source code to verify our privacy claims. We welcome security audits and bug reports.
 
 ## Contact
 
 Questions about privacy?
-- GitHub Issues: https://github.com/mmtuentertainment/scope-shield/issues
+- [GitHub Issues](https://github.com/mmtuentertainment/scope-shield/issues)
 - Or inspect the code yourself (it's open source!)
 
 ## Summary (TL;DR)
