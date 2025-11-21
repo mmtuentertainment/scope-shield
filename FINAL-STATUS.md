@@ -333,7 +333,6 @@ zip -r ../scopeshield-v0.1.0.zip .
 ### To Add Freemium ($9/month):
 
 **Missing Features** (4-6 weeks):
-
 | Feature | Effort | Purpose |
 |---------|--------|---------|
 | User Authentication | 20-30 hrs | Signup/login |
